@@ -433,12 +433,12 @@ void Graphics::blit_char(char c, coord_t x, coord_t y)
   coord_t w = kFixedFontW;
   coord_t h = kFixedFontH;
   font_glyph data = get_char_glyph(c);
-  if (c + w > kWidth) w = kWidth - x;
+  if (x + w > kWidth) w = kWidth - x;
   if (x < 0) {
     w += x;
     data += x;
   }
-  if (w <= 0) return;
+  if (w <= 0 || w > kFixedFontW) return;
   CLIPY(y, h);
 
   blit<pixel_op>(get_frame_ptr(x, y), y, w, h, data);
