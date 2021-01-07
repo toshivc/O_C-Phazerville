@@ -26,9 +26,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
+#ifndef _HEM_APPLET_H_
+#define _HEM_APPLET_H_
 
 #include <Arduino.h>
 #include "OC_core.h"
+
 #include "OC_digital_inputs.h"
 #include "OC_DAC.h"
 #include "OC_ADC.h"
@@ -95,13 +98,10 @@ namespace HS {
 typedef struct Applet {
   int id;
   uint8_t categories;
-  HemisphereApplet* instance;
+  HemisphereApplet* instance[2];
 } Applet;
 
-static IOFrame frame;
-
-extern Applet available_applets[];
-extern Applet clock_setup_applet;
+extern IOFrame frame;
 
 }
 
@@ -402,3 +402,5 @@ private:
     bool applet_started; // Allow the app to maintain state during switching
     bool full_screen;
 };
+
+#endif // _HEM_APPLET_H_
