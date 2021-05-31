@@ -86,6 +86,11 @@ OC::App available_apps[] = {
   #ifdef ENABLE_APP_FPART
   DECLARE_APP('F','P', "4 Parts", FPART),
   #endif
+  #ifdef ENABLE_APP_PASSENCORE
+  // boring name version
+  // DECLARE_APP('P','Q', "Tension", PASSENCORE),
+  DECLARE_APP('P','Q', "Passencore", PASSENCORE),
+  #endif
   #ifdef ENABLE_APP_MIDI
   DECLARE_APP('M','I', "Captain MIDI", MIDI),
   #endif
