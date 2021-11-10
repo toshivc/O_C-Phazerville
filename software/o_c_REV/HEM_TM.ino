@@ -96,9 +96,20 @@ public:
         
         Out(0, quantizer.Lookup(note + 64));
 
-        // Send 8-bit proportioned CV
-        int cv = Proportion(reg & 0x00ff, 255, HEMISPHERE_MAX_CV);
-        Out(1, cv);
+        if (cv2 == 0) {
+          // Send 8-bit proportioned CV
+          int cv = Proportion(reg & 0x00ff, 255, HEMISPHERE_MAX_CV);
+          Out(1, cv);
+        } else if (cv2 == 1) {
+          if (Clock(0)) {
+            ClockOut(1); 
+          }
+        } else if (cv2 == 2) {
+          // only trigger if 1st bit is high
+          if (Clock(0) && (reg & 0x01) == 1) {
+            ClockOut(1);
+          }
+        }
     }
 
     void View() {
@@ -108,7 +119,7 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor > 3) cursor = 0;
+        if (++cursor > 4) cursor = 0;
     }
 
     void OnEncoderMove(int direction) {
@@ -123,6 +134,15 @@ public:
         if(cursor == 3){
            quant_range = constrain(quant_range += direction, 1, 32);
         }
+        if(cursor == 4){
+          cv2 += direction;
+          if (cv2 > 2) {
+            cv2 = 0;
+          }
+          if (cv2 < 0) {
+            cv2 = 2;
+          }
+        }
     }
         
     uint32_t OnDataRequest() {
@@ -134,6 +154,8 @@ public:
         // Logarhythm mod: Since scale can exceed 6 bits now, clamp mathematically rather than surprising the user with a roll over of larger numbers
         //Pack(data, PackLocation {27,6}, scale);
         Pack(data, PackLocation {27,6}, constrain(scale, 0, 63));
+        // Benirose mod: cv2 output mode
+//        Pack(data, PackLocation {33,1}, cv2);
         
         return data;
     }
@@ -168,6 +190,7 @@ private:
     int scale;  // Logarhythm: hold larger values
     //int tmp = 0;
     int quant_range;  // APD
+    int cv2 = 0;
 
     void DrawSelector() {
         gfxBitmap(1, 14, 8, LOOP_ICON);
@@ -185,11 +208,21 @@ private:
         gfxPrint(12, 25, OC::scale_names_short[scale]);
         gfxBitmap(41, 24, 8, NOTE4_ICON);
         gfxPrint(49, 25, quant_range); // APD
+        gfxPrint(1, 35, "CV2:");
+        if (cv2 == 0) {
+          gfxBitmap(28, 35, 8, WAVEFORM_ICON);
+        } else {
+          gfxBitmap(28, 35, 8, CLOCK_ICON);
+          if (cv2 == 2) {
+            gfxPrint(36, 35, "1");
+          }
+        }
 
         //gfxPrint(1, 35, tmp);
         if (cursor == 0) gfxCursor(13, 23, 12); // Length Cursor
         if (cursor == 2) gfxCursor(13, 33, 30); // Scale Cursor
         if (cursor == 3) gfxCursor(49, 33, 14); // Quant Range Cursor // APD
+        if (cursor == 4) gfxCursor(27, 43, (cv2 == 2) ? 18 : 10); // cv2 mode
     }
 
     void DrawIndicator() {
