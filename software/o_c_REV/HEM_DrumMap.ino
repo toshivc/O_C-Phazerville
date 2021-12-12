@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
+#include "grids_resources.h"
 
 class DrumMap : public HemisphereApplet {
 public:
@@ -39,11 +39,60 @@ public:
     }
 
     void Start() {
+        step = 0;
     }
 
     void Controller() {
         cv1 = Proportion(DetentedIn(0), HEMISPHERE_MAX_CV, 255);
         cv2 = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 255);
+
+        // TODO: add cv value to x and y if cv mode dictates it
+        int _x = x;
+        int _y = y;
+
+        int _fill[2];
+        _fill[0] = fill[0];
+        if (cv_mode[0] == 0) _fill[0] = constrain(_fill[0]+cv1, 0, 255);
+        _fill[1] = fill[1];
+        if (cv_mode[1] == 0) _fill[1] = constrain(_fill[1]+cv2, 0, 255);
+
+        if (Clock(1)) step = 0; // Reset
+
+        // TODO: generate randomness for each part on step 0
+        // if (step == 0) {
+        //     for (int i = 0; i < 3; i++) {
+        //         randomness = random(0, chaos >> 64);
+        //     }
+        // }
+
+        if (Clock(0)) {
+            ForEachChannel(ch) {
+                uint8_t part = mode[ch] % 3;
+                uint8_t level = ReadDrumMap(step, part, _x, _y);
+                // level = constrain(level + randomness[part], 0, 255);
+                uint8_t threshold = ~_fill[ch];
+                if (level > threshold) {
+                    if (mode[ch] < 3) {
+                        ClockOut(ch);
+                        pulse_animation[ch] = 500;
+                    } else if (level > 192) {
+                        // accent output
+                        ClockOut(ch);
+                        pulse_animation[ch] = 500;
+                    }
+                }
+            }
+
+            if (++step > 31) step = 0;
+        }
+
+        // animate pulses
+        ForEachChannel(ch) {
+            if (pulse_animation[ch] > 0) {
+                pulse_animation[ch]--;
+            }
+        }
+        
     }
 
     void View() {
@@ -53,24 +102,24 @@ public:
 
     void OnButtonPress() {
         if (++cursor > 8) cursor = 0;
-        if (mode_b > 2 && cursor == 3) cursor = 4;
+        if (mode[1] > 2 && cursor == 3) cursor = 4;
     }
 
     void OnEncoderMove(int direction) {
         // modes
         if (cursor == 0) {
-            mode_a += direction;
-            if (mode_a > 2) mode_a = 0;
-            if (mode_a < 0) mode_a = 2;
+            mode[0] += direction;
+            if (mode[0] > 2) mode[0] = 0;
+            if (mode[0] < 0) mode[0] = 2;
         }
         if (cursor == 1) {
-            mode_b += direction;
-            if (mode_b > 5) mode_b = 0;
-            if (mode_b < 0) mode_b = 5;
+            mode[1] += direction;
+            if (mode[1] > 5) mode[1] = 0;
+            if (mode[1] < 0) mode[1] = 5;
         }
         // fill
-        if (cursor == 2) fill_a = constrain(fill_a += direction, 0, 255);
-        if (cursor == 3) fill_b = constrain(fill_b += direction, 0, 255);
+        if (cursor == 2) fill[0] = constrain(fill[0] += direction, 0, 255);
+        if (cursor == 3) fill[1] = constrain(fill[1] += direction, 0, 255);
         // x/y
         if (cursor == 4) x = constrain(x += direction, 0, 255);
         if (cursor == 5) y = constrain(y += direction, 0, 255);
@@ -94,50 +143,88 @@ protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "1=Clock   2=Reset";
-        help[HEMISPHERE_HELP_CVS]      = "1=X/FilA  2=Y/FilB";
+        help[HEMISPHERE_HELP_CVS]      = "1=FilA/X  2=FilB/Y";
         help[HEMISPHERE_HELP_OUTS]     = "A=Part A  B=Part B";
         help[HEMISPHERE_HELP_ENCODER]  = "Operation";
         //                               "------------------" <-- Size Guide
     }
     
 private:
-    int cursor;
+    const uint8_t* drum_map[5][5] = {
+      { grids::node_10, grids::node_8, grids::node_0, grids::node_9, grids::node_11 },
+      { grids::node_15, grids::node_7, grids::node_13, grids::node_12, grids::node_6 },
+      { grids::node_18, grids::node_14, grids::node_4, grids::node_5, grids::node_3 },
+      { grids::node_23, grids::node_16, grids::node_21, grids::node_1, grids::node_2 },
+      { grids::node_24, grids::node_19, grids::node_17, grids::node_20, grids::node_22 },
+    };
     const uint8_t *MODE_ICONS[3] = {BD_ICON,SN_ICON,HH_ICON};
-    int mode_a = 0;
-    int mode_b = 1;
-    int fill_a = 128;
-    int fill_b = 128;
-    int x = 0;
-    int y = 0;
-    int chaos = 0;
-    int cv_mode_a = 0;
-    int cv_mode_b = 0;
-    int cv1 = 0;
+    uint8_t cursor;
+    uint8_t step;
+    uint8_t randomness[3] = {0, 0, 0};
+    int pulse_animation[2] = {0, 0};
+
+    
+    // settings
+    uint8_t mode[2] = {0, 1};
+    uint8_t fill[2] = {128, 128}; 
+    uint8_t cv_mode[2] = {0, 0}; // 0 = Fill, 1 = X/Y
+    uint8_t x = 0;
+    uint8_t y = 0;
+    uint8_t chaos = 0;
+    int cv1 = 0; // internal tracking of cv inputs
     int cv2 = 0;
+
+    uint8_t ReadDrumMap(uint8_t step, uint8_t part, uint8_t x, uint8_t y) {
+      uint8_t i = x >> 6;
+      uint8_t j = y >> 6;
+      const uint8_t* a_map = drum_map[i][j];
+      const uint8_t* b_map = drum_map[i + 1][j];
+      const uint8_t* c_map = drum_map[i][j + 1];
+      const uint8_t* d_map = drum_map[i + 1][j + 1];
+      uint8_t offset = (part * 32) + step;
+      uint8_t a = a_map[offset];
+      uint8_t b = b_map[offset];
+      uint8_t c = c_map[offset];
+      uint8_t d = d_map[offset];
+      uint8_t quad_x = x << 2;
+      uint8_t quad_y = y << 2;
+      // return U8Mix(U8Mix(a, b, x << 2), U8Mix(c, d, x << 2), y << 2);
+      // U8Mix returns b * x + a * (255 - x) >> 8 
+      uint8_t ab_fade = (b * quad_x + a * (255 - quad_x)) >> 8;
+      uint8_t cd_fade = (d * quad_x + c * (255 - quad_x)) >> 8;
+      return (cd_fade * quad_y + ab_fade * (255 - quad_y)) >> 8;
+    }
     
     void DrawInterface() {
         // output selection
+        // todo: dynamically name outputs depending on which hemisphere
         gfxPrint(1,15,"A:");
-        gfxIcon(14,14,MODE_ICONS[mode_a]);
+        gfxIcon(14,14,MODE_ICONS[mode[0]]);
         gfxPrint(32,15,"B:");
-        gfxIcon(45,14,MODE_ICONS[mode_b%3]);
-        if (mode_b > 2) {
+        gfxIcon(45,14,MODE_ICONS[mode[1]%3]);
+        if (mode[1] > 2) {
             gfxPrint(53,15,">");
         }
+        // pulse animation per channel
+         ForEachChannel(ch){
+             if (pulse_animation[ch] > 0) {
+                 gfxInvert(1+ch*32,15,8,8);
+             }
+         }
 
         // fill
         gfxPrint(1,25,"F");
         // add cv1 to fill_a value if cv1 mode is set to Fill A
-        int fa = fill_a;
-        if (cv_mode_a == 0) fa += cv1;
-        DrawKnobAt(9,25,20,constrain(fa, 0, 255),cursor == 2);
+        int fa = fill[0];
+        if (cv_mode[0] == 0) fa = constrain(fa+cv1, 0, 255);
+        DrawKnobAt(9,25,20,fa,cursor == 2);
         // don't show fill for channel b if it is an accent mode
-        if (mode_b < 3) {
+        if (mode[1] < 3) {
             gfxPrint(32,25,"F");
             // add cv1 to fill_a value if cv1 mode is set to Fill A
-            int fb = fill_b;
-            if (cv_mode_b == 0) fb += cv2;
-            DrawKnobAt(40,25,20,constrain(fb, 0, 255),cursor == 3);
+            int fb = fill[1];
+            if (cv_mode[1] == 0) fb = constrain(fb+cv2, 0, 255);
+            DrawKnobAt(40,25,20,fb,cursor == 3);
         }
         
         // x & y
@@ -156,7 +243,7 @@ private:
 //        gfxIcon(32,47,CV_ICON);
         gfxPrint(32,55,"2:FB");
 
-        // cursor
+        // cursor for non-knobs
         if (cursor == 0) gfxCursor(14,23,16); // Part A
         if (cursor == 1) gfxCursor(45,23,16); // Part B
         if (cursor == 7) gfxCursor(14,63,16); // CV1 Assign
