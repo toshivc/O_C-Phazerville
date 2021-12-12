@@ -58,25 +58,28 @@ public:
 
         if (Clock(1)) step = 0; // Reset
 
-        // TODO: generate randomness for each part on step 0
-        // if (step == 0) {
-        //     for (int i = 0; i < 3; i++) {
-        //         randomness = random(0, chaos >> 64);
-        //     }
-        // }
-
         if (Clock(0)) {
+            // generate randomness for each drum type on first step of the pattern
+            if (step == 0) {
+                for (int i = 0; i < 3; i++) {
+                    randomness[i] = random(0, chaos >> 2);
+                }
+            }
+
             ForEachChannel(ch) {
-                uint8_t part = mode[ch] % 3;
-                uint8_t level = ReadDrumMap(step, part, _x, _y);
-                // level = constrain(level + randomness[part], 0, 255);
-                uint8_t threshold = ~_fill[ch];
+                // accent on ch 1 will be for whatever part ch 0 is set to
+                uint8_t part = (ch == 1 && mode[ch] == 3) ? mode[0] : mode[ch];
+                int level = ReadDrumMap(step, part, _x, _y);
+                level = constrain(level + randomness[part], 0, 255);
+                // use ch 0 fill if ch 1 is in accent mode
+                uint8_t threshold = (ch == 1 && mode[ch] == 3) ? ~_fill[0] : ~_fill[ch];
                 if (level > threshold) {
                     if (mode[ch] < 3) {
+                        // normal part
                         ClockOut(ch);
                         pulse_animation[ch] = 500;
                     } else if (level > 192) {
-                        // accent output
+                        // accent
                         ClockOut(ch);
                         pulse_animation[ch] = 500;
                     }
@@ -92,6 +95,11 @@ public:
                 pulse_animation[ch]--;
             }
         }
+
+        // decrease knob acceleration
+        if (knob_accel > 256) {
+          knob_accel--;
+        }
         
     }
 
@@ -106,6 +114,7 @@ public:
     }
 
     void OnEncoderMove(int direction) {
+        int accel = knob_accel >> 8;
         // modes
         if (cursor == 0) {
             mode[0] += direction;
@@ -114,17 +123,22 @@ public:
         }
         if (cursor == 1) {
             mode[1] += direction;
-            if (mode[1] > 5) mode[1] = 0;
-            if (mode[1] < 0) mode[1] = 5;
+            if (mode[1] > 3) mode[1] = 0;
+            if (mode[1] < 0) mode[1] = 3;
         }
         // fill
-        if (cursor == 2) fill[0] = constrain(fill[0] += direction, 0, 255);
-        if (cursor == 3) fill[1] = constrain(fill[1] += direction, 0, 255);
+        if (cursor == 2) fill[0] = constrain(fill[0] += (direction * accel), 0, 255);
+        if (cursor == 3) fill[1] = constrain(fill[1] += (direction * accel), 0, 255);
         // x/y
-        if (cursor == 4) x = constrain(x += direction, 0, 255);
-        if (cursor == 5) y = constrain(y += direction, 0, 255);
+        if (cursor == 4) x = constrain(x += (direction * accel), 0, 255);
+        if (cursor == 5) y = constrain(y += (direction * accel), 0, 255);
         // chaos
-        if (cursor == 6) chaos = constrain(chaos += direction, 0, 255);
+        if (cursor == 6) chaos = constrain(chaos += (direction * accel), 0, 255);
+
+        // knob acceleration for bigger params
+        if (cursor >= 2 && cursor <= 6 && knob_accel < 4097) {
+          knob_accel = knob_accel << 2;
+        }
     }
         
     uint32_t OnDataRequest() {
@@ -158,19 +172,20 @@ private:
       { grids::node_24, grids::node_19, grids::node_17, grids::node_20, grids::node_22 },
     };
     const uint8_t *MODE_ICONS[3] = {BD_ICON,SN_ICON,HH_ICON};
-    uint8_t cursor;
+    uint8_t cursor = 2;
     uint8_t step;
     uint8_t randomness[3] = {0, 0, 0};
     int pulse_animation[2] = {0, 0};
+    int knob_accel = 256;
 
     
     // settings
-    uint8_t mode[2] = {0, 1};
-    uint8_t fill[2] = {128, 128}; 
+    int8_t mode[2] = {0, 1};
+    int fill[2] = {128, 128}; 
+    int x = 0;
+    int y = 0;
+    int chaos = 0;
     uint8_t cv_mode[2] = {0, 0}; // 0 = Fill, 1 = X/Y
-    uint8_t x = 0;
-    uint8_t y = 0;
-    uint8_t chaos = 0;
     int cv1 = 0; // internal tracking of cv inputs
     int cv2 = 0;
 
@@ -201,9 +216,13 @@ private:
         gfxPrint(1,15,"A:");
         gfxIcon(14,14,MODE_ICONS[mode[0]]);
         gfxPrint(32,15,"B:");
-        gfxIcon(45,14,MODE_ICONS[mode[1]%3]);
-        if (mode[1] > 2) {
+        if (mode[1] == 3) {
+            // accent
+            gfxIcon(45,14,MODE_ICONS[mode[0]]);
             gfxPrint(53,15,">");
+        } else {
+            // standard
+            gfxIcon(45,14,MODE_ICONS[mode[1]]);
         }
         // pulse animation per channel
          ForEachChannel(ch){
