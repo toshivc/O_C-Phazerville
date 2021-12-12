@@ -46,15 +46,25 @@ public:
         cv1 = Proportion(DetentedIn(0), HEMISPHERE_MAX_CV, 255);
         cv2 = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 255);
 
-        // TODO: add cv value to x and y if cv mode dictates it
+        int _fill[2] = {fill[0], fill[1]};
+        if (cv_mode == 0) {
+          _fill[0] = constrain(_fill[0]+cv1, 0, 255);
+          _fill[1] = constrain(_fill[1]+cv2, 0, 255);
+        }
+
         int _x = x;
         int _y = y;
+        if (cv_mode == 1) {
+          _x = constrain(_x+cv1, 0, 255);
+          _y = constrain(_y+cv2, 0, 255);
+        }
 
-        int _fill[2];
-        _fill[0] = fill[0];
-        if (cv_mode[0] == 0) _fill[0] = constrain(_fill[0]+cv1, 0, 255);
-        _fill[1] = fill[1];
-        if (cv_mode[1] == 0) _fill[1] = constrain(_fill[1]+cv2, 0, 255);
+        int _chaos = chaos;
+        if (cv_mode == 2) {
+          _fill[0] = constrain(_fill[0]+cv1, 0, 255);
+          _chaos = constrain(_chaos+cv2, 0, 255);
+        }
+        
 
         if (Clock(1)) step = 0; // Reset
 
@@ -62,7 +72,7 @@ public:
             // generate randomness for each drum type on first step of the pattern
             if (step == 0) {
                 for (int i = 0; i < 3; i++) {
-                    randomness[i] = random(0, chaos >> 2);
+                    randomness[i] = random(0, _chaos >> 2);
                 }
             }
 
@@ -109,7 +119,7 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor > 8) cursor = 0;
+        if (++cursor > 7) cursor = 0;
         if (mode[1] > 2 && cursor == 3) cursor = 4;
     }
 
@@ -134,6 +144,12 @@ public:
         if (cursor == 5) y = constrain(y += (direction * accel), 0, 255);
         // chaos
         if (cursor == 6) chaos = constrain(chaos += (direction * accel), 0, 255);
+        // cv assign
+        if (cursor == 7) {
+          cv_mode += direction;
+          if (cv_mode > 2) cv_mode = 0;
+          if (cv_mode < 0) cv_mode = 2;
+        }
 
         // knob acceleration for bigger params
         if (cursor >= 2 && cursor <= 6 && knob_accel < 4097) {
@@ -172,7 +188,8 @@ private:
       { grids::node_24, grids::node_19, grids::node_17, grids::node_20, grids::node_22 },
     };
     const uint8_t *MODE_ICONS[3] = {BD_ICON,SN_ICON,HH_ICON};
-    uint8_t cursor = 2;
+    const char *CV_MODE_NAMES[3] = {"FILL A/B", "X/Y", "FA/CHAOS"};
+    uint8_t cursor = 0;
     uint8_t step;
     uint8_t randomness[3] = {0, 0, 0};
     int pulse_animation[2] = {0, 0};
@@ -185,7 +202,7 @@ private:
     int x = 0;
     int y = 0;
     int chaos = 0;
-    uint8_t cv_mode[2] = {0, 0}; // 0 = Fill, 1 = X/Y
+    int8_t cv_mode = 0; // 0 = Fill A/B, 1 = X/Y, 2 = Fill A/Chaos
     int cv1 = 0; // internal tracking of cv inputs
     int cv2 = 0;
 
@@ -235,38 +252,44 @@ private:
         gfxPrint(1,25,"F");
         // add cv1 to fill_a value if cv1 mode is set to Fill A
         int fa = fill[0];
-        if (cv_mode[0] == 0) fa = constrain(fa+cv1, 0, 255);
+        if (cv_mode == 0 || cv_mode == 2) fa = constrain(fa+cv1, 0, 255);
         DrawKnobAt(9,25,20,fa,cursor == 2);
         // don't show fill for channel b if it is an accent mode
         if (mode[1] < 3) {
             gfxPrint(32,25,"F");
             // add cv1 to fill_a value if cv1 mode is set to Fill A
             int fb = fill[1];
-            if (cv_mode[1] == 0) fb = constrain(fb+cv2, 0, 255);
+            if (cv_mode == 0) fb = constrain(fb+cv2, 0, 255);
             DrawKnobAt(40,25,20,fb,cursor == 3);
         }
         
         // x & y
+        int _x = x;
+        if (cv_mode == 1) _x = constrain(_x+cv1, 0, 255);
         gfxPrint(1,35,"X");
-        DrawKnobAt(9,35,20,x,cursor == 4);
+        DrawKnobAt(9,35,20,_x,cursor == 4);
+        int _y = y;
+        if (cv_mode == 1) _y = constrain(_y+cv2, 0, 255);
         gfxPrint(32,35,"Y");
-        DrawKnobAt(40,35,20,y,cursor == 5);
+        DrawKnobAt(40,35,20,_y,cursor == 5);
         
         // chaos
+        int _chaos = chaos;
+        if (cv_mode == 2) _chaos = constrain(_chaos+cv2, 0, 255);
         gfxPrint(1,45,"CHAOS");
-        DrawKnobAt(32,45,28,chaos,cursor == 6);
+        DrawKnobAt(32,45,28,_chaos,cursor == 6);
         
         // cv input assignment
-//        gfxIcon(1,47,CV_ICON);
-        gfxPrint(1,55,"1:FA");
+        gfxIcon(1,57,CV_ICON);
+        gfxPrint(10,55,CV_MODE_NAMES[cv_mode]);
+//        gfxPrint(1,55,"1:FA");
 //        gfxIcon(32,47,CV_ICON);
-        gfxPrint(32,55,"2:FB");
+//        gfxPrint(32,55,"2:FB");
 
         // cursor for non-knobs
         if (cursor == 0) gfxCursor(14,23,16); // Part A
         if (cursor == 1) gfxCursor(45,23,16); // Part B
-        if (cursor == 7) gfxCursor(14,63,16); // CV1 Assign
-        if (cursor == 8) gfxCursor(45,63,16); // CV2 Assign
+        if (cursor == 7) gfxCursor(10,63,50); // CV Assign
 
     }
 
