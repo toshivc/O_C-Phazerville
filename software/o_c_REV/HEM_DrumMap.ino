@@ -185,9 +185,9 @@ protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "1=Clock   2=Reset";
-        help[HEMISPHERE_HELP_CVS]      = "1=FilA/X  2=FilB/Y";
+        help[HEMISPHERE_HELP_CVS]      = "Assignable";
         help[HEMISPHERE_HELP_OUTS]     = "A=Part A  B=Part B";
-        help[HEMISPHERE_HELP_ENCODER]  = "Operation";
+        help[HEMISPHERE_HELP_ENCODER]  = "Params/Config";
         //                               "------------------" <-- Size Guide
     }
     
