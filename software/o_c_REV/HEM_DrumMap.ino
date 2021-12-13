@@ -31,6 +31,9 @@
 
 #include "grids_resources.h"
 
+#define HEM_DRUMMAP_PULSE_ANIMATION_TICKS 500
+#define HEM_DRUMMAP_AUTO_RESET_TICKS 35000
+
 class DrumMap : public HemisphereApplet {
 public:
 
@@ -40,6 +43,7 @@ public:
 
     void Start() {
         step = 0;
+        last_clock = OC::CORE::ticks;
     }
 
     void Controller() {
@@ -66,7 +70,7 @@ public:
         }
         
 
-        if (Clock(1)) step = 0; // Reset
+        if (Clock(1)) Reset(); // Reset
 
         if (Clock(0)) {
             // generate randomness for each drum type on first step of the pattern
@@ -87,15 +91,18 @@ public:
                     if (mode[ch] < 3) {
                         // normal part
                         ClockOut(ch);
-                        pulse_animation[ch] = 500;
+                        pulse_animation[ch] = HEM_DRUMMAP_PULSE_ANIMATION_TICKS;
                     } else if (level > 192) {
                         // accent
                         ClockOut(ch);
-                        pulse_animation[ch] = 500;
+                        pulse_animation[ch] = HEM_DRUMMAP_PULSE_ANIMATION_TICKS;
                     }
                 }
             }
 
+            // keep track of last clock for auto-reset
+            last_clock = OC::CORE::ticks;
+            // loop back to first step
             if (++step > 31) step = 0;
         }
 
@@ -109,6 +116,11 @@ public:
         // decrease knob acceleration
         if (knob_accel > 256) {
           knob_accel--;
+        }
+
+        // auto-reset after ~2 seconds of no clock
+        if (OC::CORE::ticks - last_clock > HEM_DRUMMAP_AUTO_RESET_TICKS && step != 0) {
+            Reset();
         }
         
     }
@@ -180,13 +192,6 @@ protected:
     }
     
 private:
-    const uint8_t* drum_map[5][5] = {
-      { grids::node_10, grids::node_8, grids::node_0, grids::node_9, grids::node_11 },
-      { grids::node_15, grids::node_7, grids::node_13, grids::node_12, grids::node_6 },
-      { grids::node_18, grids::node_14, grids::node_4, grids::node_5, grids::node_3 },
-      { grids::node_23, grids::node_16, grids::node_21, grids::node_1, grids::node_2 },
-      { grids::node_24, grids::node_19, grids::node_17, grids::node_20, grids::node_22 },
-    };
     const uint8_t *MODE_ICONS[3] = {BD_ICON,SN_ICON,HH_ICON};
     const char *CV_MODE_NAMES[3] = {"FILL A/B", "X/Y", "FA/CHAOS"};
     uint8_t cursor = 0;
@@ -194,7 +199,7 @@ private:
     uint8_t randomness[3] = {0, 0, 0};
     int pulse_animation[2] = {0, 0};
     int knob_accel = 256;
-
+    uint32_t last_clock;
     
     // settings
     int8_t mode[2] = {0, 1};
@@ -209,10 +214,10 @@ private:
     uint8_t ReadDrumMap(uint8_t step, uint8_t part, uint8_t x, uint8_t y) {
       uint8_t i = x >> 6;
       uint8_t j = y >> 6;
-      const uint8_t* a_map = drum_map[i][j];
-      const uint8_t* b_map = drum_map[i + 1][j];
-      const uint8_t* c_map = drum_map[i][j + 1];
-      const uint8_t* d_map = drum_map[i + 1][j + 1];
+      const uint8_t* a_map = grids::drum_map[i][j];
+      const uint8_t* b_map = grids::drum_map[i + 1][j];
+      const uint8_t* c_map = grids::drum_map[i][j + 1];
+      const uint8_t* d_map = grids::drum_map[i + 1][j + 1];
       uint8_t offset = (part * 32) + step;
       uint8_t a = a_map[offset];
       uint8_t b = b_map[offset];
@@ -282,9 +287,9 @@ private:
         // cv input assignment
         gfxIcon(1,57,CV_ICON);
         gfxPrint(10,55,CV_MODE_NAMES[cv_mode]);
-//        gfxPrint(1,55,"1:FA");
-//        gfxIcon(32,47,CV_ICON);
-//        gfxPrint(32,55,"2:FB");
+
+        // step count in header
+        gfxPrint((step > 9 ? 48 : 54),2,step+1);
 
         // cursor for non-knobs
         if (cursor == 0) gfxCursor(14,23,16); // Part A
@@ -298,6 +303,10 @@ private:
         byte p = is_cursor ? 1 : 3;
         gfxDottedLine(x, y + 4, x + len, y + 4, p);
         gfxRect(x + w, y, 2, 7);
+    }
+
+    void Reset() {
+        step = 0;
     }
 };
 

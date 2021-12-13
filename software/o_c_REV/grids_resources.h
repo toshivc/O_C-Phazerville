@@ -378,6 +378,14 @@ const uint8_t node_24[] = {
      127,      0,      0,      0,      0,     31,      0,      0,
 };
 
+const uint8_t* drum_map[5][5] = {
+  { node_10, node_8, node_0, node_9, node_11 },
+  { node_15, node_7, node_13, node_12, node_6 },
+  { node_18, node_14, node_4, node_5, node_3 },
+  { node_23, node_16, node_21, node_1, node_2 },
+  { node_24, node_19, node_17, node_20, node_22 },
+};
+
 } // namespace grids
 
 #endif  // GRIDS_RESOURCES_H_
