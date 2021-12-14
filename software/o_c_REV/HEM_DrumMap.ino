@@ -32,7 +32,7 @@
 #include "grids_resources.h"
 
 #define HEM_DRUMMAP_PULSE_ANIMATION_TICKS 500
-#define HEM_DRUMMAP_AUTO_RESET_TICKS 35000
+#define HEM_DRUMMAP_AUTO_RESET_TICKS 30000
 
 class DrumMap : public HemisphereApplet {
 public:
@@ -289,7 +289,7 @@ private:
         gfxPrint(10,55,CV_MODE_NAMES[cv_mode]);
 
         // step count in header
-        gfxPrint((step > 9 ? 48 : 54),2,step+1);
+        gfxPrint((step < 9 ? 54 : 48),2,step+1);
 
         // cursor for non-knobs
         if (cursor == 0) gfxCursor(14,23,16); // Part A
