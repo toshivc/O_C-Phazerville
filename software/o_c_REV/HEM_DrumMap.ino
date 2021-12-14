@@ -171,14 +171,18 @@ public:
         
     uint32_t OnDataRequest() {
         uint32_t data = 0;
-        // example: pack property_name at bit 0, with size of 8 bits
-        // Pack(data, PackLocation {0,8}, property_name); 
+        Pack(data, PackLocation {0,8}, fill[0]); 
+        Pack(data, PackLocation {8,8}, fill[1]); 
+        Pack(data, PackLocation {16,8}, x); 
+        Pack(data, PackLocation {24,8}, y); 
         return data;
     }
 
     void OnDataReceive(uint32_t data) {
-        // example: unpack value at bit 0 with size of 8 bits to property_name
-        // property_name = Unpack(data, PackLocation {0,8}); 
+        fill[0] = Unpack(data, PackLocation {0,8});
+        fill[1] = Unpack(data, PackLocation {8,8});
+        x = Unpack(data, PackLocation {16,8});
+        y = Unpack(data, PackLocation {24,8});
     }
 
 protected:
