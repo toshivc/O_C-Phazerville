@@ -29,6 +29,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#define HEM_SHREDDER_ANIMATION_SPEED 500
+#define HEM_SHREDDER_DOUBLE_CLICK_DELAY 5000
+
 class Shredder : public HemisphereApplet {
 public:
 
@@ -37,23 +40,55 @@ public:
     }
 
     void Start() {
+        quant_channels = 0;
+        scale = 4;
         step = 0;
         replay = 0;
-        transpose = 0;
     }
 
     void Controller() {
+
+        // Handle imprint confirmation animation
+        if (--confirm_animation_countdown < 0) {
+            confirm_animation_position--;
+            confirm_animation_countdown = HEM_SHREDDER_ANIMATION_SPEED;
+        }
+
+        // Handle double click delay
+        if (double_click_delay > 0) {
+            // decrement delay and if it's 0, move the cursor
+            if (--double_click_delay < 1) {
+                // if we hit zero before being reset (aka no double click), move the cursor
+                if (++cursor > 3) cursor = 0; // we should never be > 3, so this is just for safety
+            }
+        }
     }
 
     void View() {
         gfxHeader(applet_name());
+        DrawParams();
         DrawGrid();
     }
 
     void OnButtonPress() {
+        if (cursor < 2) {
+            // first two cursor params support double-click to shred voltages
+            if (double_click_delay == 0) {
+                // first click
+                double_click_delay = HEM_SHREDDER_DOUBLE_CLICK_DELAY;    
+            } else {
+                // second click
+                double_click_delay = 0; // kill the delay
+                ImprintVoltage(cursor);
+            }
+        } else {
+            if (++cursor > 3) cursor = 0;
+        }
     }
 
     void OnEncoderMove(int direction) {
+        
+
     }
         
     uint32_t OnDataRequest() {
@@ -87,9 +122,38 @@ private:
     int16_t sequence2[16];
     bool replay; // When the encoder is moved, re-quantize the output
 
+    // settings
+    int range[2] = {0,0};
+    int8_t quant_channels;
+    int scale;
+
     // Variables to handle imprint confirmation animation
     int confirm_animation_countdown;
     int confirm_animation_position;
+    // Variable for double-clicking to shred voltage
+    int double_click_delay;
+
+    void DrawParams() {
+        // Channel 1 voltage
+        gfxPrint(1, 15, "1:");
+        gfxPrint(13, 15, "+5");
+        if (cursor == 0) gfxCursor(13, 23, 18);
+
+        // Channel 2 voltage
+        gfxPrint(32, 15, "2:");
+        gfxPrint(44, 15, "+5");
+        if (cursor == 1) gfxCursor(44, 23, 18);
+
+        // quantize channel selection
+        gfxIcon(32, 25, SCALE_ICON);
+        gfxPrint(42, 25, "1+2");
+        if (cursor == 2) gfxCursor(42, 33, 20);
+
+        // quantize scale selection
+        gfxPrint(32, 35, OC::scale_names_short[scale]);
+        if (cursor == 3) gfxCursor(32, 43, 30);
+
+    }
     
     void DrawGrid() {
         // Draw the Cartesian plane
@@ -102,7 +166,7 @@ private:
         gfxDottedLine(1, 28 + (8 * cxy), 32, 28 + (8 * cxy), 2);
         gfxRect(1 + (8 * cxx), 26 + (8 * cxy), 5, 5);
 
-        // Draw confirmation animation, if necessary
+        // Draw imprint animation, if necessary
         if (confirm_animation_position > -1) {
             int progress = 16 - confirm_animation_position;
             for (int s = 0; s < progress; s++)
@@ -110,6 +174,13 @@ private:
                 gfxRect(1 + (8 * (s / 4)), 26 + (8 * (s % 4)), 7, 7);
             }
         }
+    }
+
+    void ImprintVoltage(int channel) {
+
+        // start imprint animation
+        confirm_animation_position = 16;
+        confirm_animation_countdown = HEM_SHREDDER_ANIMATION_SPEED;
     }
 };
 
