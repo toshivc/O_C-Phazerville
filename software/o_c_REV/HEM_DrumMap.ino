@@ -1,15 +1,6 @@
-// Hemisphere Applet Boilerplate. Follow these steps to add a Hemisphere app:
+// Copyright (c) 2021, Benjamin Rosenbach
 //
-// (1) Save this file as HEM_ClassName.ino
-// (2) Find and replace "ClassName" with the name of your Applet class
-// (3) Implement all of the public methods below
-// (4) Add text to the help section below in SetHelp()
-// (5) Add a declare line in hemisphere_config.h, which looks like this:
-//     DECLARE_APPLET(id, categories, ClassName), \
-// (6) Increment HEMISPHERE_AVAILABLE_APPLETS in hemisphere_config.h
-// (7) Add your name and any additional copyright info to the block below
-
-// Copyright (c) 2018, __________
+// Based on Grids pattern generator, Copyright 2011 Émilie Gillet.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -314,15 +305,6 @@ private:
     }
 };
 
-
-////////////////////////////////////////////////////////////////////////////////
-//// Hemisphere Applet Functions
-///
-///  Once you run the find-and-replace to make these refer to ClassName,
-///  it's usually not necessary to do anything with these functions. You
-///  should prefer to handle things in the HemisphereApplet child class
-///  above.
-////////////////////////////////////////////////////////////////////////////////
 DrumMap DrumMap_instance[2];
 
 void DrumMap_Start(bool hemisphere) {DrumMap_instance[hemisphere].BaseStart(hemisphere);}
