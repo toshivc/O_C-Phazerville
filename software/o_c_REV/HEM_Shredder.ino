@@ -29,8 +29,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "braids_quantizer.h"
+#include "braids_quantizer_scales.h"
+#include "OC_scales.h"
+
 #define HEM_SHREDDER_ANIMATION_SPEED 500
 #define HEM_SHREDDER_DOUBLE_CLICK_DELAY 5000
+#define HEM_SHREDDER_POS_5V 7680 // 5 * (12 << 7)
+#define HEM_SHREDDER_NEG_3V 4608 // 3 * (12 << 7)
 
 class Shredder : public HemisphereApplet {
 public:
@@ -40,13 +46,41 @@ public:
     }
 
     void Start() {
-        quant_channels = 0;
-        scale = 4;
         step = 0;
         replay = 0;
+        quant_channels = 0;
+        quantizer.Init();
+        scale = OC::Scales::SCALE_NONE;
+        quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
+        ForEachChannel(ch) {
+            Shred(ch);
+        }
+        VolageOut();
     }
 
     void Controller() {
+        if (Clock(1)) step = 0; // Reset
+
+        if (Clock(0)) {
+            // Are the X or Y position being set? If so, get step coordinates. Otherwise,
+            // simply play current step and advance it. This way, the applet can be used as
+            // a more conventional arpeggiator as well as a Cartesian one.
+            if (DetentedIn(0) || DetentedIn(1)) {
+                int x = ProportionCV(In(0), 4);
+                int y = ProportionCV(In(1), 4);
+                if (x > 3) x = 3;
+                if (y > 3) y = 3;
+                step = (y * 4) + x;
+                VolageOut();
+            } else {
+                if (++step > 15) step = 0;
+                VolageOut();
+            }
+            replay = 0;
+        } else if (replay) {
+            VolageOut();
+            replay = 0;
+        }
 
         // Handle imprint confirmation animation
         if (--confirm_animation_countdown < 0) {
@@ -67,6 +101,7 @@ public:
     void View() {
         gfxHeader(applet_name());
         DrawParams();
+        DrawMeters();
         DrawGrid();
     }
 
@@ -79,7 +114,7 @@ public:
             } else {
                 // second click
                 double_click_delay = 0; // kill the delay
-                ImprintVoltage(cursor);
+                Shred(cursor);
             }
         } else {
             if (++cursor > 3) cursor = 0;
@@ -87,8 +122,35 @@ public:
     }
 
     void OnEncoderMove(int direction) {
-        
-
+        if (cursor < 2) {
+            range[cursor] += direction;
+            if (bipolar[cursor]) {
+                if (range[cursor] > 3) {
+                    range[cursor] = 0;
+                    bipolar[cursor] = false;
+                } else if (range[cursor] < 1) {
+                    range[cursor] = 5;
+                    bipolar[cursor] = false;
+                }
+            } else {
+                if (range[cursor] > 5) {
+                    range[cursor] = 1;
+                    bipolar[cursor] = true;
+                } else if (range[cursor] < 0) {
+                    range[cursor] = 3;
+                    bipolar[cursor] = true;
+                }
+            }
+        }
+        // if (cursor == 0) range[0] = constrain(range[0] += direction, 0, 9);
+        // if (cursor == 1) range[1] = constrain(range[1] += direction, 0, 9);
+        if (cursor == 2) quant_channels = constrain(quant_channels += direction, 0, 2);
+        if (cursor == 3) {
+          scale += direction;
+          if (scale >= OC::Scales::NUM_SCALES) scale = 0;
+          if (scale < 0) scale = OC::Scales::NUM_SCALES - 1;
+          quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
+        }
     }
         
     uint32_t OnDataRequest() {
@@ -109,7 +171,7 @@ protected:
         help[HEMISPHERE_HELP_DIGITALS] = "1=Clock 2=Reset";
         help[HEMISPHERE_HELP_CVS]      = "1=X     2=Y";
         help[HEMISPHERE_HELP_OUTS]     = "A=Ch 1  B=Ch 2";
-        help[HEMISPHERE_HELP_ENCODER]  = "Range/Quant";
+        help[HEMISPHERE_HELP_ENCODER]  = "DblClk to Shred";
         //                               "------------------" <-- Size Guide
     }
     
@@ -118,14 +180,16 @@ private:
 
     // Sequencer state
     uint8_t step; // Current step number
-    int16_t sequence1[16];
-    int16_t sequence2[16];
+    int sequence[2][16];
+    int current[2];
     bool replay; // When the encoder is moved, re-quantize the output
 
     // settings
-    int range[2] = {0,0};
+    int range[2] = {1,0};
+    bool bipolar[2] = {false, false};
     int8_t quant_channels;
     int scale;
+    braids::Quantizer quantizer;
 
     // Variables to handle imprint confirmation animation
     int confirm_animation_countdown;
@@ -135,24 +199,68 @@ private:
 
     void DrawParams() {
         // Channel 1 voltage
-        gfxPrint(1, 15, "1:");
-        gfxPrint(13, 15, "+5");
-        if (cursor == 0) gfxCursor(13, 23, 18);
+        gfxPrint(1, 15, "1:+");
+        gfxPrint(19, 15, (char) (range[0]));
+        if (bipolar[0]) {
+          gfxPrint(13, 18, "-");
+        }
+        if (cursor == 0) gfxCursor(13, 23, 12);
 
         // Channel 2 voltage
-        gfxPrint(32, 15, "2:");
-        gfxPrint(44, 15, "+5");
-        if (cursor == 1) gfxCursor(44, 23, 18);
+        gfxPrint(32, 15, "2:+");
+        gfxPrint(50, 15, (char) (range[1]));
+        if (bipolar[1]) {
+          gfxPrint(44, 18, "-");
+        }
+        if (cursor == 1) gfxCursor(44, 23, 12);
 
         // quantize channel selection
         gfxIcon(32, 25, SCALE_ICON);
-        gfxPrint(42, 25, "1+2");
+        if (quant_channels == 0) {
+          gfxPrint(42, 25, "1+2");
+        } else {
+          gfxPrint(48, 25, (char) quant_channels);
+        }
         if (cursor == 2) gfxCursor(42, 33, 20);
 
         // quantize scale selection
         gfxPrint(32, 35, OC::scale_names_short[scale]);
         if (cursor == 3) gfxCursor(32, 43, 30);
 
+    }
+
+    void DrawMeters() {
+      ForEachChannel(ch) {
+        int o = ch * 10; // offset
+        gfxLine(34, 47+o, 62, 47+o); // top line
+        gfxLine(34, 50+o, 62, 50+o); // bottom line
+        gfxLine(44, 45+o, 44, 52+o); // zero line
+        // 10 pixels for neg, 18 pixels for pos
+        if (current[ch] > 0) {
+          int w = Proportion(current[ch], HEM_SHREDDER_POS_5V, 18);
+          gfxRect(45, 48+o, w, 2);
+        } else {
+          int w = Proportion(-current[ch], HEM_SHREDDER_NEG_3V, 10);
+          gfxRect(44-w, 48+o, w, 2);
+        }
+      }
+    }
+
+    void PrintVoltage(int x, int y, int value) {
+        int v = (value * 100) / (12 << 7);
+        bool neg = v < 0 ? 1 : 0;
+        if (v < 0) v = -v;
+        int wv = v / 100; // whole volts
+        int dv = v - (wv * 100); // decimal
+        gfxPrint(x, y, neg ? "-" : "+");
+        gfxPrint(x + 6, y, wv);
+        gfxPrint(x + 11, y, ".");
+        if (dv < 10) {
+          gfxPrint(x + 15, y, "0");
+          gfxPrint(x + 21, y, dv);
+        } else {
+          gfxPrint(x + 15, y, dv);
+        }
     }
     
     void DrawGrid() {
@@ -176,11 +284,31 @@ private:
         }
     }
 
-    void ImprintVoltage(int channel) {
+    void Shred(int ch) {
+        int max;
+        int min;
+        for (int i = 0; i < 16; i++) {
+            if (range[ch] == 0) {
+                sequence[ch][i] = 0;
+            } else {
+                max = range[ch] * (12 << 7);
+                min = bipolar[ch] ? -max : 0;
+                sequence[ch][i] = random(min, max);
+            }
+        }
 
         // start imprint animation
         confirm_animation_position = 16;
         confirm_animation_countdown = HEM_SHREDDER_ANIMATION_SPEED;
+    }
+
+    void VolageOut() {
+        ForEachChannel(ch) {
+            current[ch] = sequence[ch][step];
+            int8_t qc = quant_channels - 1; 
+            if (qc < 0 || qc == ch) current[ch] = quantizer.Process(current[ch], 0, 0);
+            Out(ch, current[ch]);
+        }
     }
 };
 
