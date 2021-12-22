@@ -1,15 +1,4 @@
-// Hemisphere Applet Boilerplate. Follow these steps to add a Hemisphere app:
-//
-// (1) Save this file as HEM_ClassName.ino
-// (2) Find and replace "ClassName" with the name of your Applet class
-// (3) Implement all of the public methods below
-// (4) Add text to the help section below in SetHelp()
-// (5) Add a declare line in hemisphere_config.h, which looks like this:
-//     DECLARE_APPLET(id, categories, ClassName), \
-// (6) Increment HEMISPHERE_AVAILABLE_APPLETS in hemisphere_config.h
-// (7) Add your name and any additional copyright info to the block below
-
-// Copyright (c) 2018, __________
+// Copyright (c) 2021, Benjamin Rosenbach
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -142,8 +131,6 @@ public:
                 }
             }
         }
-        // if (cursor == 0) range[0] = constrain(range[0] += direction, 0, 9);
-        // if (cursor == 1) range[1] = constrain(range[1] += direction, 0, 9);
         if (cursor == 2) quant_channels = constrain(quant_channels += direction, 0, 2);
         if (cursor == 3) {
           scale += direction;
@@ -155,14 +142,23 @@ public:
         
     uint32_t OnDataRequest() {
         uint32_t data = 0;
-        // example: pack property_name at bit 0, with size of 8 bits
-        // Pack(data, PackLocation {0,8}, property_name); 
+        // Not enough room to save the sequences, so we'll just have to save settings
+        Pack(data, PackLocation {0,4}, range[0]); // range will never be more than 4 bits
+        Pack(data, PackLocation {4,1}, int(bipolar[0]));
+        Pack(data, PackLocation {8,4}, range[1]);
+        Pack(data, PackLocation {12,1}, int(bipolar[1]));
+        Pack(data, PackLocation {16,8}, quant_channels);
+        Pack(data, PackLocation {24,8}, scale);
         return data;
     }
 
     void OnDataReceive(uint32_t data) {
-        // example: unpack value at bit 0 with size of 8 bits to property_name
-        // property_name = Unpack(data, PackLocation {0,8}); 
+        range[0] = Unpack(data, PackLocation {0,4}); // only 4 bits used for range
+        bipolar[0] = Unpack(data, PackLocation {4,1}); 
+        range[1] = Unpack(data, PackLocation {8,4});
+        bipolar[1] = Unpack(data, PackLocation {12,1}); 
+        quant_channels = Unpack(data, PackLocation {16,8});
+        scale = Unpack(data, PackLocation {24,8});
     }
 
 protected:
