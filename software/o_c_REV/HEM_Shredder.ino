@@ -241,23 +241,6 @@ private:
         }
       }
     }
-
-    void PrintVoltage(int x, int y, int value) {
-        int v = (value * 100) / (12 << 7);
-        bool neg = v < 0 ? 1 : 0;
-        if (v < 0) v = -v;
-        int wv = v / 100; // whole volts
-        int dv = v - (wv * 100); // decimal
-        gfxPrint(x, y, neg ? "-" : "+");
-        gfxPrint(x + 6, y, wv);
-        gfxPrint(x + 11, y, ".");
-        if (dv < 10) {
-          gfxPrint(x + 15, y, "0");
-          gfxPrint(x + 21, y, dv);
-        } else {
-          gfxPrint(x + 15, y, dv);
-        }
-    }
     
     void DrawGrid() {
         // Draw the Cartesian plane
