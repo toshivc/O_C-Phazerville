@@ -50,6 +50,7 @@
     DECLARE_APPLET( 14, 0x02, Sequence5), \
     DECLARE_APPLET( 48, 0x45, ShiftGate), \
     DECLARE_APPLET( 18, 0x02, TM), \
+    DECLARE_APPLET( 58, 0x01, Shredder), \
     DECLARE_APPLET( 36, 0x04, Shuffle), \
     DECLARE_APPLET(  7, 0x01, SkewedLFO), \
     DECLARE_APPLET( 19, 0x01, Slew), \
