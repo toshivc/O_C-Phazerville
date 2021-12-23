@@ -229,7 +229,6 @@ private:
     
     void DrawInterface() {
         // output selection
-        // todo: dynamically name outputs depending on which hemisphere
         gfxPrint(1,15,"A:");
         gfxIcon(14,14,MODE_ICONS[mode[0]]);
         gfxPrint(32,15,"B:");
@@ -284,7 +283,7 @@ private:
         gfxPrint(10,55,CV_MODE_NAMES[cv_mode]);
 
         // step count in header
-        gfxPrint((step < 9 ? 54 : 48),2,step+1);
+        gfxPrint((step < 9 ? 49 : 43),2,step+1);
 
         // cursor for non-knobs
         if (cursor == 0) gfxCursor(14,23,16); // Part A
