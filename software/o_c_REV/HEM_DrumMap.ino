@@ -23,6 +23,7 @@
 #include "grids_resources.h"
 
 #define HEM_DRUMMAP_PULSE_ANIMATION_TICKS 500
+#define HEM_DRUMMAP_VALUE_ANIMATION_TICKS 16000
 #define HEM_DRUMMAP_AUTO_RESET_TICKS 30000
 
 class DrumMap : public HemisphereApplet {
@@ -104,6 +105,11 @@ public:
             }
         }
 
+        // animate value changes
+        if (value_animation > 0) {
+          value_animation--;
+        }
+
         // decrease knob acceleration
         if (knob_accel > 256) {
           knob_accel--;
@@ -154,9 +160,13 @@ public:
           if (cv_mode < 0) cv_mode = 2;
         }
 
-        // knob acceleration for bigger params
-        if (cursor >= 2 && cursor <= 6 && knob_accel < 4097) {
+        // knob acceleration and value display for slider params
+        if (cursor >= 2 && cursor <= 6 && knob_accel < 2049) {
+          if (knob_accel < 300) {
+            knob_accel = knob_accel << 1;
+          }
           knob_accel = knob_accel << 2;
+          value_animation = HEM_DRUMMAP_VALUE_ANIMATION_TICKS;
         }
     }
         
@@ -193,6 +203,7 @@ private:
     uint8_t step;
     uint8_t randomness[3] = {0, 0, 0};
     int pulse_animation[2] = {0, 0};
+    int value_animation = 0;
     int knob_accel = 256;
     uint32_t last_clock;
     
@@ -289,7 +300,38 @@ private:
         if (cursor == 0) gfxCursor(14,23,16); // Part A
         if (cursor == 1) gfxCursor(45,23,16); // Part B
         if (cursor == 7) gfxCursor(10,63,50); // CV Assign
-
+        
+        // display value for knobs
+        if (value_animation > 0 && cursor >= 2 && cursor <= 6) {
+          gfxRect(1, 54, 60, 10);
+          gfxInvert(1, 54, 60, 10);
+          int val = 0;
+          switch (cursor) {
+            case 2:
+              val = fill[0];
+              break;
+            case 3:
+              val = fill[1];
+              break;
+            case 4:
+              val = x;
+              break;
+            case 5:
+              val = y;
+              break;
+            case 6:
+              val = chaos;
+              break;
+          }
+          int xPos = 27;
+          if (val > 99) {
+            xPos = 21;
+          } else if (val > 9) {
+            xPos = 24;
+          }
+          gfxPrint(xPos, 55, val);
+          gfxInvert(1, 54, 60, 10);
+        }
     }
 
     void DrawKnobAt(byte x, byte y, byte len, byte value, bool is_cursor) {
