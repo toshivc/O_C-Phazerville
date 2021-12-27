@@ -1,7 +1,7 @@
 Welcome to Benisphere Suite
 ===
 
-## An active fork of the Hemisphere Suite. 
+## A continuation of the Hemisphere Suite. 
 
 Benisphere takes the suite in a new direction, adding new applets and some enhancements to existing ones, while also removing o_C style apps to make space for these changes.
 
