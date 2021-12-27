@@ -5,17 +5,17 @@ Welcome to Benisphere Suite
 
 Benisphere takes the suite in a new direction, adding new applets and some enhancements to existing ones, while also removing o_C style apps to make space for these changes.
 
-### Any alternate firmware to an alternate firmware??
+### An alternate firmware to an alternate firmware??
 
 Yes! This fork was an opportunity for me add stuff I wanted to see on my o_C without having to worry about running up against any legacy issues for other Hemipshere users. When I shared some of the progress I was making in my fork, people seemed excited and interested in trying it out, so I have made it an official fork rather than just my own personal project. I try to give back any improvements I make to the [main Hemispheres repo](https://github.com/Chysn/O_C-HemisphereSuite) when possible, but 1) it is not clear if that repo is still active and 2) there is barely any room remaining on the Teensy for improvements. By deciding that this version of the suite will only contain Hemisphere applets I was able to make room for new applets and other improvements. I do accept feature request issues and pull request, but the things that will make it in to this fork are still largely up to my discression.
 
 ### Ok, so what's changed?
 
-As of v1.0, I have added two new applets inspired by very popular modules ([Mutable Instruments Grids](https://mutable-instruments.net/modules/grids/) and [Noise Engineering Mimetic Digitalis](https://noiseengineering.us/products/mimetic-digitalis)) as well as some minor improvements to existing apps. I've also removed all of the full-width o_C style apps to make space for these changes. To see all of the changes in detail, visit the [wiki](https://github.com/benirose/O_C-HemisphereSuite/wiki).
+As of v1.0, I have added two new applets inspired by very popular modules ([Mutable Instruments Grids](https://mutable-instruments.net/modules/grids/) and [Noise Engineering Mimetic Digitalis](https://noiseengineering.us/products/mimetic-digitalis)) as well as some minor improvements to existing apps. I've also removed all of the full-width o_C style apps to make space for these changes. To see all of the changes in detail, visit the [wiki](/wiki).
 
 ### How do I try it?
 
-Head over to the [releases](https://github.com/benirose/O_C-HemisphereSuite/releases) section and download the latest release. Follow the ["Method A" instructions](https://ornament-and-cri.me/firmware/#method_a) from the Ornament and Crime website, except use the hex file you downloaded from the releases section.
+Head over to the [releases](/releases) section and download the latest release. Follow the ["Method A" instructions](https://ornament-and-cri.me/firmware/#method_a) from the Ornament and Crime website, except use the hex file you downloaded from the releases section.
 
 Note: you can reload any other previous firmware you had installed (stock o_C or Hemisphere Suite) just as easily.
 
