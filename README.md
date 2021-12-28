@@ -17,6 +17,8 @@ As of v1.0, I have added two new applets inspired by very popular modules ([Muta
 
 Head over to the [releases](https://github.com/benirose/O_C-BenisphereSuite/releases) section and download the latest release. Follow the ["Method A" instructions](https://ornament-and-cri.me/firmware/#method_a) from the Ornament and Crime website, except use the hex file you downloaded from the releases section.
 
+Alternatively, you can follow instructions in [this video](https://www.youtube.com/watch?v=dg_acylaMZU).
+
 Note: you can reload any other previous firmware you had installed (stock o_C or Hemisphere Suite) just as easily.
 
 ### How do I build it?
