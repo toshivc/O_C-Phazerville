@@ -3,7 +3,7 @@ Welcome to Benisphere Suite
 
 ## A continuation of the Hemisphere Suite. 
 
-Benisphere takes the suite in a new direction, adding new applets and some enhancements to existing ones, while also removing o_C style apps to make space for these changes.
+Benisphere takes the Hemisphere Suite in a new direction, adding new applets and some enhancements to existing ones, while also removing o_C style apps to make space for these changes.
 
 ### An alternate firmware to an alternate firmware??
 
