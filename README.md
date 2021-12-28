@@ -25,7 +25,7 @@ You can download this repo and build the code following the ["Method B" instruct
 
 ### What's with the name?
 
-Beta tester [Jroo](https://github.com/jroo) jokingly called it that, and it kind of stuck! Also it has a nicer ringer than "Hemisphere Suite BR Fork".
+Beta tester [@jroo](https://github.com/jroo) jokingly called it that, and it kind of stuck! Also it has a nicer ringer than "Hemisphere Suite BR Fork".
 
 ### Credits
 
