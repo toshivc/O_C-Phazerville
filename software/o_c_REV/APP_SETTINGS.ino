@@ -73,7 +73,7 @@ public:
         gfxHeader("Setup / About");
         gfxPrint(0, 15, "Benisphere Suite");
         gfxPrint(0, 25, OC_VERSION);
-        gfxPrint(0, 35, "benrosenbach.com/bss");
+        gfxPrint(0, 35, "github.com/benirose");
         gfxPrint(0, 55, "[CALIBRATE]   [RESET]");
 
 #ifdef BUCHLA_4U
