@@ -1,9 +1,9 @@
 Welcome to Benisphere Suite
 ===
 
-## An active fork of the Hemisphere Suite. 
+## An active fork expanding upon Hemisphere Suite.
 
-Benisphere takes the suite in a new direction, adding new applets and some enhancements to existing ones, while also removing o_C style apps to make space for these changes.
+Benisphere takes the Hemisphere Suite in a new direction, adding new applets and some enhancements to existing ones, while also removing o_C style apps to make space for these changes.
 
 ### An alternate firmware to an alternate firmware??
 
@@ -11,11 +11,13 @@ Yes! This fork was an opportunity for me add stuff I wanted to see on my o_C wit
 
 ### Ok, so what's changed?
 
-As of v1.0, I have added two new applets inspired by very popular modules ([Mutable Instruments Grids](https://mutable-instruments.net/modules/grids/) and [Noise Engineering Mimetic Digitalis](https://noiseengineering.us/products/mimetic-digitalis)) as well as some minor improvements to existing apps. I've also removed all of the full-width o_C style apps to make space for these changes. To see all of the changes in detail, visit the [wiki](/wiki).
+As of v1.0, I have added two new applets inspired by very popular modules ([Mutable Instruments Grids](https://mutable-instruments.net/modules/grids/) and [Noise Engineering Mimetic Digitalis](https://noiseengineering.us/products/mimetic-digitalis)) as well as some minor improvements to existing apps. I've also removed all of the full-width o_C style apps to make space for these changes. To see all of the changes in detail, visit the [wiki](https://github.com/benirose/O_C-BenisphereSuite/wiki).
 
 ### How do I try it?
 
-Head over to the [releases](/releases) section and download the latest release. Follow the ["Method A" instructions](https://ornament-and-cri.me/firmware/#method_a) from the Ornament and Crime website, except use the hex file you downloaded from the releases section.
+Head over to the [releases](https://github.com/benirose/O_C-BenisphereSuite/releases) section and download the latest release. Follow the ["Method A" instructions](https://ornament-and-cri.me/firmware/#method_a) from the Ornament and Crime website, except use the hex file you downloaded from the releases section.
+
+Alternatively, you can follow instructions in [this video](https://www.youtube.com/watch?v=dg_acylaMZU).
 
 Note: you can reload any other previous firmware you had installed (stock o_C or Hemisphere Suite) just as easily.
 
@@ -25,7 +27,7 @@ You can download this repo and build the code following the ["Method B" instruct
 
 ### What's with the name?
 
-Beta tester [Jroo](https://github.com/jroo) jokingly called it that, and it kind of stuck! Also it has a nicer ringer than "Hemisphere Suite BR Fork".
+Beta tester [@jroo](https://github.com/jroo) jokingly called it that, and it kind of stuck! It's supposed to be a bit tongue in cheek, so I hope it's not taken too seriously! Also it has a nicer ringer than "Hemisphere Suite BR Fork".
 
 ### Credits
 
