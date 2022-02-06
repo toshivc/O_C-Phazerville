@@ -19,6 +19,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// TODO:
+// - blend is a stupid parameter
+
 #include "vector_osc/HSVectorOscillator.h"
 #include "vector_osc/WaveformManager.h"
 
@@ -26,6 +29,9 @@
 #define CH_KICK 0
 #define CH_SNARE 1
 #define CH_PUNCH_DECAY 2
+
+#define FREQ_SNARE_MOD0 62000
+#define FREQ_SNARE_MOD1 66000
 
 class BootsNCat : public HemisphereApplet {
 public:
@@ -42,6 +48,8 @@ public:
 
         tone_snare = 55; // Snare low limit
         decay_snare = 16; // Snare decay
+        decay_snap = 32;
+        dirt = 32;
         noise_tone_countdown = 1;
 
         blend = 0;
@@ -70,6 +78,24 @@ public:
         env_snare.Offset(HEMISPHERE_3V_CV);
         env_snare.Cycle(0);
         SetEnvDecaySnare();
+
+        env_snap = WaveformManager::VectorOscillatorFromWaveform(HS::Exponential);
+        env_snap.SetScale(HEMISPHERE_3V_CV);
+        env_snap.Offset(HEMISPHERE_3V_CV);
+        env_snap.Cycle(0);
+        SetEnvDecaySnap();
+
+        snare_mod0 = WaveformManager::VectorOscillatorFromWaveform(HS::Triangle);
+        snare_mod0.SetFrequency(FREQ_SNARE_MOD0);
+        snare_mod0.SetScale(HEMISPHERE_3V_CV);
+
+        snare_mod1 = WaveformManager::VectorOscillatorFromWaveform(HS::Sine);
+        snare_mod1.SetFrequency(FREQ_SNARE_MOD1);
+        snare_mod1.SetScale(HEMISPHERE_3V_CV);
+
+        snare = WaveformManager::VectorOscillatorFromWaveform(HS::Sine);
+        snare.SetFrequency(661*100); // 100 Hz - 1500 Hz
+        snare_mod1.SetScale((12 << 7) * 3);
     }
 
     void Controller() {
@@ -77,6 +103,7 @@ public:
         int32_t bd_signal = 0;
         int32_t sd_signal = 0;
 
+        // Calculate kick drum signal
         if (Changed(CH_KICK))
             env_kick.SetScale(HEMISPHERE_MAX_CV - In(CH_KICK));
         if (Clock(CH_KICK, 1)) {  // Use physical-only clocking
@@ -84,38 +111,59 @@ public:
             env_punch.Start();
             kick.Start();  // Set phase to zero
         }
-        if (Changed(CH_SNARE))
-            env_snare.SetScale(HEMISPHERE_3V_CV - In(CH_SNARE));
-        if (Clock(CH_SNARE, 1)) {  // Use physical-only clocking
-            env_snare.Start();
-        }
-
-        // Calculate kick drum signal
         if (!env_kick.GetEOC()) {
             // base frequency
-            int freq = Proportion(tone_kick, BNC_MAX_PARAM, 3000) + 3000;
+            int freq_kick = Proportion(tone_kick, BNC_MAX_PARAM, 3000) + 3000;
 
             // punchy FM drop
             if (!env_punch.GetEOC()) {
-                int df = Proportion(env_punch.Next(), HEMISPHERE_3V_CV, freq);
+                int df = Proportion(env_punch.Next(), HEMISPHERE_3V_CV, freq_kick);
                 df = Proportion(punch, BNC_MAX_PARAM/4, df);
-                freq = freq + df;
+                freq_kick = freq_kick + df;
             }
 
-            kick.SetFrequency(freq);
+            kick.SetFrequency(freq_kick);
             levels[0] = env_kick.Next()/2; // Divide by 2 to account for offset
             bd_signal = Proportion(levels[0], HEMISPHERE_MAX_CV, kick.Next());
         }
 
         // Calculate snare drum signal
-        if (--noise_tone_countdown == 0) {
-            noise = random(0, (12 << 7) * 6) - ((12 << 7) * 3);
-            noise_tone_countdown = BNC_MAX_PARAM - tone_snare + 1;
+        // if (--noise_tone_countdown == 0) {
+        //     noise = random(0, (12 << 7) * 6) - ((12 << 7) * 3);
+        //     noise_tone_countdown = BNC_MAX_PARAM - tone_snare + 1;
+        // }
+        if (Changed(CH_SNARE))
+            env_snare.SetScale(HEMISPHERE_3V_CV - In(CH_SNARE));
+        if (Clock(CH_SNARE, 1)) {  // Use physical-only clocking
+            env_snare.Start();
+            env_snap.Start();
         }
-
         if (!env_snare.GetEOC()) {
+            int freq_snare = Proportion(tone_snare, BNC_MAX_PARAM, 900*100) + 100*100;
+
+            // mod0 --<dirt>%--> mod1
+            int freq_mod1 = snare_mod0.Next() - HEMISPHERE_3V_CV;
+            freq_mod1 = Proportion(freq_mod1, HEMISPHERE_3V_CV, FREQ_SNARE_MOD1);
+            freq_mod1 = Proportion(dirt, BNC_MAX_PARAM, freq_mod1);
+            freq_mod1 += FREQ_SNARE_MOD1;
+            snare_mod1.SetFrequency(freq_mod1);
+
+            // mod1 --30%--> snare
+            int mod1 = snare_mod1.Next() - HEMISPHERE_3V_CV;
+            mod1 = Proportion(mod1, HEMISPHERE_3V_CV, (3*freq_snare)/10);
+            freq_snare += mod1;
+
+            // env_snap --40%--> snare
+            if (!env_snap.GetEOC()) {
+                int snap = env_snap.Next();
+                snap = Proportion(snap, HEMISPHERE_3V_CV, (4*freq_snare)/10);
+                freq_snare += snap;
+            }
+
+            snare_mod1.SetFrequency(freq_snare);
+
             levels[1] = env_snare.Next();
-            sd_signal = Proportion(levels[1], HEMISPHERE_MAX_CV, noise);
+            sd_signal = Proportion(levels[1], HEMISPHERE_MAX_CV, snare.Next());
         }
 
         // Kick Drum Output
@@ -167,6 +215,13 @@ public:
                 decay_snare = constrain(decay_snare + direction, 0, BNC_MAX_PARAM);
                 SetEnvDecaySnare();
             }
+            if (cursor == 6) {
+                dirt = constrain(dirt + direction, 0, BNC_MAX_PARAM);
+            }
+            if (cursor == 7) {
+                decay_snap = constrain(decay_snap + direction, 0, BNC_MAX_PARAM);
+                SetEnvDecaySnap();
+            }
         }
         ResetCursor();
     }
@@ -203,20 +258,29 @@ private:
     int cursor = 0;
     VectorOscillator kick;
     VectorOscillator env_kick;
-    VectorOscillator env_snare;
     VectorOscillator env_punch;
+
+    VectorOscillator env_snare;
+    VectorOscillator env_snap;
+    VectorOscillator snare_mod0;
+    VectorOscillator snare_mod1;
+    VectorOscillator snare;
+
     int noise_tone_countdown = 0;
     uint32_t noise;
     int levels[2]; // For display
 
     // Settings
     int tone_kick;
-    int tone_snare;
-    int decay_kick;
-    int decay_snare;
-    int decay_punch;
-    int8_t blend;
     int punch;
+    int decay_kick;
+    int decay_punch;
+
+    int tone_snare;
+    int decay_snare;
+    int dirt;
+    int decay_snap;
+    int8_t blend;
 
     void DrawInterface() {
         gfxBitmap(1, 15, 8, NOTE_ICON);
@@ -237,18 +301,18 @@ private:
         gfxBitmap(32, 25, 8, DECAY_ICON);
         DrawKnobAt(41, 25, 18, decay_snare, cursor == 5);
 
-        gfxBitmap(32, 35, 8, FM_ICON);
-        DrawKnobAt(41, 35, 18, tone_snare, cursor == 6);
+        gfxBitmap(32, 35, 8, NOISE_ICON);
+        DrawKnobAt(41, 35, 18, dirt, cursor == 6);
 
         gfxBitmap(32, 45, 8, BANG_ICON);
-        DrawKnobAt(41, 45, 18, decay_snare, cursor == 7);
+        DrawKnobAt(41, 45, 18, decay_snap, cursor == 7);
 
         gfxPrint(1, 55, "BD");
         gfxPrint(49, 55, "SN");
         DrawKnobAt(20, 55, 20, blend, cursor == 8);
 
         // Level indicators
-        // x, y, w, h
+        // gfxInvert(x, y, w, h)
         ForEachChannel(ch)
             gfxInvert(1 + (31*ch), 63 - ProportionCV(levels[ch], 42),
                       30, ProportionCV(levels[ch], 42));
@@ -265,12 +329,15 @@ private:
     void SetBDFreq() {
         kick.SetFrequency(Proportion(tone_kick, BNC_MAX_PARAM, 3000) + 3000);
     }
-
     void SetEnvDecayKick() {
         env_kick.SetFrequency(1000 - Proportion(decay_kick, BNC_MAX_PARAM, 900));
     }
+
     void SetEnvDecaySnare() {
         env_snare.SetFrequency(1000 - Proportion(decay_snare, BNC_MAX_PARAM, 900));
+    }
+    void SetEnvDecaySnap() {
+        env_snap.SetFrequency(1000 - Proportion(decay_snap, BNC_MAX_PARAM, 900));
     }
 
     void SetEnvDecayPunch() {
