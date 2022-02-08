@@ -23,8 +23,6 @@
 // - check the scaling of envelops and modulators... there might be cleaner ways than HEMISPHERE_3V_CV etc.
 // - clean up int64, int32, etc.
 // - remove blend and add input to CV mux: CV can control tone, level, or delay
-// - display
-// - improve bang icon
 
 #include "vector_osc/HSVectorOscillator.h"
 #include "vector_osc/WaveformManager.h"
@@ -272,29 +270,32 @@ private:
     int8_t blend;
 
     void DrawInterface() {
-        gfxBitmap(1, 15, 8, NOTE_ICON);
-        DrawKnobAt(10, 15, 18, tone_kick, cursor == 0);
+        DrawDrumBody(1, 42 - Proportion(tone_kick, BNC_MAX_PARAM, 13),
+                     decay_kick, punch, decay_punch);
 
-        gfxBitmap(1, 25, 8, DECAY_ICON);
-        DrawKnobAt(10, 25, 18, decay_kick, cursor == 1);
+        DrawDrumBody(32, 42 - Proportion(tone_snare, BNC_MAX_PARAM, 13),
+                     decay_snare, snap, decay_snap);
 
-        gfxBitmap(1, 35, 8, FM_ICON);
-        DrawKnobAt(10, 35, 18, punch, cursor == 2);
-
-        gfxBitmap(1, 45, 8, BANG_ICON);
-        DrawKnobAt(10, 45, 18, decay_punch, cursor == 3);
-
-        gfxBitmap(32, 15, 8, NOTE_ICON);
-        DrawKnobAt(41, 15, 18, tone_snare, cursor == 4);
-
-        gfxBitmap(32, 25, 8, DECAY_ICON);
-        DrawKnobAt(41, 25, 18, decay_snare, cursor == 5);
-
-        gfxBitmap(32, 35, 8, FM_ICON);
-        DrawKnobAt(41, 35, 18, snap, cursor == 6);
-
-        gfxBitmap(32, 45, 8, BANG_ICON);
-        DrawKnobAt(41, 45, 18, decay_snap, cursor == 7);
+        switch (cursor) {
+            // kick
+            case 0:
+                gfxPrint(1, 45, "tone"); break;
+            case 1:
+                gfxPrint(1, 45, "decay"); break;
+            case 2:
+                gfxPrint(1, 45, "punch"); break;
+            case 3:
+                gfxPrint(1, 45, "drop"); break;
+            // snare
+            case 4:
+                gfxPrint(32, 45, "tone"); break;
+            case 5:
+                gfxPrint(32, 45, "decay"); break;
+            case 6:
+                gfxPrint(32, 45, "snap"); break;
+            case 7:
+                gfxPrint(32, 45, "drop"); break;
+        }
 
         gfxPrint(1, 55, "BD");
         gfxPrint(49, 55, "SN");
@@ -308,11 +309,20 @@ private:
     }
 
     void DrawKnobAt(byte x, byte y, byte len, byte value, bool is_cursor) {
-        // byte x = 45;
         byte w = Proportion(value, BNC_MAX_PARAM, len);
         byte p = is_cursor ? 1 : 3;
         gfxDottedLine(x, y + 4, x + len, y + 4, p);
         gfxRect(x + w, y, 2, 7);
+    }
+
+    void DrawDrumBody(byte x, byte y, byte decay, byte punch, byte pdecay) {
+        const byte wmax = 30;
+        const byte hmax = 14;
+        byte w = Proportion(decay, BNC_MAX_PARAM, wmax - 5) + 5;
+        byte h = Proportion(punch, BNC_MAX_PARAM, hmax - 3) + 3;
+        byte r = Proportion(pdecay, BNC_MAX_PARAM, w);
+        gfxFrame(x, y - h, w, h);
+        gfxRect(x + 1, y + 1 - h, r - 1, h - 2);
     }
 
     void SetFreqKick() {
