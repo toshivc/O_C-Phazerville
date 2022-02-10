@@ -24,7 +24,7 @@
 namespace HS {
 
 const byte VO_SEGMENT_COUNT = 64; // The total number of segments in user memory
-const byte VO_MAX_SEGMENTS = 12; // The maximum number of segments in a waveform
+const byte VO_MAX_SEGMENTS = 24; // The maximum number of segments in a waveform
 
 /*
  * The VOSegment is a single segment of the VectorOscillator that specifies a target
@@ -191,7 +191,7 @@ public:
     }
 
 private:
-    VOSegment segments[12]; // Array of segments in this Oscillator
+    VOSegment segments[24]; // Array of segments in this Oscillator
     byte segment_count = 0; // Number of segments
     int total_time = 0; // Sum of time values for all segments
     vosignal_t signal = 0; // Current scaled signal << 10 for more precision
