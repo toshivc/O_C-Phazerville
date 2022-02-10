@@ -58,7 +58,7 @@ public:
         snap = 55;
         decay_snap = 26;
 
-        kick = WaveformManager::VectorOscillatorFromWaveform(HS::Triangle);
+        kick = WaveformManager::VectorOscillatorFromWaveform(HS::HiResSine);
         kick.SetFrequency(Proportion(tone_kick, BNC_MAX_PARAM, 3000) + 3000);
         // Audio signal is -3V to +3V due to DAC asymmetry
         kick.SetScale((12 << 7) * 3);
