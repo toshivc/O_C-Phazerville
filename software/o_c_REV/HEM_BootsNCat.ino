@@ -23,6 +23,7 @@
 // - check the scaling of envelops and modulators... there might be cleaner ways than HEMISPHERE_3V_CV etc.
 // - clean up int64, int32, etc.
 // - improve snare for small bandwidths
+// - bug: when tone CV is set but unplugged, tone clips on higher edge
 
 #include "vector_osc/HSVectorOscillator.h"
 #include "vector_osc/WaveformManager.h"
@@ -43,7 +44,7 @@ class BootsNCat : public HemisphereApplet {
 public:
 
     const char* applet_name() {
-        return "BugCrack";
+        return "BugsNCrack";
     }
 
     void Start() {
@@ -57,7 +58,7 @@ public:
         snap = 55;
         decay_snap = 26;
 
-        kick = WaveformManager::VectorOscillatorFromWaveform(HS::Sine);
+        kick = WaveformManager::VectorOscillatorFromWaveform(HS::Triangle);
         kick.SetFrequency(Proportion(tone_kick, BNC_MAX_PARAM, 3000) + 3000);
         // Audio signal is -3V to +3V due to DAC asymmetry
         kick.SetScale((12 << 7) * 3);
@@ -307,15 +308,8 @@ private:
     uint8_t cv_mode_snare;
 
     void DrawInterface() {
-        // DrawDrumBody(1, 42 - Proportion(_tone_kick, BNC_MAX_PARAM, 13),
-        //              _decay_kick, punch, decay_punch);
-        // DrawDrumBody(32, 42 - Proportion(_tone_snare, BNC_MAX_PARAM, 13),
-        //              _decay_snare, snap, decay_snap);
-        DrawDrumBody(1, _tone_kick, _decay_kick, punch, decay_punch);
-        DrawDrumBody(32, _tone_snare, _decay_snare, snap, decay_snap);
-
-        gfxDottedLine(0, 28, 31, 28, 3);
-        gfxDottedLine(32, 28, 63, 28, 3);
+        DrawDrumBody(1, _tone_kick, _decay_kick, punch, decay_punch, 0);
+        DrawDrumBody(32, _tone_snare, _decay_snare, snap, decay_snap, 1);
 
         switch (cursor) {
             // kick
@@ -348,31 +342,81 @@ private:
                       30, ProportionCV(levels[ch], 42));
     }
 
-    void DrawKnobAt(byte x, byte y, byte len, byte value, bool is_cursor) {
-        byte w = Proportion(value, BNC_MAX_PARAM, len);
-        byte p = is_cursor ? 1 : 3;
-        gfxDottedLine(x, y + 4, x + len, y + 4, p);
-        gfxRect(x + w, y, 2, 7);
-    }
+    void DrawDrumBody(byte x, byte tone, byte decay, byte punch, byte pdecay, bool is_snare) {
+        const int8_t wmin = 10;
+        const int8_t wmax = 30;
+        const int8_t hmin = 6;
+        const int8_t hmax = 16;
 
-    void DrawDrumBody(byte x, byte tone, byte decay, byte punch, byte pdecay) {
-        const byte wmax = 30;
-        const byte hmax = 12;
-        byte w = Proportion(decay, BNC_MAX_PARAM, wmax - 5) + 5;
-        byte h = Proportion(punch, BNC_MAX_PARAM, hmax - 3) + 3;
-        byte r = Proportion(pdecay, BNC_MAX_PARAM, w);
-        byte y = 38 - Proportion(tone, BNC_MAX_PARAM, 18);
-        gfxFrame(x + (wmax - w)/2, y - h/2, w, h);
-        gfxRect(x + 1 + (wmax - w)/2, y + 1 - h/2, r - 1, h - 2);
+        int8_t w = Proportion(decay, BNC_MAX_PARAM, wmax - wmin) + wmin;
+        int8_t h = Proportion(punch, BNC_MAX_PARAM, hmax - hmin) + hmin;
+        int8_t body_h = (2*h/hmin - 1) + hmin - 2;
+        int8_t r = Proportion(pdecay, BNC_MAX_PARAM, body_h);
+        int8_t y = 40 - Proportion(tone, BNC_MAX_PARAM, 18);
+
+        int8_t cx = x + wmax/2;
+        int8_t cy = y;
+
+        // body
+        int dx = w/5;
+        gfxLine(
+            cx - dx + 1, cy - body_h/2,
+            cx + dx - 1, cy - body_h/2);
+        gfxLine(
+            cx - dx + 2, cy - body_h/2-1,
+            cx + dx - 2, cy - body_h/2-1);
+        gfxLine(
+            cx - dx + 1, cy + body_h/2,
+            cx + dx - 1, cy + body_h/2);
+        gfxRect(
+            cx - dx + 1, cy - body_h/2 + 1,
+            2*dx - 1, r - 1);
+
+        // legs
+        for(int p=-1; p<=1; p+=2) { // parity for both sides
+            int _dx = p*dx;
+            // front legs
+            gfxLine(
+                cx + _dx, cy - body_h/2,
+                cx + p*w/3, cy - h/2);
+            // mid legs
+            gfxLine(
+                cx + _dx, cy - 1,
+                cx + _dx + 2*p, cy-1);
+            gfxLine(
+                cx + _dx + 2*p, cy - 1,
+                cx + p*w/2, cy - 2);
+            // rear legs
+            gfxLine(
+                cx + _dx, cy + 1,
+                cx + p*w/3, cy + hmax/h);
+            gfxLine(
+                cx + p*w/3, cy + hmax/h,
+                cx + p*w/2, cy + h/2);
+            // body flank
+            gfxLine(
+                cx+_dx, cy-body_h/2+1,
+                cx+_dx, cy+body_h/2-1);
+            if(is_snare) {
+                // draw some feelers
+                gfxLine(
+                    cx + p, cy - body_h/2 - 2,
+                    cx + 2*p, cy - body_h/2 - 2 - hmax/h);
+            } else {
+                gfxInvert(
+                    cx + _dx - p, cy - body_h/2 + 1,
+                    1, 1);
+            }
+        }
     }
 
     void SetEnvDecayKick(int decay) {
         env_kick.SetFrequency(1000 - Proportion(decay, BNC_MAX_PARAM, 900));
     }
     void SetEnvDecayPunch(int decay) {
-        // 10 ms - 200 ms -> 10000 cHz - 500 cHz
+        // 25 ms - 200 ms -> 4000 cHz - 500 cHz
         env_punch.SetFrequency(
-            10000 - Proportion(decay, BNC_MAX_PARAM, 9500));
+            4000 - Proportion(decay, BNC_MAX_PARAM, 3500));
     }
 
     void SetEnvDecaySnare(int decay) {
@@ -380,7 +424,7 @@ private:
     }
     void SetEnvDecaySnap(int decay) {
         env_snap.SetFrequency(
-            10000 - Proportion(decay, BNC_MAX_PARAM, 9500));
+            2000 - Proportion(decay, BNC_MAX_PARAM, 1500));
     }
 
     int FilterHP(int signal, int32_t cfreq){
