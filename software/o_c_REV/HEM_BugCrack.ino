@@ -1,5 +1,5 @@
-// Copyright (c) 2018, Jason Justian
 // Copyright (c) 2022, Korbinian Schreiber
+// Copyright (c) 2018, Jason Justian
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
