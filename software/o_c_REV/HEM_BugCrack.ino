@@ -19,14 +19,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// TODO:
-// - check the scaling of envelops and modulators... there might be cleaner ways than HEMISPHERE_3V_CV etc.
-// - clean up int64, int32, etc.
-// - improve snare for small bandwidths
-// - add DDS engine instead of HS::HiResSine for even better sine wave and less RAM consumption
-// - replace xpf_y_prev by lpf_y
-// - display Hz instead of tone and maybe ms instead of decay
-
 #include "vector_osc/HSVectorOscillator.h"
 #include "vector_osc/WaveformManager.h"
 
@@ -54,20 +46,14 @@ public:
         decay_kick = 60;
         punch = 50;
         decay_punch = 32;
-        // tone_kick = 40;
-        // decay_kick = BNC_MAX_PARAM;
-        // punch = 0;
-        // decay_punch = 32;
 
         tone_snare = 6;
         decay_snare = 50; // Snare decay
         snap = 55;
         decay_snap = 26;
 
-        // kick = WaveformManager::VectorOscillatorFromWaveform(HS::HiResSine);
         kick = WaveformManager::VectorOscillatorFromWaveform(HS::Sine);
         kick.SetFrequency(Proportion(tone_kick, BNC_MAX_PARAM, 3000) + 3000);
-        // Audio signal is -3V to +3V due to DAC asymmetry
         kick.SetScale((12 << 7) * 3);
 
         ForEachChannel(ch) levels[ch] = 0;
@@ -103,7 +89,7 @@ public:
         cv_kick = Proportion(DetentedIn(CH_KICK), HEMISPHERE_MAX_CV, BNC_MAX_PARAM);
         cv_snare = Proportion(DetentedIn(CH_SNARE), HEMISPHERE_MAX_CV, BNC_MAX_PARAM);
 
-        // Calculate kick drum signal
+        // Kick drum
         if (cv_mode_kick == CV_MODE_TONE) {
             _tone_kick = constrain(tone_kick + cv_kick, 0, BNC_MAX_PARAM);
         } else {
@@ -140,7 +126,7 @@ public:
             bd_signal = FilterLP(bd_signal, freq_kick);
         }
 
-        // Calculate snare drum signal
+        // Snare drum
         noise = random(0, (12 << 7) * 6) - ((12 << 7) * 3);
         if (cv_mode_snare == CV_MODE_TONE) {
             _tone_snare = constrain(tone_snare + cv_snare, 0, BNC_MAX_PARAM);
@@ -167,17 +153,8 @@ public:
                 freq_snare += df;
             }
 
-            // Loudness is proportional to the bandwidth, let's scale it by a
-            // factor of ~3 as we go down.
-            // bw = 40 Hz - 10 Hz = 30 Hz, bw = 640 Hz - 160 Hz = 480 Hz
-            // (40 - 10)*100/128 = 23, (640 - 160)*100/128 = 375 -> factor 16
-            // (40 - 10)*100/128 + 128 = 151, (640 - 160)*100/128 + 128 = 503 -> factor 3.3
-            // int64_t freq_lp = freq_snare * 2;
-            // int64_t freq_hp = freq_snare / 2;
-            // int32_t snare = FilterLP(noise, freq_lp);
-            // snare = FilterHP(snare, freq_hp);
-            // int bw = freq_lp/128 - freq_hp/128;
-            // snare = Proportion(375+128, bw+128, snare);
+            // FilterBP(signal, freq, q)
+            // q can be 0 .. 2047
             int32_t snare = FilterBP(noise, freq_snare, 1024);
 
             levels[1] = env_snare.Next()/2;
