@@ -23,7 +23,9 @@
 // - check the scaling of envelops and modulators... there might be cleaner ways than HEMISPHERE_3V_CV etc.
 // - clean up int64, int32, etc.
 // - improve snare for small bandwidths
-// - bug: when tone CV is set but unplugged, tone clips on higher edge
+// - add DDS engine instead of HS::HiResSine for even better sine wave and less RAM consumption
+// - replace xpf_y_prev by lpf_y
+// - display Hz instead of tone and maybe ms instead of decay
 
 #include "vector_osc/HSVectorOscillator.h"
 #include "vector_osc/WaveformManager.h"
@@ -52,13 +54,18 @@ public:
         decay_kick = 60;
         punch = 50;
         decay_punch = 32;
+        // tone_kick = 40;
+        // decay_kick = BNC_MAX_PARAM;
+        // punch = 0;
+        // decay_punch = 32;
 
         tone_snare = 6;
         decay_snare = 50; // Snare decay
         snap = 55;
         decay_snap = 26;
 
-        kick = WaveformManager::VectorOscillatorFromWaveform(HS::HiResSine);
+        // kick = WaveformManager::VectorOscillatorFromWaveform(HS::HiResSine);
+        kick = WaveformManager::VectorOscillatorFromWaveform(HS::Sine);
         kick.SetFrequency(Proportion(tone_kick, BNC_MAX_PARAM, 3000) + 3000);
         // Audio signal is -3V to +3V due to DAC asymmetry
         kick.SetScale((12 << 7) * 3);
@@ -128,6 +135,9 @@ public:
                 levels[0] = Proportion(BNC_MAX_PARAM - cv_kick, BNC_MAX_PARAM, levels[0]);
             }
             bd_signal = Proportion(levels[0], HEMISPHERE_MAX_CV, kick.Next());
+            // Because of overtones induced by the linear interpolation of the
+            // sine wave vector oscilator, we have to low/pass filter the signal
+            bd_signal = FilterLP(bd_signal, freq_kick);
         }
 
         // Calculate snare drum signal
@@ -148,7 +158,7 @@ public:
             env_snap.Start();
         }
         if (!env_snare.GetEOC()) {
-            int64_t freq_snare = Proportion(_tone_snare, BNC_MAX_PARAM, 600) + 20;
+            int64_t freq_snare = Proportion(_tone_snare, BNC_MAX_PARAM, 500) + 100;
             freq_snare *= 100;
             if (!env_snap.GetEOC()) {
                 int64_t df = Proportion(env_snap.Next(), HEMISPHERE_3V_CV, freq_snare/1024);
@@ -156,17 +166,20 @@ public:
                 df *= 1024;
                 freq_snare += df;
             }
-            int64_t freq_lp = freq_snare * 2;
-            int64_t freq_hp = freq_snare / 2;
-            int32_t snare = FilterLP(noise, freq_lp);
-            snare = FilterHP(snare, freq_hp);
+
             // Loudness is proportional to the bandwidth, let's scale it by a
             // factor of ~3 as we go down.
             // bw = 40 Hz - 10 Hz = 30 Hz, bw = 640 Hz - 160 Hz = 480 Hz
             // (40 - 10)*100/128 = 23, (640 - 160)*100/128 = 375 -> factor 16
             // (40 - 10)*100/128 + 128 = 151, (640 - 160)*100/128 + 128 = 503 -> factor 3.3
-            int bw = freq_lp/128 - freq_hp/128;
-            snare = Proportion(375+128, bw+128, snare);
+            // int64_t freq_lp = freq_snare * 2;
+            // int64_t freq_hp = freq_snare / 2;
+            // int32_t snare = FilterLP(noise, freq_lp);
+            // snare = FilterHP(snare, freq_hp);
+            // int bw = freq_lp/128 - freq_hp/128;
+            // snare = Proportion(375+128, bw+128, snare);
+            int32_t snare = FilterBP(noise, freq_snare, 1024);
+
             levels[1] = env_snare.Next()/2;
             if (cv_mode_snare == CV_MODE_ATTEN) {
                 levels[1] = Proportion(BNC_MAX_PARAM - cv_snare, BNC_MAX_PARAM, levels[1]);
@@ -277,10 +290,10 @@ private:
 
     uint32_t noise;
 
-    int32_t lpf_y_prev;
+    int32_t lpf_y;
 
-    int32_t hpf_signal_prev;
-    int32_t hpf_y_prev;
+    int32_t bpf_y0;
+    int32_t bpf_y1;
 
     int cv_kick;
     int cv_snare;
@@ -311,10 +324,17 @@ private:
         DrawDrumBody(1, _tone_kick, _decay_kick, punch, decay_punch, 0);
         DrawDrumBody(32, _tone_snare, _decay_snare, snap, decay_snap, 1);
 
+        gfxIcon(1, 57, CV_ICON);
+        gfxPrint(10, 55, CV_MODE_NAMES[cv_mode_kick]);
+        gfxPrint(41, 55, CV_MODE_NAMES[cv_mode_snare]);
+
         switch (cursor) {
             // kick
             case 0:
-                gfxPrint(1, 45, "tone"); break;
+                // gfxPrint(1, 45, "tone"); break;
+                gfxPrint(7, 45, Proportion(_tone_kick, BNC_MAX_PARAM, 30) + 30);
+                gfxPrint(19, 45, "Hz");
+                break;
             case 1:
                 gfxPrint(1, 45, "decay"); break;
             case 2:
@@ -323,18 +343,19 @@ private:
                 gfxPrint(1, 45, "drop"); break;
             // snare
             case 4:
-                gfxPrint(32, 45, "tone"); break;
+                // gfxPrint(32, 45, "tone"); break;
+                gfxPrint(32, 45, Proportion(_tone_snare, BNC_MAX_PARAM, 500) + 100);
+                gfxPrint(50, 45, "Hz");
+                break;
             case 5:
                 gfxPrint(32, 45, "decay"); break;
             case 6:
                 gfxPrint(32, 45, "snap"); break;
             case 7:
                 gfxPrint(32, 45, "drop"); break;
+            case 8:
+                gfxInvert(1, 54, 61, 9);
         }
-
-        gfxIcon(1,57,CV_ICON);
-        gfxPrint(10, 55, CV_MODE_NAMES[cv_mode_kick]);
-        gfxPrint(41, 55, CV_MODE_NAMES[cv_mode_snare]);
 
         // Level indicators
         ForEachChannel(ch)
@@ -424,22 +445,7 @@ private:
     }
     void SetEnvDecaySnap(int decay) {
         env_snap.SetFrequency(
-            2000 - Proportion(decay, BNC_MAX_PARAM, 1500));
-    }
-
-    int FilterHP(int signal, int32_t cfreq){
-        // cfreq is in cHz
-        // alpha = 1/(1 + 2*pi*cfreq*dt/100)
-        // alpha = CF/(CF + cfreq)
-        // CF = 1/(2*pi*dt) for cHz
-        // sample rate dt = 60 us
-        static const int32_t CF = 265258;
-        int32_t alpha = (CF * 1024) / (CF + cfreq);
-        int32_t y = alpha*(hpf_y_prev + signal - hpf_signal_prev);
-        y /= 1024;
-        hpf_y_prev = y;
-        hpf_signal_prev = signal;
-        return y;
+            8000 - Proportion(decay, BNC_MAX_PARAM, 7500));
     }
 
     int FilterLP(int signal, int32_t cfreq){
@@ -449,11 +455,36 @@ private:
         // CF = 1/(2*pi*dt) for cHz
         // sample rate dt = 60 us
         static const int32_t CF = 265258;
-        int32_t alpha = (cfreq * 1024) / (CF + cfreq);
-        int32_t y = (alpha*signal) + (1024 - alpha)*lpf_y_prev;
-        y /= 1024;
-        lpf_y_prev = y;
-        return y;
+        static const int M = 1024;
+        int32_t alpha = (cfreq * M) / (CF + cfreq);
+
+        lpf_y = (alpha*signal) + (M - alpha)*lpf_y;
+        lpf_y /= M;
+        return lpf_y;
+    }
+
+    int FilterBP(int32_t signal, int32_t cfreq, int32_t q){
+        // cfreq is in cHz
+        // q between 0 and 2047
+        // alpha = 2*pi*cfreq*dt/100/(1 + 2*pi*cfreq*dt/100)
+        // alpha = CF*cfreq/(1+ CF*cfreq)
+        // CF = 1/(2*pi*dt) for cHz
+        // sample rate dt = 60 us
+        static const int32_t CF = 265258;
+        // static multiplier/divider
+        static const int32_t M = 2048;
+
+        int32_t ft = (M*cfreq)/CF;
+
+        bpf_y0 =  M*bpf_y0
+                + ft*(signal - bpf_y0)
+                + ft*(q*(2*M - ft)/(M - ft))*(bpf_y0 - bpf_y1)/M;
+        bpf_y0 /= M;
+
+        bpf_y1 =  M*bpf_y1
+                + ft*(bpf_y0 - bpf_y1);
+        bpf_y1 /= M;
+        return bpf_y1;
     }
 
 };
