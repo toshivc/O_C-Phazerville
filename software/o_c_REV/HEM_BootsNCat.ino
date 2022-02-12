@@ -42,11 +42,11 @@
 #define FREQ_SNARE_MOD0 62000
 #define FREQ_SNARE_MOD1 66000
 
-class BootsNCat : public HemisphereApplet {
+class BugCrack : public HemisphereApplet {
 public:
 
     const char* applet_name() {
-        return "BugsNCrack";
+        return "BugCrack";
     }
 
     void Start() {
@@ -493,18 +493,18 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 //// Hemisphere Applet Functions
 ///
-///  Once you run the find-and-replace to make these refer to BootsNCat,
+///  Once you run the find-and-replace to make these refer to BugCrack,
 ///  it's usually not necessary to do anything with these functions. You
 ///  should prefer to handle things in the HemisphereApplet child class
 ///  above.
 ////////////////////////////////////////////////////////////////////////////////
-BootsNCat BootsNCat_instance[2];
+BugCrack BugCrack_instance[2];
 
-void BootsNCat_Start(bool hemisphere) {BootsNCat_instance[hemisphere].BaseStart(hemisphere);}
-void BootsNCat_Controller(bool hemisphere, bool forwarding) {BootsNCat_instance[hemisphere].BaseController(forwarding);}
-void BootsNCat_View(bool hemisphere) {BootsNCat_instance[hemisphere].BaseView();}
-void BootsNCat_OnButtonPress(bool hemisphere) {BootsNCat_instance[hemisphere].OnButtonPress();}
-void BootsNCat_OnEncoderMove(bool hemisphere, int direction) {BootsNCat_instance[hemisphere].OnEncoderMove(direction);}
-void BootsNCat_ToggleHelpScreen(bool hemisphere) {BootsNCat_instance[hemisphere].HelpScreen();}
-uint32_t BootsNCat_OnDataRequest(bool hemisphere) {return BootsNCat_instance[hemisphere].OnDataRequest();}
-void BootsNCat_OnDataReceive(bool hemisphere, uint32_t data) {BootsNCat_instance[hemisphere].OnDataReceive(data);}
+void BugCrack_Start(bool hemisphere) {BugCrack_instance[hemisphere].BaseStart(hemisphere);}
+void BugCrack_Controller(bool hemisphere, bool forwarding) {BugCrack_instance[hemisphere].BaseController(forwarding);}
+void BugCrack_View(bool hemisphere) {BugCrack_instance[hemisphere].BaseView();}
+void BugCrack_OnButtonPress(bool hemisphere) {BugCrack_instance[hemisphere].OnButtonPress();}
+void BugCrack_OnEncoderMove(bool hemisphere, int direction) {BugCrack_instance[hemisphere].OnEncoderMove(direction);}
+void BugCrack_ToggleHelpScreen(bool hemisphere) {BugCrack_instance[hemisphere].HelpScreen();}
+uint32_t BugCrack_OnDataRequest(bool hemisphere) {return BugCrack_instance[hemisphere].OnDataRequest();}
+void BugCrack_OnDataReceive(bool hemisphere, uint32_t data) {BugCrack_instance[hemisphere].OnDataReceive(data);}
