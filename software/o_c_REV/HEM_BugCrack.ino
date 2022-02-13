@@ -31,9 +31,6 @@
 #define CV_MODE_TONE 1
 #define CV_MODE_DECAY 2
 
-#define FREQ_SNARE_MOD0 62000
-#define FREQ_SNARE_MOD1 66000
-
 class BugCrack : public HemisphereApplet {
 public:
 
@@ -122,7 +119,7 @@ public:
             }
             bd_signal = Proportion(levels[0], HEMISPHERE_MAX_CV, kick.Next());
             // Because of overtones induced by the linear interpolation of the
-            // sine wave vector oscilator, we have to low/pass filter the signal
+            // sine wave vector oscilator, we have to low-pass filter the signal
             bd_signal = FilterLP(bd_signal, freq_kick);
         }
 
@@ -211,6 +208,7 @@ public:
             SetEnvDecaySnap(decay_snap);
         }
 
+        // CV mode
         if (cursor == 8) {
             cv_mode = constrain(cv_mode + direction, 0, 8);
             cv_mode_kick = cv_mode/3;
@@ -250,7 +248,7 @@ protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "trigger 1=ki 2=sn";
-        help[HEMISPHERE_HELP_CVS]      = "atten.  1=ki 2=sn";
+        help[HEMISPHERE_HELP_CVS]      = "cv in   1=ki 2=sn";
         help[HEMISPHERE_HELP_OUTS]     = "output  1=ki 2=sn";
         help[HEMISPHERE_HELP_ENCODER]  = "preset/pan";
         //                               "------------------" <-- Size Guide
@@ -301,14 +299,14 @@ private:
         DrawDrumBody(1, _tone_kick, _decay_kick, punch, decay_punch, 0);
         DrawDrumBody(32, _tone_snare, _decay_snare, snap, decay_snap, 1);
 
+        // CV modes
         gfxIcon(1, 57, CV_ICON);
         gfxPrint(10, 55, CV_MODE_NAMES[cv_mode_kick]);
         gfxPrint(41, 55, CV_MODE_NAMES[cv_mode_snare]);
 
         switch (cursor) {
-            // kick
+            // Kick drum
             case 0:
-                // gfxPrint(1, 45, "tone"); break;
                 gfxPrint(7, 45, Proportion(_tone_kick, BNC_MAX_PARAM, 30) + 30);
                 gfxPrint(19, 45, "Hz");
                 break;
@@ -318,9 +316,9 @@ private:
                 gfxPrint(1, 45, "punch"); break;
             case 3:
                 gfxPrint(1, 45, "drop"); break;
-            // snare
+
+            // Snare drum
             case 4:
-                // gfxPrint(32, 45, "tone"); break;
                 gfxPrint(32, 45, Proportion(_tone_snare, BNC_MAX_PARAM, 500) + 100);
                 gfxPrint(50, 45, "Hz");
                 break;
@@ -355,7 +353,7 @@ private:
         int8_t cx = x + wmax/2;
         int8_t cy = y;
 
-        // body
+        // Body
         int dx = w/5;
         gfxLine(
             cx - dx + 1, cy - body_h/2,
@@ -370,37 +368,38 @@ private:
             cx - dx + 1, cy - body_h/2 + 1,
             2*dx - 1, r - 1);
 
-        // legs
+        // Legs
         for(int p=-1; p<=1; p+=2) { // parity for both sides
             int _dx = p*dx;
-            // front legs
+            // Front legs
             gfxLine(
                 cx + _dx, cy - body_h/2,
                 cx + p*w/3, cy - h/2);
-            // mid legs
+            // Mid legs
             gfxLine(
                 cx + _dx, cy - 1,
                 cx + _dx + 2*p, cy-1);
             gfxLine(
                 cx + _dx + 2*p, cy - 1,
                 cx + p*w/2, cy - 2);
-            // rear legs
+            // Rear legs
             gfxLine(
                 cx + _dx, cy + 1,
                 cx + p*w/3, cy + hmax/h);
             gfxLine(
                 cx + p*w/3, cy + hmax/h,
                 cx + p*w/2, cy + h/2);
-            // body flank
+            // Body flank
             gfxLine(
                 cx+_dx, cy-body_h/2+1,
                 cx+_dx, cy+body_h/2-1);
             if(is_snare) {
-                // draw some feelers
+                // Some feelers for snare bug
                 gfxLine(
                     cx + p, cy - body_h/2 - 2,
                     cx + 2*p, cy - body_h/2 - 2 - hmax/h);
             } else {
+                // Some eyes on the kick bug
                 gfxInvert(
                     cx + _dx - p, cy - body_h/2 + 1,
                     1, 1);
