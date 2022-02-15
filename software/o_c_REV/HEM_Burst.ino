@@ -22,6 +22,8 @@
 #define HEM_BURST_SPACING_MAX 500
 #define HEM_BURST_SPACING_MIN 8
 #define HEM_BURST_CLOCKDIV_MAX 8
+#define HEM_BURST_ACCEL_MAX 7
+#define HEM_BURST_JITTER_MAX 15
 
 class Burst : public HemisphereApplet {
 public:
@@ -35,6 +37,8 @@ public:
         number = 4;
         div = 1;
         spacing = 50;
+        accel = 0;
+        jitter = 0;
         bursts_to_go = 0;
         clocked = 0;
         last_number_cv_tick = 0;
@@ -66,8 +70,27 @@ public:
         if (bursts_to_go > 0) {
             if (--burst_countdown <= 0) {
                 int modded_spacing = effective_spacing + spacing_mod;
-                if (modded_spacing < HEM_BURST_SPACING_MIN) modded_spacing = HEM_BURST_SPACING_MIN;
+                // if (modded_spacing < HEM_BURST_SPACING_MIN) modded_spacing = HEM_BURST_SPACING_MIN;
+                // if (modded_spacing > HEM_BURST_SPACING_MAX) modded_spacing = HEM_BURST_SPACING_MAX;
+                modded_spacing = constrain(modded_spacing, HEM_BURST_SPACING_MIN, HEM_BURST_SPACING_MAX);
+                if (accel > 0) {
+                    int amount_from_min = modded_spacing - HEM_BURST_SPACING_MIN;
+                    int spacing_accel = amount_from_min * burst_count / (burst_count + bursts_to_go - 1) * accel / HEM_BURST_ACCEL_MAX;
+                    modded_spacing -= spacing_accel;
+                }
+                if (accel < 0) {
+                    int amount_from_max = HEM_BURST_SPACING_MAX - modded_spacing;
+                    int spacing_accel = amount_from_max * burst_count / (burst_count + bursts_to_go - 1) * abs(accel) / HEM_BURST_ACCEL_MAX;
+                    modded_spacing += spacing_accel;
+                }
+                if (jitter > 0) {
+                    int rand = random(10 * -jitter, 1 + (10 * jitter));
+                    int jitter_offset = Proportion(rand, (HEM_BURST_JITTER_MAX * 10), modded_spacing); // rand / HEM_BURST_JITTER_MAX * 10 * modded_spacing
+                    modded_spacing += jitter_offset;
+                }
+                modded_spacing = constrain(modded_spacing, HEM_BURST_SPACING_MIN, HEM_BURST_SPACING_MAX);
                 ClockOut(0);
+                burst_count++;
                 if (--bursts_to_go > 0) burst_countdown = modded_spacing * 17; // Reset for next burst
                 else GateOut(1, 0); // Turn off the gate
             }
@@ -88,6 +111,7 @@ public:
             GateOut(1, 1);
             bursts_to_go = number - 1;
             burst_countdown = effective_spacing * 17;
+            burst_count = 1;
         }
     }
 
@@ -99,8 +123,8 @@ public:
 
     void OnButtonPress() {
         cursor += 1;
-        if (cursor > 2) cursor = 0;
-        if (cursor > 1 && !clocked) cursor = 0;
+        if (cursor > 4) cursor = 0;
+        if (cursor > 3 && !clocked) cursor = 0;
     }
 
     void OnEncoderMove(int direction) {
@@ -110,6 +134,14 @@ public:
             clocked = 0;
         }
         if (cursor == 2) {
+            accel = constrain(accel += direction, -HEM_BURST_ACCEL_MAX, HEM_BURST_ACCEL_MAX);
+        }
+
+        if (cursor == 3) {
+            jitter = constrain(jitter += direction, 0, HEM_BURST_JITTER_MAX);
+        }
+
+        if (cursor == 4) {
             div += direction;
             if (div > HEM_BURST_CLOCKDIV_MAX) div = HEM_BURST_CLOCKDIV_MAX;
             if (div < -HEM_BURST_CLOCKDIV_MAX) div = -HEM_BURST_CLOCKDIV_MAX;
@@ -146,6 +178,7 @@ private:
     int cursor; // Number and Spacing
     int burst_countdown; // Number of ticks to the next expected burst
     int bursts_to_go; // Counts down to end of burst set
+    int burst_count; // How many bursts have passed
     bool clocked; // When a clock signal is received at Digital 1, clocked is activated, and the
                   // spacing of a new burst is number/clock length.
     int ticks_since_clock; // When clocked, this is the time since the last clock.
@@ -156,6 +189,8 @@ private:
     int number; // How many bursts fire at each trigger
     int spacing; // How many ms pass between each burst
     int div; // Divide or multiply the clock tempo
+    int accel; // Accelleration or deceleration
+    int jitter; // Randomness
 
     void DrawSelector() {
         // Number
@@ -166,22 +201,35 @@ private:
         gfxPrint(1, 25, clocked ? get_effective_spacing() : spacing);
         gfxPrint(28, 25, "ms");
 
+        // Acceleration
+        gfxIcon(1, 34, GAUGE_ICON);
+        gfxPrint(10, 35, accel);
+
+        // Jitter
+        gfxIcon(30, 34, RANDOM_ICON);
+        gfxPrint(38, 35, jitter);
+
         // Div
         if (clocked) {
-            gfxBitmap(1, 35, 8, CLOCK_ICON);
-            gfxPrint(11, 35, div < 0 ? "x" : "/");
+            gfxBitmap(1, 45, 8, CLOCK_ICON);
+            gfxPrint(11, 45, div < 0 ? "x" : "/");
             gfxPrint(div < 0 ? -div : div);
             gfxPrint(div < 0 ? " Mult" : " Div");
         }
 
         // Cursor
-        gfxCursor(1, 23 + (cursor * 10), 62);
+        if (cursor < 2) gfxCursor(1, 23 + (cursor * 10), 62);
+        if (cursor == 2) gfxCursor(10, 43, 12);
+        if (cursor == 3) gfxCursor(38, 43, 12);
+        if (cursor == 4) gfxCursor(1, 53, 62);
     }
 
-    void DrawIndicator() {
+    void DrawIndicator() {        
         for (int i = 0; i < bursts_to_go; i++)
         {
-            gfxFrame(1 + (i * 5), 46, 4, 12);
+//            gfxLine(0 + (i * 5), 11, 4 + (i * 5), 11);
+//            gfxInvert(3 + (i * 5), 10, 2, 3);
+            gfxFrame(1 + (i * 5), 55, 4, 4);
         }
     }
 
