@@ -150,9 +150,9 @@ public:
                 freq_snare += df;
             }
 
-            // FilterBP(signal, freq, q)
+            // FilterResonantLP(signal, freq, q)
             // q can be 0 .. 2047
-            int32_t snare = FilterBP(noise, freq_snare, 1024);
+            int32_t snare = FilterResonantLP(noise, freq_snare, 1024);
 
             levels[1] = env_snare.Next()/2;
             if (cv_mode_snare == CV_MODE_ATTEN) {
@@ -439,7 +439,7 @@ private:
         return lpf_y;
     }
 
-    int FilterBP(int32_t signal, int32_t cfreq, int32_t q){
+    int FilterResonantLP(int32_t signal, int32_t cfreq, int32_t q){
         // cfreq is in cHz
         // q between 0 and 2047
         // alpha = 2*pi*cfreq*dt/100/(1 + 2*pi*cfreq*dt/100)
@@ -462,7 +462,6 @@ private:
         bpf_y1 /= M;
         return bpf_y1;
     }
-
 };
 
 
