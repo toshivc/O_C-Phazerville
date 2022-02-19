@@ -25,6 +25,7 @@ namespace TDSP {
 
 // Constant multiplier for precision divisions
 const int16_t M = 2048;
+const int16_t QMAX = M;
 
 // CF = 1/(2*pi*dt) for cHz
 // sample rate dt = 60 u
