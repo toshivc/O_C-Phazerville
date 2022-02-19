@@ -21,6 +21,7 @@
 
 #include "vector_osc/HSVectorOscillator.h"
 #include "vector_osc/WaveformManager.h"
+#include "tiny_dsp.h"
 
 #define BNC_MAX_PARAM 63
 #define CH_KICK 0
@@ -120,7 +121,7 @@ public:
             bd_signal = Proportion(levels[0], HEMISPHERE_MAX_CV, kick.Next());
             // Because of overtones induced by the linear interpolation of the
             // sine wave vector oscilator, we have to low-pass filter the signal
-            bd_signal = FilterLP(bd_signal, freq_kick);
+            bd_signal = filter_lp.filter(bd_signal, freq_kick);
         }
 
         // Snare drum
@@ -265,7 +266,7 @@ private:
 
     uint32_t noise;
 
-    int32_t lpf_y;
+    TDSP::FilterLP filter_lp;
 
     int32_t bpf_y0;
     int32_t bpf_y1;
@@ -422,21 +423,6 @@ private:
     void SetEnvDecaySnap(int decay) {
         env_snap.SetFrequency(
             8000 - Proportion(decay, BNC_MAX_PARAM, 7500));
-    }
-
-    int FilterLP(int signal, int32_t cfreq){
-        // cfreq is in cHz
-        // alpha = 2*pi*cfreq*dt/100/(1 + 2*pi*cfreq*dt/100)
-        // alpha = CF*cfreq/(1+ CF*cfreq)
-        // CF = 1/(2*pi*dt) for cHz
-        // sample rate dt = 60 us
-        static const int32_t CF = 265258;
-        static const int M = 1024;
-        int32_t alpha = (cfreq * M) / (CF + cfreq);
-
-        lpf_y = (alpha*signal) + (M - alpha)*lpf_y;
-        lpf_y /= M;
-        return lpf_y;
     }
 
     int FilterResonantLP(int32_t signal, int32_t cfreq, int32_t q){
