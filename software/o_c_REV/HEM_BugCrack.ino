@@ -50,6 +50,8 @@ public:
         snap = 55;
         decay_snap = 26;
 
+        noise = random(0, (1<<12));
+
         kick = WaveformManager::VectorOscillatorFromWaveform(HS::Sine);
         kick.SetFrequency(Proportion(tone_kick, BNC_MAX_PARAM, 3000) + 3000);
         kick.SetScale((12 << 7) * 3);
@@ -125,7 +127,8 @@ public:
         }
 
         // Snare drum
-        noise = random(0, (12 << 7) * 6) - ((12 << 7) * 3);
+        // Bitflip noise
+        noise ^= (1 << random(0, 12));
         if (cv_mode_snare == CV_MODE_TONE) {
             _tone_snare = constrain(tone_snare + cv_snare, 0, BNC_MAX_PARAM);
         } else {
@@ -151,15 +154,13 @@ public:
                 freq_snare += df;
             }
 
-            // FilterResonantLP(signal, freq, q)
-            // q can be 0 .. 2047
-            int32_t snare = FilterResonantLP(noise, freq_snare, 1024);
-
             levels[1] = env_snare.Next()/2;
             if (cv_mode_snare == CV_MODE_ATTEN) {
                 levels[1] = Proportion(BNC_MAX_PARAM - cv_snare, BNC_MAX_PARAM, levels[1]);
             }
-            sd_signal = Proportion(levels[1], HEMISPHERE_3V_CV, snare);
+            sd_signal = Proportion(levels[1], HEMISPHERE_3V_CV, noise);
+            filter_sv.feed(sd_signal, freq_snare, TDSP::QMAX/4);
+            sd_signal = filter_sv.get_lp();
         }
 
         // Kick Drum Output
@@ -267,9 +268,7 @@ private:
     uint32_t noise;
 
     TDSP::FilterLP filter_lp;
-
-    int32_t bpf_y0;
-    int32_t bpf_y1;
+    TDSP::FilterStateVariable filter_sv;
 
     int cv_kick;
     int cv_snare;
@@ -423,30 +422,6 @@ private:
     void SetEnvDecaySnap(int decay) {
         env_snap.SetFrequency(
             8000 - Proportion(decay, BNC_MAX_PARAM, 7500));
-    }
-
-    int FilterResonantLP(int32_t signal, int32_t cfreq, int32_t q){
-        // cfreq is in cHz
-        // q between 0 and 2047
-        // alpha = 2*pi*cfreq*dt/100/(1 + 2*pi*cfreq*dt/100)
-        // alpha = CF*cfreq/(1+ CF*cfreq)
-        // CF = 1/(2*pi*dt) for cHz
-        // sample rate dt = 60 us
-        static const int32_t CF = 265258;
-        // static multiplier/divider
-        static const int32_t M = 2048;
-
-        int32_t ft = (M*cfreq)/CF;
-
-        bpf_y0 =  M*bpf_y0
-                + ft*(signal - bpf_y0)
-                + ft*(q*(2*M - ft)/(M - ft))*(bpf_y0 - bpf_y1)/M;
-        bpf_y0 /= M;
-
-        bpf_y1 =  M*bpf_y1
-                + ft*(bpf_y0 - bpf_y1);
-        bpf_y1 /= M;
-        return bpf_y1;
     }
 };
 
