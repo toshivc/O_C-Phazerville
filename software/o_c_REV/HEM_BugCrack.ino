@@ -307,8 +307,8 @@ private:
         switch (cursor) {
             // Kick drum
             case 0:
-                gfxPrint(7, 45, Proportion(_tone_kick, BNC_MAX_PARAM, 30) + 30);
-                gfxPrint(19, 45, "Hz");
+                gfxPrint(9, 45, Proportion(_tone_kick, BNC_MAX_PARAM, 30) + 30);
+                gfxIcon(22, 44, HERTZ_ICON);
                 break;
             case 1:
                 gfxPrint(1, 45, "decay"); break;
@@ -319,8 +319,8 @@ private:
 
             // Snare drum
             case 4:
-                gfxPrint(32, 45, Proportion(_tone_snare, BNC_MAX_PARAM, 500) + 100);
-                gfxPrint(50, 45, "Hz");
+                gfxPrint(35, 45, Proportion(_tone_snare, BNC_MAX_PARAM, 500) + 100);
+                gfxIcon(54, 44, HERTZ_ICON);
                 break;
             case 5:
                 gfxPrint(32, 45, "decay"); break;
@@ -334,8 +334,8 @@ private:
 
         // Level indicators
         ForEachChannel(ch)
-            gfxInvert(1 + (31*ch), 63 - ProportionCV(levels[ch], 42),
-                      30, ProportionCV(levels[ch], 42));
+            gfxInvert(1 + (31*ch), 53 - ProportionCV(levels[ch], 34),
+                      30, ProportionCV(levels[ch], 34));
     }
 
     void DrawDrumBody(byte x, byte tone, byte decay, byte punch, byte pdecay, bool is_snare) {
