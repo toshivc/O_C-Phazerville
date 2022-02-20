@@ -29,8 +29,10 @@
 #define CH_PUNCH_DECAY 2
 
 #define CV_MODE_ATTEN 0
-#define CV_MODE_TONE 1
+#define CV_MODE_TONE  1
 #define CV_MODE_DECAY 2
+#define CV_MODE_FM    3
+#define CV_MODE_DROP  4
 
 class BugCrack : public HemisphereApplet {
 public:
@@ -100,8 +102,19 @@ public:
         } else {
             _decay_kick = decay_kick;
         }
+        if (cv_mode_kick == CV_MODE_FM) {
+            _punch = constrain(punch + cv_kick, 0, BNC_MAX_PARAM);
+        } else {
+            _punch = punch;
+        }
+        if (cv_mode_kick == CV_MODE_DROP) {
+            _decay_punch = constrain(decay_punch + cv_kick, 0, BNC_MAX_PARAM);
+        } else {
+            _decay_punch = decay_punch;
+        }
         if (Clock(CH_KICK, 1)) {
             SetEnvDecayKick(_decay_kick);
+            SetEnvDecayPunch(_decay_punch);
             env_kick.Start();
             env_punch.Start();
             kick.Start();
@@ -112,7 +125,7 @@ public:
             // punchy FM drop
             if (!env_punch.GetEOC()) {
                 int df = Proportion(env_punch.Next(), HEMISPHERE_3V_CV, freq_kick);
-                df = Proportion(punch, BNC_MAX_PARAM/4, df);
+                df = Proportion(_punch, BNC_MAX_PARAM/4, df);
                 freq_kick += df;
             }
             kick.SetFrequency(freq_kick);
@@ -139,8 +152,19 @@ public:
         } else {
             _decay_snare = decay_snare;
         }
+        if (cv_mode_snare == CV_MODE_FM) {
+            _snap = constrain(snap + cv_snare, 0, BNC_MAX_PARAM);
+        } else {
+            _snap = snap;
+        }
+        if (cv_mode_snare == CV_MODE_DROP) {
+            _decay_snap = constrain(decay_snap + cv_snare, 0, BNC_MAX_PARAM);
+        } else {
+            _decay_snap = decay_snap;
+        }
         if (Clock(CH_SNARE, 1)) {
             SetEnvDecaySnare(_decay_snare);
+            SetEnvDecaySnap(_decay_snap);
             env_snare.Start();
             env_snap.Start();
         }
@@ -149,7 +173,7 @@ public:
             freq_snare *= 100;
             if (!env_snap.GetEOC()) {
                 int64_t df = Proportion(env_snap.Next(), HEMISPHERE_3V_CV, freq_snare/1024);
-                df = Proportion(snap, BNC_MAX_PARAM/4, df);
+                df = Proportion(_snap, BNC_MAX_PARAM/4, df);
                 df *= 1024;
                 freq_snare += df;
             }
@@ -192,7 +216,6 @@ public:
         }
         if (cursor == 3) {
             decay_punch = constrain(decay_punch + direction, 0, BNC_MAX_PARAM);
-            SetEnvDecayPunch(decay_punch);
         }
 
         // Snare drum
@@ -207,14 +230,13 @@ public:
         }
         if (cursor == 7) {
             decay_snap = constrain(decay_snap + direction, 0, BNC_MAX_PARAM);
-            SetEnvDecaySnap(decay_snap);
         }
 
         // CV mode
         if (cursor == 8) {
-            cv_mode = constrain(cv_mode + direction, 0, 8);
-            cv_mode_kick = cv_mode/3;
-            cv_mode_snare = cv_mode%3;
+            cv_mode = constrain(cv_mode + direction, 0, 24);
+            cv_mode_kick = cv_mode/5;
+            cv_mode_snare = cv_mode%5;
         }
         ResetCursor();
     }
@@ -280,24 +302,28 @@ private:
     int decay_kick;
     int _decay_kick;
     int punch;
+    int _punch;
     int decay_punch;
+    int _decay_punch;
 
     int tone_snare;
     int _tone_snare;
     int decay_snare;
     int _decay_snare;
     int snap;
+    int _snap;
     int decay_snap;
+    int _decay_snap;
 
-    const char *CV_MODE_NAMES[3] = {"atn", "ton", "dec"};
+    const char *CV_MODE_NAMES[5] = {"atn", "ton", "dec", "FM", "dro"};
 
     uint8_t cv_mode;
     uint8_t cv_mode_kick;
     uint8_t cv_mode_snare;
 
     void DrawInterface() {
-        DrawDrumBody(1, _tone_kick, _decay_kick, punch, decay_punch, 0);
-        DrawDrumBody(32, _tone_snare, _decay_snare, snap, decay_snap, 1);
+        DrawDrumBody(1, _tone_kick, _decay_kick, _punch, _decay_punch, 0);
+        DrawDrumBody(32, _tone_snare, _decay_snare, _snap, _decay_snap, 1);
 
         // CV modes
         gfxIcon(1, 57, CV_ICON);
