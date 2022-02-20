@@ -160,6 +160,10 @@ public:
         quant_channels = Unpack(data, PackLocation {16,8});
         scale = Unpack(data, PackLocation {24,8});
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
+        ForEachChannel(ch) {
+            Shred(ch);
+        }
+        VolageOut();
     }
 
 protected:
