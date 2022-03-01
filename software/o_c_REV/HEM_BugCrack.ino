@@ -200,7 +200,7 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor > 8) cursor = 0;
+        if (++cursor > 9) cursor = 0;
     }
 
     void OnEncoderMove(int direction) {
@@ -217,27 +217,27 @@ public:
         if (cursor == 3) {
             decay_punch = constrain(decay_punch + direction, 0, BNC_MAX_PARAM);
         }
+        if (cursor == 4) {
+            cv_mode_kick = constrain(cv_mode_kick + direction, 0, 4);
+        }
 
         // Snare drum
-        if (cursor == 4) {
+        if (cursor == 5) {
             tone_snare = constrain(tone_snare + direction, 0, BNC_MAX_PARAM);
         }
-        if (cursor == 5) {
+        if (cursor == 6) {
             decay_snare = constrain(decay_snare + direction, 0, BNC_MAX_PARAM);
         }
-        if (cursor == 6) {
+        if (cursor == 7) {
             snap = constrain(snap + direction, 0, BNC_MAX_PARAM);
         }
-        if (cursor == 7) {
+        if (cursor == 8) {
             decay_snap = constrain(decay_snap + direction, 0, BNC_MAX_PARAM);
         }
-
-        // CV mode
-        if (cursor == 8) {
-            cv_mode = constrain(cv_mode + direction, 0, 24);
-            cv_mode_kick = cv_mode/5;
-            cv_mode_snare = cv_mode%5;
+        if (cursor == 9) {
+            cv_mode_snare = constrain(cv_mode_snare + direction, 0, 4);
         }
+
         ResetCursor();
     }
 
@@ -317,7 +317,6 @@ private:
 
     const char *CV_MODE_NAMES[5] = {"atn", "ton", "dec", "FM", "dro"};
 
-    uint8_t cv_mode;
     uint8_t cv_mode_kick;
     uint8_t cv_mode_snare;
 
@@ -328,6 +327,7 @@ private:
         // CV modes
         gfxIcon(1, 57, CV_ICON);
         gfxPrint(10, 55, CV_MODE_NAMES[cv_mode_kick]);
+        gfxIcon(32, 57, CV_ICON);
         gfxPrint(41, 55, CV_MODE_NAMES[cv_mode_snare]);
 
         switch (cursor) {
@@ -342,20 +342,22 @@ private:
                 gfxPrint(1, 45, "punch"); break;
             case 3:
                 gfxPrint(1, 45, "drop"); break;
+            case 4:
+                gfxInvert(1, 54, 30, 9); break;
 
             // Snare drum
-            case 4:
+            case 5:
                 gfxPrint(35, 45, Proportion(_tone_snare, BNC_MAX_PARAM, 500) + 100);
                 gfxIcon(54, 44, HERTZ_ICON);
                 break;
-            case 5:
-                gfxPrint(32, 45, "decay"); break;
             case 6:
-                gfxPrint(32, 45, "snap"); break;
+                gfxPrint(32, 45, "decay"); break;
             case 7:
-                gfxPrint(32, 45, "drop"); break;
+                gfxPrint(32, 45, "snap"); break;
             case 8:
-                gfxInvert(1, 54, 61, 9);
+                gfxPrint(32, 45, "drop"); break;
+            case 9:
+                gfxInvert(32, 54, 31, 9); break;
         }
 
         // Level indicators
