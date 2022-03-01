@@ -357,7 +357,7 @@ private:
             case 8:
                 gfxPrint(32, 45, "drop"); break;
             case 9:
-                gfxInvert(32, 54, 31, 9); break;
+                gfxInvert(32, 54, 30, 9); break;
         }
 
         // Level indicators
