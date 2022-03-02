@@ -15,7 +15,7 @@
 
 //////////////////  id  cat   class name
 #define HEMISPHERE_APPLETS { \
-    // DECLARE_APPLET(  8, 0x01, ADSREG), \
+    DECLARE_APPLET(  8, 0x01, ADSREG), \
     // DECLARE_APPLET( 34, 0x01, ADEG), \
     // DECLARE_APPLET( 15, 0x02, AnnularFusion), \
     // DECLARE_APPLET( 47, 0x09, ASR), \
@@ -46,7 +46,7 @@
     // DECLARE_APPLET( 33, 0x10, MixerBal), \
     // DECLARE_APPLET( 20, 0x02, Palimpsest), \
     // DECLARE_APPLET( 44, 0x01, RunglBook), \
-    // DECLARE_APPLET( 26, 0x08, ScaleDuet), \
+    DECLARE_APPLET( 26, 0x08, ScaleDuet), \
     // DECLARE_APPLET( 40, 0x40, Schmitt), \
     // DECLARE_APPLET( 23, 0x80, Scope), \
     // DECLARE_APPLET( 14, 0x02, Sequence5), \
