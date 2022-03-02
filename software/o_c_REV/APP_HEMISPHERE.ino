@@ -38,7 +38,6 @@ namespace menu = OC::menu;
 }
 
 #define HEMISPHERE_DOUBLE_CLICK_TIME 8000
-#define HEMISPHERE_SETTING_LAST 20
 
 typedef struct Applet {
   int id;
@@ -65,7 +64,8 @@ enum HEMISPHERE_SETTINGS {
     HEMISPHERE_RIGHT_DATA_B3,
     HEMISPHERE_LEFT_DATA_B4,
     HEMISPHERE_RIGHT_DATA_B4,
-    HEMISPHERE_CLOCK_DATA
+    HEMISPHERE_CLOCK_DATA,
+    HEMISPHERE_SETTING_LAST
 };
 
 ////////////////////////////////////////////////////////////////////////////////
