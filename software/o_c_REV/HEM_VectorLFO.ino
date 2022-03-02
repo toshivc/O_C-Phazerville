@@ -113,15 +113,15 @@ public:
         }
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,6}, waveform_number[0]);
         Pack(data, PackLocation {6,6}, waveform_number[1]);
         Pack(data, PackLocation {12,10}, freq[0] & 0x03ff);
         Pack(data, PackLocation {22,10}, freq[1] & 0x03ff);
         return data;
     }
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         freq[0] = Unpack(data, PackLocation {12,10});
         freq[1] = Unpack(data, PackLocation {22,10});
         SwitchWaveform(0, Unpack(data, PackLocation {0,6}));
@@ -224,5 +224,5 @@ void VectorLFO_View(bool hemisphere) {VectorLFO_instance[hemisphere].BaseView();
 void VectorLFO_OnButtonPress(bool hemisphere) {VectorLFO_instance[hemisphere].OnButtonPress();}
 void VectorLFO_OnEncoderMove(bool hemisphere, int direction) {VectorLFO_instance[hemisphere].OnEncoderMove(direction);}
 void VectorLFO_ToggleHelpScreen(bool hemisphere) {VectorLFO_instance[hemisphere].HelpScreen();}
-uint32_t VectorLFO_OnDataRequest(bool hemisphere) {return VectorLFO_instance[hemisphere].OnDataRequest();}
-void VectorLFO_OnDataReceive(bool hemisphere, uint32_t data) {VectorLFO_instance[hemisphere].OnDataReceive(data);}
+uint64_t VectorLFO_OnDataRequest(bool hemisphere) {return VectorLFO_instance[hemisphere].OnDataRequest();}
+void VectorLFO_OnDataReceive(bool hemisphere, uint64_t data) {VectorLFO_instance[hemisphere].OnDataReceive(data);}
