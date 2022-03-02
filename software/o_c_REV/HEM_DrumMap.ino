@@ -170,20 +170,28 @@ public:
         }
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,8}, fill[0]); 
         Pack(data, PackLocation {8,8}, fill[1]); 
         Pack(data, PackLocation {16,8}, x); 
         Pack(data, PackLocation {24,8}, y); 
+        Pack(data, PackLocation {32,8}, chaos);
+        Pack(data, PackLocation {40,8}, mode[0]);
+        Pack(data, PackLocation {48,8}, mode[1]);
+        Pack(data, PackLocation {56,8}, cv_mode);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         fill[0] = Unpack(data, PackLocation {0,8});
         fill[1] = Unpack(data, PackLocation {8,8});
         x = Unpack(data, PackLocation {16,8});
         y = Unpack(data, PackLocation {24,8});
+        chaos = Unpack(data, PackLocation {32,8});
+        mode[0] = Unpack(data, PackLocation {40,8});
+        mode[1] = Unpack(data, PackLocation {48,8});
+        cv_mode = Unpack(data, PackLocation {56,8});
     }
 
 protected:
@@ -354,5 +362,5 @@ void DrumMap_View(bool hemisphere) {DrumMap_instance[hemisphere].BaseView();}
 void DrumMap_OnButtonPress(bool hemisphere) {DrumMap_instance[hemisphere].OnButtonPress();}
 void DrumMap_OnEncoderMove(bool hemisphere, int direction) {DrumMap_instance[hemisphere].OnEncoderMove(direction);}
 void DrumMap_ToggleHelpScreen(bool hemisphere) {DrumMap_instance[hemisphere].HelpScreen();}
-uint32_t DrumMap_OnDataRequest(bool hemisphere) {return DrumMap_instance[hemisphere].OnDataRequest();}
-void DrumMap_OnDataReceive(bool hemisphere, uint32_t data) {DrumMap_instance[hemisphere].OnDataReceive(data);}
+uint64_t DrumMap_OnDataRequest(bool hemisphere) {return DrumMap_instance[hemisphere].OnDataRequest();}
+void DrumMap_OnDataReceive(bool hemisphere, uint64_t data) {DrumMap_instance[hemisphere].OnDataReceive(data);}

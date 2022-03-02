@@ -38,6 +38,7 @@ namespace menu = OC::menu;
 }
 
 #define HEMISPHERE_DOUBLE_CLICK_TIME 8000
+#define HEMISPHERE_SETTING_LAST 20
 
 typedef struct Applet {
   int id;
@@ -48,20 +49,23 @@ typedef struct Applet {
   void (*OnButtonPress)(bool); // Encoder button has been pressed
   void (*OnEncoderMove)(bool, int); // Encoder has been rotated
   void (*ToggleHelpScreen)(bool); // Help Screen has been requested
-  uint32_t (*OnDataRequest)(bool); // Get a data int from the applet
-  void (*OnDataReceive)(bool, uint32_t); // Send a data int to the applet
+  uint64_t (*OnDataRequest)(bool); // Get a data int from the applet
+  void (*OnDataReceive)(bool, uint64_t); // Send a data int to the applet
 } Applet;
 
 // The settings specify the selected applets, and 32 bits of data for each applet
 enum HEMISPHERE_SETTINGS {
     HEMISPHERE_SELECTED_LEFT_ID,
     HEMISPHERE_SELECTED_RIGHT_ID,
-    HEMISPHERE_LEFT_DATA_L,
-    HEMISPHERE_RIGHT_DATA_L,
-    HEMISPHERE_LEFT_DATA_H,
-    HEMISPHERE_RIGHT_DATA_H,
-    HEMISPHERE_CLOCK_DATA,
-    HEMISPHERE_SETTING_LAST
+    HEMISPHERE_LEFT_DATA_B1,
+    HEMISPHERE_RIGHT_DATA_B1,
+    HEMISPHERE_LEFT_DATA_B2,
+    HEMISPHERE_RIGHT_DATA_B2,
+    HEMISPHERE_LEFT_DATA_B3,
+    HEMISPHERE_RIGHT_DATA_B3,
+    HEMISPHERE_LEFT_DATA_B4,
+    HEMISPHERE_RIGHT_DATA_B4,
+    HEMISPHERE_CLOCK_DATA
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,8 +85,8 @@ public:
         help_hemisphere = -1;
         clock_setup = 0;
 
-        SetApplet(0, get_applet_index_by_id(8)); // ADSR
-        SetApplet(1, get_applet_index_by_id(26)); // Scale Duet
+        SetApplet(0, get_applet_index_by_id(57)); // ADSR
+        SetApplet(1, get_applet_index_by_id(58)); // Scale Duet
     }
 
     void Resume() {
@@ -90,10 +94,10 @@ public:
         {
             int index = get_applet_index_by_id(values_[h]);
             SetApplet(h, index);
-            uint32_t data = (values_[4 + h] << 16) + values_[2 + h];
+            uint64_t data = (values_[8 + h] << 48) + (values_[6 + h] << 32) + (values_[4 + h] << 16) + values_[2 + h];
             available_applets[index].OnDataReceive(h, data);
         }
-        ClockSetup.OnDataReceive(0, uint32_t(values_[HEMISPHERE_CLOCK_DATA]));
+        ClockSetup.OnDataReceive(0, uint64_t(values_[HEMISPHERE_CLOCK_DATA]));
     }
 
     void SetApplet(int hemisphere, int index) {
@@ -241,13 +245,16 @@ public:
         for (int h = 0; h < 2; h++)
         {
             int index = my_applet[h];
-            uint32_t data = available_applets[index].OnDataRequest(h);
+            uint64_t data = available_applets[index].OnDataRequest(h);
             apply_value(2 + h, data & 0xffff);
             apply_value(4 + h, (data >> 16) & 0xffff);
+            apply_value(6 + h, (data >> 32) & 0xffff);
+            apply_value(8 + h, (data >> 48) & 0xffff);
         }
         apply_value(HEMISPHERE_CLOCK_DATA, ClockSetup.OnDataRequest(0));
     }
 
+    // TODO: update to 4 bytes of data
     void OnSendSysEx() {
         // Set the values_ array prior to packing it
         RequestAppletData();
@@ -272,6 +279,7 @@ public:
         SendSysEx(packed, 'H');
     }
 
+    // TODO: update to 4 bytes of data
     void OnReceiveSysEx() {
         uint8_t V[10];
         if (ExtractSysExData(V, 'H')) {
@@ -330,10 +338,14 @@ private:
 SETTINGS_DECLARE(HemisphereManager, HEMISPHERE_SETTING_LAST) {
     {0, 0, 255, "Applet ID L", NULL, settings::STORAGE_TYPE_U8},
     {0, 0, 255, "Applet ID R", NULL, settings::STORAGE_TYPE_U8},
-    {0, 0, 65535, "Data L low", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data R low", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data L high", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data R high", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L byte 1", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R byte 1", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L byte 2", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R byte 2", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L byte 3", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R byte 3", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L byte 4", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R byte 4", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data", NULL, settings::STORAGE_TYPE_U16},
 };
 
