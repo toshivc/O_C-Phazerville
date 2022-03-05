@@ -436,6 +436,7 @@ private:
     }
 
     void SetEnvDecayKick(int decay) {
+        // 100 ms - 1000 ms -> 10 Hz - 1 Hz
         env_kick.SetFrequency(1000 - Proportion(decay, BNC_MAX_PARAM, 900));
     }
     void SetEnvDecayPunch(int decay) {
@@ -445,9 +446,11 @@ private:
     }
 
     void SetEnvDecaySnare(int decay) {
-        env_snare.SetFrequency(1000 - Proportion(decay, BNC_MAX_PARAM, 900));
+        // 50 ms - 1000 ms -> 20 Hz - 1 Hz
+        env_snare.SetFrequency(2000 - Proportion(decay, BNC_MAX_PARAM, 1900));
     }
     void SetEnvDecaySnap(int decay) {
+        // 12.5 ms - 200 ms -> 80 Hz - 5 Hz
         env_snap.SetFrequency(
             8000 - Proportion(decay, BNC_MAX_PARAM, 7500));
     }
