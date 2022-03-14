@@ -254,43 +254,53 @@ public:
         apply_value(HEMISPHERE_CLOCK_DATA, ClockSetup.OnDataRequest(0));
     }
 
-    // TODO: update to 4 bytes of data
     void OnSendSysEx() {
-        // // Set the values_ array prior to packing it
-        // RequestAppletData();
+        // Set the values_ array prior to packing it
+        RequestAppletData();
 
-        // // Describe the data structure for the audience
-        // uint8_t V[10];
-        // V[0] = (uint8_t)values_[HEMISPHERE_SELECTED_LEFT_ID];
-        // V[1] = (uint8_t)values_[HEMISPHERE_SELECTED_RIGHT_ID];
-        // V[2] = (uint8_t)(values_[HEMISPHERE_LEFT_DATA_L] & 0xff);
-        // V[3] = (uint8_t)((values_[HEMISPHERE_LEFT_DATA_L] >> 8) & 0xff);
-        // V[4] = (uint8_t)(values_[HEMISPHERE_RIGHT_DATA_L] & 0xff);
-        // V[5] = (uint8_t)((values_[HEMISPHERE_RIGHT_DATA_L] >> 8) & 0xff);
-        // V[6] = (uint8_t)(values_[HEMISPHERE_LEFT_DATA_H] & 0xff);
-        // V[7] = (uint8_t)((values_[HEMISPHERE_LEFT_DATA_H] >> 8) & 0xff);
-        // V[8] = (uint8_t)(values_[HEMISPHERE_RIGHT_DATA_H] & 0xff);
-        // V[9] = (uint8_t)((values_[HEMISPHERE_RIGHT_DATA_H] >> 8) & 0xff);
+        // Describe the data structure for the audience
+        uint8_t V[18];
+        V[0] = (uint8_t)values_[HEMISPHERE_SELECTED_LEFT_ID];
+        V[1] = (uint8_t)values_[HEMISPHERE_SELECTED_RIGHT_ID];
+        V[2] = (uint8_t)(values_[HEMISPHERE_LEFT_DATA_B1] & 0xff);
+        V[3] = (uint8_t)((values_[HEMISPHERE_LEFT_DATA_B1] >> 8) & 0xff);
+        V[4] = (uint8_t)(values_[HEMISPHERE_RIGHT_DATA_B1] & 0xff);
+        V[5] = (uint8_t)((values_[HEMISPHERE_RIGHT_DATA_B1] >> 8) & 0xff);
+        V[6] = (uint8_t)(values_[HEMISPHERE_LEFT_DATA_B2] & 0xff);
+        V[7] = (uint8_t)((values_[HEMISPHERE_LEFT_DATA_B2] >> 8) & 0xff);
+        V[8] = (uint8_t)(values_[HEMISPHERE_RIGHT_DATA_B2] & 0xff);
+        V[9] = (uint8_t)((values_[HEMISPHERE_RIGHT_DATA_B2] >> 8) & 0xff);
+        V[10] = (uint8_t)(values_[HEMISPHERE_LEFT_DATA_B3] & 0xff);
+        V[11] = (uint8_t)((values_[HEMISPHERE_LEFT_DATA_B3] >> 8) & 0xff);
+        V[12] = (uint8_t)(values_[HEMISPHERE_RIGHT_DATA_B3] & 0xff);
+        V[13] = (uint8_t)((values_[HEMISPHERE_RIGHT_DATA_B3] >> 8) & 0xff);
+        V[14] = (uint8_t)(values_[HEMISPHERE_LEFT_DATA_B4] & 0xff);
+        V[15] = (uint8_t)((values_[HEMISPHERE_LEFT_DATA_B4] >> 8) & 0xff);
+        V[16] = (uint8_t)(values_[HEMISPHERE_RIGHT_DATA_B4] & 0xff);
+        V[17] = (uint8_t)((values_[HEMISPHERE_RIGHT_DATA_B4] >> 8) & 0xff);
 
-        // // Pack it up, ship it out
-        // UnpackedData unpacked;
-        // unpacked.set_data(10, V);
-        // PackedData packed = unpacked.pack();
-        // SendSysEx(packed, 'H');
+        // Pack it up, ship it out
+        UnpackedData unpacked;
+        unpacked.set_data(18, V);
+        PackedData packed = unpacked.pack();
+        SendSysEx(packed, 'H');
     }
 
-    // TODO: update to 4 bytes of data
     void OnReceiveSysEx() {
-        // uint8_t V[10];
-        // if (ExtractSysExData(V, 'H')) {
-        //     values_[HEMISPHERE_SELECTED_LEFT_ID] = V[0];
-        //     values_[HEMISPHERE_SELECTED_RIGHT_ID] = V[1];
-        //     values_[HEMISPHERE_LEFT_DATA_L] = ((uint16_t)V[3] << 8) + V[2];
-        //     values_[HEMISPHERE_RIGHT_DATA_L] = ((uint16_t)V[5] << 8) + V[4];
-        //     values_[HEMISPHERE_LEFT_DATA_H] = ((uint16_t)V[7] << 8) + V[6];
-        //     values_[HEMISPHERE_RIGHT_DATA_H] = ((uint16_t)V[9] << 8) + V[8];
-        //     Resume();
-        // }
+        uint8_t V[18];
+        if (ExtractSysExData(V, 'H')) {
+            values_[HEMISPHERE_SELECTED_LEFT_ID] = V[0];
+            values_[HEMISPHERE_SELECTED_RIGHT_ID] = V[1];
+            values_[HEMISPHERE_LEFT_DATA_B1] = ((uint16_t)V[3] << 8) + V[2];
+            values_[HEMISPHERE_RIGHT_DATA_B1] = ((uint16_t)V[5] << 8) + V[4];
+            values_[HEMISPHERE_LEFT_DATA_B2] = ((uint16_t)V[7] << 8) + V[6];
+            values_[HEMISPHERE_RIGHT_DATA_B2] = ((uint16_t)V[9] << 8) + V[8];
+            values_[HEMISPHERE_LEFT_DATA_B3] = ((uint16_t)V[11] << 8) + V[10];
+            values_[HEMISPHERE_RIGHT_DATA_B3] = ((uint16_t)V[13] << 8) + V[12];
+            values_[HEMISPHERE_LEFT_DATA_B4] = ((uint16_t)V[15] << 8) + V[14];
+            values_[HEMISPHERE_RIGHT_DATA_B4] = ((uint16_t)V[17] << 8) + V[16];
+            Resume();
+        }
     }
 
 private:
@@ -338,14 +348,14 @@ private:
 SETTINGS_DECLARE(HemisphereManager, HEMISPHERE_SETTING_LAST) {
     {0, 0, 255, "Applet ID L", NULL, settings::STORAGE_TYPE_U8},
     {0, 0, 255, "Applet ID R", NULL, settings::STORAGE_TYPE_U8},
-    {0, 0, 65535, "Data L byte 1", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data R byte 1", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data L byte 2", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data R byte 2", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data L byte 3", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data R byte 3", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data L byte 4", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data R byte 4", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L block 1", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R block 1", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L block 2", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R block 2", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L block 3", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R block 3", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L block 4", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R block 4", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data", NULL, settings::STORAGE_TYPE_U16}
 };
 
