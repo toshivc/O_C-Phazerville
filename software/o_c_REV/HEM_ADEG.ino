@@ -108,14 +108,14 @@ public:
         last_change_ticks = OC::CORE::ticks;
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,8}, attack);
         Pack(data, PackLocation {8,8}, decay);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         attack = Unpack(data, PackLocation {0,8});
         decay = Unpack(data, PackLocation {8,8});
     }
@@ -183,5 +183,5 @@ void ADEG_View(bool hemisphere) {ADEG_instance[hemisphere].BaseView();}
 void ADEG_OnButtonPress(bool hemisphere) {ADEG_instance[hemisphere].OnButtonPress();}
 void ADEG_OnEncoderMove(bool hemisphere, int direction) {ADEG_instance[hemisphere].OnEncoderMove(direction);}
 void ADEG_ToggleHelpScreen(bool hemisphere) {ADEG_instance[hemisphere].HelpScreen();}
-uint32_t ADEG_OnDataRequest(bool hemisphere) {return ADEG_instance[hemisphere].OnDataRequest();}
-void ADEG_OnDataReceive(bool hemisphere, uint32_t data) {ADEG_instance[hemisphere].OnDataReceive(data);}
+uint64_t ADEG_OnDataRequest(bool hemisphere) {return ADEG_instance[hemisphere].OnDataRequest();}
+void ADEG_OnDataReceive(bool hemisphere, uint64_t data) {ADEG_instance[hemisphere].OnDataReceive(data);}

@@ -140,8 +140,8 @@ public:
         }
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         // Not enough room to save the sequences, so we'll just have to save settings
         Pack(data, PackLocation {0,4}, range[0]); // range will never be more than 4 bits
         Pack(data, PackLocation {4,1}, int(bipolar[0]));
@@ -152,7 +152,7 @@ public:
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         range[0] = Unpack(data, PackLocation {0,4}); // only 4 bits used for range
         bipolar[0] = Unpack(data, PackLocation {4,1}); 
         range[1] = Unpack(data, PackLocation {8,4});
@@ -313,5 +313,5 @@ void Shredder_View(bool hemisphere) {Shredder_instance[hemisphere].BaseView();}
 void Shredder_OnButtonPress(bool hemisphere) {Shredder_instance[hemisphere].OnButtonPress();}
 void Shredder_OnEncoderMove(bool hemisphere, int direction) {Shredder_instance[hemisphere].OnEncoderMove(direction);}
 void Shredder_ToggleHelpScreen(bool hemisphere) {Shredder_instance[hemisphere].HelpScreen();}
-uint32_t Shredder_OnDataRequest(bool hemisphere) {return Shredder_instance[hemisphere].OnDataRequest();}
-void Shredder_OnDataReceive(bool hemisphere, uint32_t data) {Shredder_instance[hemisphere].OnDataReceive(data);}
+uint64_t Shredder_OnDataRequest(bool hemisphere) {return Shredder_instance[hemisphere].OnDataRequest();}
+void Shredder_OnDataReceive(bool hemisphere, uint64_t data) {Shredder_instance[hemisphere].OnDataReceive(data);}
