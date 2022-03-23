@@ -155,7 +155,7 @@ public:
         //Pack(data, PackLocation {27,6}, scale);
         Pack(data, PackLocation {27,6}, constrain(scale, 0, 63));
         // Benirose mod: cv2 output mode
-//        Pack(data, PackLocation {33,1}, cv2);
+        Pack(data, PackLocation {33,2}, cv2);
         
         return data;
     }
@@ -166,6 +166,7 @@ public:
         length = Unpack(data, PackLocation {23,4}) + 1;
         scale = Unpack(data, PackLocation {27,6});
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
+        cv2 = Unpack(data, PackLocation {33,2});
     }
 
 protected:
