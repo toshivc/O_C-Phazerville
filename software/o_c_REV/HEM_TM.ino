@@ -145,8 +145,8 @@ public:
         }
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,16}, reg);
         Pack(data, PackLocation {16,7}, p);
         Pack(data, PackLocation {23,4}, length - 1);
@@ -155,17 +155,18 @@ public:
         //Pack(data, PackLocation {27,6}, scale);
         Pack(data, PackLocation {27,6}, constrain(scale, 0, 63));
         // Benirose mod: cv2 output mode
-//        Pack(data, PackLocation {33,1}, cv2);
+        Pack(data, PackLocation {33,2}, cv2);
         
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         reg = Unpack(data, PackLocation {0,16});
         p = Unpack(data, PackLocation {16,7});
         length = Unpack(data, PackLocation {23,4}) + 1;
         scale = Unpack(data, PackLocation {27,6});
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
+        cv2 = Unpack(data, PackLocation {33,2});
     }
 
 protected:
@@ -281,10 +282,10 @@ void TM_ToggleHelpScreen(bool hemisphere) {
     TM_instance[hemisphere].HelpScreen();
 }
 
-uint32_t TM_OnDataRequest(bool hemisphere) {
+uint64_t TM_OnDataRequest(bool hemisphere) {
     return TM_instance[hemisphere].OnDataRequest();
 }
 
-void TM_OnDataReceive(bool hemisphere, uint32_t data) {
+void TM_OnDataReceive(bool hemisphere, uint64_t data) {
     TM_instance[hemisphere].OnDataReceive(data);
 }

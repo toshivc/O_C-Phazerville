@@ -118,15 +118,15 @@ public:
         }
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,8}, number);
         Pack(data, PackLocation {8,8}, spacing);
         Pack(data, PackLocation {16,8}, div + 8);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         number = Unpack(data, PackLocation {0,8});
         spacing = Unpack(data, PackLocation {8,8});
         div = Unpack(data, PackLocation {16,8}) - 8;
@@ -231,10 +231,10 @@ void Burst_ToggleHelpScreen(bool hemisphere) {
     Burst_instance[hemisphere].HelpScreen();
 }
 
-uint32_t Burst_OnDataRequest(bool hemisphere) {
+uint64_t Burst_OnDataRequest(bool hemisphere) {
     return Burst_instance[hemisphere].OnDataRequest();
 }
 
-void Burst_OnDataReceive(bool hemisphere, uint32_t data) {
+void Burst_OnDataReceive(bool hemisphere, uint64_t data) {
     Burst_instance[hemisphere].OnDataReceive(data);
 }

@@ -105,14 +105,14 @@ public:
         if (cursor != 1) replay = 1;
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,8}, sel_chord);
         Pack(data, PackLocation {8,8}, transpose + 24);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         ImprintChord(Unpack(data, PackLocation {0,8}));
         transpose = Unpack(data, PackLocation {8,8}) - 24;
     }
@@ -263,10 +263,10 @@ void Carpeggio_ToggleHelpScreen(bool hemisphere) {
     Carpeggio_instance[hemisphere].HelpScreen();
 }
 
-uint32_t Carpeggio_OnDataRequest(bool hemisphere) {
+uint64_t Carpeggio_OnDataRequest(bool hemisphere) {
     return Carpeggio_instance[hemisphere].OnDataRequest();
 }
 
-void Carpeggio_OnDataReceive(bool hemisphere, uint32_t data) {
+void Carpeggio_OnDataReceive(bool hemisphere, uint64_t data) {
     Carpeggio_instance[hemisphere].OnDataReceive(data);
 }

@@ -76,14 +76,14 @@ public:
         if (cursor == 1) rho = constrain(rho += direction, 4, 127);
     }
 
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,8}, (uint8_t)freq);
         Pack(data, PackLocation {8,8}, (uint8_t)rho);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         freq = Unpack(data, PackLocation {0,8});
         rho = Unpack(data, PackLocation {8,8});
     }
@@ -161,10 +161,10 @@ void LowerRenz_ToggleHelpScreen(bool hemisphere) {
     LowerRenz_instance[hemisphere].HelpScreen();
 }
 
-uint32_t LowerRenz_OnDataRequest(bool hemisphere) {
+uint64_t LowerRenz_OnDataRequest(bool hemisphere) {
     return LowerRenz_instance[hemisphere].OnDataRequest();
 }
 
-void LowerRenz_OnDataReceive(bool hemisphere, uint32_t data) {
+void LowerRenz_OnDataReceive(bool hemisphere, uint64_t data) {
     LowerRenz_instance[hemisphere].OnDataReceive(data);
 }

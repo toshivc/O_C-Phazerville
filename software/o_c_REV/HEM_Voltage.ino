@@ -72,8 +72,8 @@ public:
         }
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,9}, voltage[0] + 256);
         Pack(data, PackLocation {10,9}, voltage[1] + 256);
         Pack(data, PackLocation {19,1}, gate[0]);
@@ -81,7 +81,7 @@ public:
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         voltage[0] = Unpack(data, PackLocation {0,9}) - 256;
         voltage[1] = Unpack(data, PackLocation {10,9}) - 256;
         gate[0] = Unpack(data, PackLocation {19,1});
@@ -141,5 +141,5 @@ void Voltage_View(bool hemisphere) {Voltage_instance[hemisphere].BaseView();}
 void Voltage_OnButtonPress(bool hemisphere) {Voltage_instance[hemisphere].OnButtonPress();}
 void Voltage_OnEncoderMove(bool hemisphere, int direction) {Voltage_instance[hemisphere].OnEncoderMove(direction);}
 void Voltage_ToggleHelpScreen(bool hemisphere) {Voltage_instance[hemisphere].HelpScreen();}
-uint32_t Voltage_OnDataRequest(bool hemisphere) {return Voltage_instance[hemisphere].OnDataRequest();}
-void Voltage_OnDataReceive(bool hemisphere, uint32_t data) {Voltage_instance[hemisphere].OnDataReceive(data);}
+uint64_t Voltage_OnDataRequest(bool hemisphere) {return Voltage_instance[hemisphere].OnDataRequest();}
+void Voltage_OnDataReceive(bool hemisphere, uint64_t data) {Voltage_instance[hemisphere].OnDataReceive(data);}

@@ -85,14 +85,14 @@ public:
         last_change_ticks = OC::CORE::ticks;
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,8}, rise);
         Pack(data, PackLocation {8,8}, fall);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         rise = Unpack(data, PackLocation {0,8});
         fall = Unpack(data, PackLocation {8,8});
     }
@@ -177,10 +177,10 @@ void Slew_ToggleHelpScreen(bool hemisphere) {
     Slew_instance[hemisphere].HelpScreen();
 }
 
-uint32_t Slew_OnDataRequest(bool hemisphere) {
+uint64_t Slew_OnDataRequest(bool hemisphere) {
     return Slew_instance[hemisphere].OnDataRequest();
 }
 
-void Slew_OnDataReceive(bool hemisphere, uint32_t data) {
+void Slew_OnDataReceive(bool hemisphere, uint64_t data) {
     Slew_instance[hemisphere].OnDataReceive(data);
 }
