@@ -54,14 +54,14 @@ public:
         clock_m->SetTempoBPM(bpm);
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,16}, clock_m->GetTempo());
         Pack(data, PackLocation {16,5}, clock_m->GetMultiply() - 1);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         clock_m->SetTempoBPM(Unpack(data, PackLocation {0,16}));
         clock_m->SetMultiply(Unpack(data, PackLocation {16,5}) + 1);
     }
@@ -130,5 +130,5 @@ void Metronome_View(bool hemisphere) {Metronome_instance[hemisphere].BaseView();
 void Metronome_OnButtonPress(bool hemisphere) {Metronome_instance[hemisphere].OnButtonPress();}
 void Metronome_OnEncoderMove(bool hemisphere, int direction) {Metronome_instance[hemisphere].OnEncoderMove(direction);}
 void Metronome_ToggleHelpScreen(bool hemisphere) {Metronome_instance[hemisphere].HelpScreen();}
-uint32_t Metronome_OnDataRequest(bool hemisphere) {return Metronome_instance[hemisphere].OnDataRequest();}
-void Metronome_OnDataReceive(bool hemisphere, uint32_t data) {Metronome_instance[hemisphere].OnDataReceive(data);}
+uint64_t Metronome_OnDataRequest(bool hemisphere) {return Metronome_instance[hemisphere].OnDataRequest();}
+void Metronome_OnDataReceive(bool hemisphere, uint64_t data) {Metronome_instance[hemisphere].OnDataReceive(data);}

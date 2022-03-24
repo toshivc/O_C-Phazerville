@@ -70,14 +70,14 @@ public:
         delay[cursor] = constrain(delay[cursor], 0, 99);
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,7}, delay[0]);
         Pack(data, PackLocation {7,7}, delay[1]);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         delay[0] = Unpack(data, PackLocation {0,7});
         delay[1] = Unpack(data, PackLocation {7,7});
     }
@@ -179,10 +179,10 @@ void Shuffle_ToggleHelpScreen(bool hemisphere) {
     Shuffle_instance[hemisphere].HelpScreen();
 }
 
-uint32_t Shuffle_OnDataRequest(bool hemisphere) {
+uint64_t Shuffle_OnDataRequest(bool hemisphere) {
     return Shuffle_instance[hemisphere].OnDataRequest();
 }
 
-void Shuffle_OnDataReceive(bool hemisphere, uint32_t data) {
+void Shuffle_OnDataReceive(bool hemisphere, uint64_t data) {
     Shuffle_instance[hemisphere].OnDataReceive(data);
 }

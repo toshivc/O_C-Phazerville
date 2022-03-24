@@ -99,8 +99,8 @@ public:
         }
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,4}, length[0] - 1);
         Pack(data, PackLocation {4,4}, beats[0] - 1);
         Pack(data, PackLocation {8,4}, length[1] - 1);
@@ -108,7 +108,7 @@ public:
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         length[0] = Unpack(data, PackLocation {0,4}) + 1;
         beats[0] = Unpack(data, PackLocation {4,4}) + 1;
         length[1] = Unpack(data, PackLocation {8,4}) + 1;
@@ -278,10 +278,10 @@ void AnnularFusion_ToggleHelpScreen(bool hemisphere) {
     AnnularFusion_instance[hemisphere].HelpScreen();
 }
 
-uint32_t AnnularFusion_OnDataRequest(bool hemisphere) {
+uint64_t AnnularFusion_OnDataRequest(bool hemisphere) {
     return AnnularFusion_instance[hemisphere].OnDataRequest();
 }
 
-void AnnularFusion_OnDataReceive(bool hemisphere, uint32_t data) {
+void AnnularFusion_OnDataReceive(bool hemisphere, uint64_t data) {
     AnnularFusion_instance[hemisphere].OnDataReceive(data);
 }
