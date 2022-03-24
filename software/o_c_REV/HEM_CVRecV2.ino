@@ -109,15 +109,15 @@ public:
         ResetCursor();
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,9}, start);
         Pack(data, PackLocation {9,9}, end);
         Pack(data, PackLocation {18,1}, smooth);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         start = Unpack(data, PackLocation {0,9});
         end = Unpack(data, PackLocation {9,9});
         smooth = Unpack(data, PackLocation {18,1});
@@ -208,5 +208,5 @@ void CVRecV2_View(bool hemisphere) {CVRecV2_instance[hemisphere].BaseView();}
 void CVRecV2_OnButtonPress(bool hemisphere) {CVRecV2_instance[hemisphere].OnButtonPress();}
 void CVRecV2_OnEncoderMove(bool hemisphere, int direction) {CVRecV2_instance[hemisphere].OnEncoderMove(direction);}
 void CVRecV2_ToggleHelpScreen(bool hemisphere) {CVRecV2_instance[hemisphere].HelpScreen();}
-uint32_t CVRecV2_OnDataRequest(bool hemisphere) {return CVRecV2_instance[hemisphere].OnDataRequest();}
-void CVRecV2_OnDataReceive(bool hemisphere, uint32_t data) {CVRecV2_instance[hemisphere].OnDataReceive(data);}
+uint64_t CVRecV2_OnDataRequest(bool hemisphere) {return CVRecV2_instance[hemisphere].OnDataRequest();}
+void CVRecV2_OnDataReceive(bool hemisphere, uint64_t data) {CVRecV2_instance[hemisphere].OnDataReceive(data);}

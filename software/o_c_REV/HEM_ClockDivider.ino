@@ -109,14 +109,14 @@ public:
         count[cursor] = 0; // Start the count over so things aren't missed
     }
 
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,8}, div[0] + 32);
         Pack(data, PackLocation {8,8}, div[1] + 32);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         div[0] = Unpack(data, PackLocation {0,8}) - 32;
         div[1] = Unpack(data, PackLocation {8,8}) - 32;
     }
@@ -191,10 +191,10 @@ void ClockDivider_ToggleHelpScreen(bool hemisphere) {
     ClockDivider_instance[hemisphere].HelpScreen();
 }
 
-uint32_t ClockDivider_OnDataRequest(bool hemisphere) {
+uint64_t ClockDivider_OnDataRequest(bool hemisphere) {
     return ClockDivider_instance[hemisphere].OnDataRequest();
 }
 
-void ClockDivider_OnDataReceive(bool hemisphere, uint32_t data) {
+void ClockDivider_OnDataReceive(bool hemisphere, uint64_t data) {
     ClockDivider_instance[hemisphere].OnDataReceive(data);
 }
