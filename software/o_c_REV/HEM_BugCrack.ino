@@ -241,31 +241,31 @@ public:
         ResetCursor();
     }
 
-    uint32_t OnDataRequest() {
-        // 16 bit per drum -> 4 bit per parameter
-        uint32_t data = 0;
-        Pack(data, PackLocation {0,4}, (tone_kick >> 2));
-        Pack(data, PackLocation {4,4}, (decay_kick >> 2));
-        Pack(data, PackLocation {8,4}, (punch >> 2));
-        Pack(data, PackLocation {12,4}, (decay_punch >> 2));
+    uint64_t OnDataRequest() {
+        // parameters are 6 bits each
+        uint64_t data = 0;
+        Pack(data, PackLocation {0,6}, tone_kick);
+        Pack(data, PackLocation {6,6}, decay_kick);
+        Pack(data, PackLocation {12,6}, punch);
+        Pack(data, PackLocation {18,6}, decay_punch);
 
-        Pack(data, PackLocation {16,4}, (tone_snare >> 2));
-        Pack(data, PackLocation {20,4}, (decay_snare >> 2));
-        Pack(data, PackLocation {24,4}, (snap >> 2));
-        Pack(data, PackLocation {28,4}, (decay_snap >> 2));
+        Pack(data, PackLocation {24,6}, tone_snare);
+        Pack(data, PackLocation {30,6}, decay_snare);
+        Pack(data, PackLocation {36,6}, snap);
+        Pack(data, PackLocation {42,6}, decay_snap);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
-        tone_kick = (Unpack(data, PackLocation {0,4}) << 2);
-        decay_kick = (Unpack(data, PackLocation {4,4}) << 2);
-        punch = (Unpack(data, PackLocation {8,4}) << 2);
-        decay_punch = (Unpack(data, PackLocation {12,4}) << 2);
+    void OnDataReceive(uint64_t data) {
+        tone_kick = Unpack(data, PackLocation {0,6});
+        decay_kick = Unpack(data, PackLocation {6,6});
+        punch = Unpack(data, PackLocation {12,6});
+        decay_punch = Unpack(data, PackLocation {18,6});
 
-        tone_snare = (Unpack(data, PackLocation {16,4}) << 2);
-        decay_snare = (Unpack(data, PackLocation {20,4}) << 2);
-        snap = (Unpack(data, PackLocation {24,4}) << 2);
-        decay_snap = (Unpack(data, PackLocation {28,4}) << 2);
+        tone_snare = Unpack(data, PackLocation {24,6});
+        decay_snare = Unpack(data, PackLocation {30,6});
+        snap = Unpack(data, PackLocation {36,6});
+        decay_snap = Unpack(data, PackLocation {42,6});
     }
 
 protected:
@@ -473,5 +473,5 @@ void BugCrack_View(bool hemisphere) {BugCrack_instance[hemisphere].BaseView();}
 void BugCrack_OnButtonPress(bool hemisphere) {BugCrack_instance[hemisphere].OnButtonPress();}
 void BugCrack_OnEncoderMove(bool hemisphere, int direction) {BugCrack_instance[hemisphere].OnEncoderMove(direction);}
 void BugCrack_ToggleHelpScreen(bool hemisphere) {BugCrack_instance[hemisphere].HelpScreen();}
-uint32_t BugCrack_OnDataRequest(bool hemisphere) {return BugCrack_instance[hemisphere].OnDataRequest();}
-void BugCrack_OnDataReceive(bool hemisphere, uint32_t data) {BugCrack_instance[hemisphere].OnDataReceive(data);}
+uint64_t BugCrack_OnDataRequest(bool hemisphere) {return BugCrack_instance[hemisphere].OnDataRequest();}
+void BugCrack_OnDataReceive(bool hemisphere, uint64_t data) {BugCrack_instance[hemisphere].OnDataReceive(data);}
