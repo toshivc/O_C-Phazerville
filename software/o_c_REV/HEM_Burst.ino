@@ -22,8 +22,8 @@
 #define HEM_BURST_SPACING_MAX 500
 #define HEM_BURST_SPACING_MIN 8
 #define HEM_BURST_CLOCKDIV_MAX 8
-#define HEM_BURST_ACCEL_MAX 7
-#define HEM_BURST_JITTER_MAX 15
+#define HEM_BURST_ACCEL_MAX 50
+#define HEM_BURST_JITTER_MAX 50
 
 class Burst : public HemisphereApplet {
 public:
@@ -155,6 +155,8 @@ public:
         Pack(data, PackLocation {0,8}, number);
         Pack(data, PackLocation {8,8}, spacing);
         Pack(data, PackLocation {16,8}, div + 8);
+        Pack(data, PackLocation {24,8}, jitter);
+        Pack(data, PackLocation {32,8}, accel);
         return data;
     }
 
@@ -162,6 +164,8 @@ public:
         number = Unpack(data, PackLocation {0,8});
         spacing = Unpack(data, PackLocation {8,8});
         div = Unpack(data, PackLocation {16,8}) - 8;
+        jitter = Unpack(data, PackLocation {24,8});
+        accel = Unpack(data, PackLocation {32,8});
     }
 
 protected:
@@ -189,8 +193,8 @@ private:
     int number; // How many bursts fire at each trigger
     int spacing; // How many ms pass between each burst
     int div; // Divide or multiply the clock tempo
-    int accel; // Accelleration or deceleration
-    int jitter; // Randomness
+    int8_t accel; // Accelleration or deceleration
+    int8_t jitter; // Randomness
 
     void DrawSelector() {
         // Number
