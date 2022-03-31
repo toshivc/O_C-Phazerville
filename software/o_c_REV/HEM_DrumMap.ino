@@ -207,6 +207,7 @@ protected:
 private:
     const uint8_t *MODE_ICONS[3] = {BD_ICON,SN_ICON,HH_ICON};
     const char *CV_MODE_NAMES[3] = {"FILL A/B", "X/Y", "FA/CHAOS"};
+    const int *VALUE_MAP[5] = {&fill[0], &fill[1], &x, &y, &chaos};
     uint8_t cursor = 0;
     uint8_t step;
     uint8_t randomness[3] = {0, 0, 0};
@@ -313,24 +314,7 @@ private:
         if (value_animation > 0 && cursor >= 2 && cursor <= 6) {
           gfxRect(1, 54, 60, 10);
           gfxInvert(1, 54, 60, 10);
-          int val = 0;
-          switch (cursor) {
-            case 2:
-              val = fill[0];
-              break;
-            case 3:
-              val = fill[1];
-              break;
-            case 4:
-              val = x;
-              break;
-            case 5:
-              val = y;
-              break;
-            case 6:
-              val = chaos;
-              break;
-          }
+          int val = *VALUE_MAP[cursor-2];
           int xPos = 27;
           if (val > 99) {
             xPos = 21;
