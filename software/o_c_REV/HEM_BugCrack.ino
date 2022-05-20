@@ -32,7 +32,7 @@
 #define CV_MODE_TONE  1
 #define CV_MODE_DECAY 2
 #define CV_MODE_FM    3
-#define CV_MODE_DROP  4
+#define CV_MODE_DROP_OR_BLEND  4
 
 class BugCrack : public HemisphereApplet {
 public:
@@ -50,7 +50,7 @@ public:
         tone_snare = 6;
         decay_snare = 50; // Snare decay
         snap = 55;
-        decay_snap = 26;
+        blend_snare = 31;
 
         noise = random(0, (1<<12));
 
@@ -72,22 +72,31 @@ public:
         env_punch.Cycle(0);
         SetEnvDecayPunch(decay_punch);
 
+        snare = WaveformManager::VectorOscillatorFromWaveform(HS::Sine);
+        snare.SetFrequency(Proportion(tone_snare, BNC_MAX_PARAM, 60000) + 10000);
+        snare.SetScale((12 << 7) * 3);
+
         env_snare = WaveformManager::VectorOscillatorFromWaveform(HS::Exponential);
         env_snare.SetScale(HEMISPHERE_3V_CV);
         env_snare.Offset(HEMISPHERE_3V_CV);
         env_snare.Cycle(0);
+        env_noise = WaveformManager::VectorOscillatorFromWaveform(HS::Exponential);
+        env_noise.SetScale(HEMISPHERE_3V_CV);
+        env_noise.Offset(HEMISPHERE_3V_CV);
+        env_noise.Cycle(0);
         SetEnvDecaySnare(decay_snare);
 
         env_snap = WaveformManager::VectorOscillatorFromWaveform(HS::Exponential);
         env_snap.SetScale(HEMISPHERE_3V_CV);
         env_snap.Offset(HEMISPHERE_3V_CV);
         env_snap.Cycle(0);
-        SetEnvDecaySnap(decay_snap);
+        SetEnvDecaySnap(decay_snare);
     }
 
     void Controller() {
         int32_t bd_signal = 0;
         int32_t sd_signal = 0;
+        int32_t ns_signal = 0;
         cv_kick = Proportion(DetentedIn(CH_KICK), HEMISPHERE_MAX_CV, BNC_MAX_PARAM);
         cv_snare = Proportion(DetentedIn(CH_SNARE), HEMISPHERE_MAX_CV, BNC_MAX_PARAM);
 
@@ -107,7 +116,7 @@ public:
         } else {
             _punch = punch;
         }
-        if (cv_mode_kick == CV_MODE_DROP) {
+        if (cv_mode_kick == CV_MODE_DROP_OR_BLEND) {
             _decay_punch = constrain(decay_punch + cv_kick, 0, BNC_MAX_PARAM);
         } else {
             _decay_punch = decay_punch;
@@ -140,8 +149,7 @@ public:
         }
 
         // Snare drum
-        // Bitflip noise
-        noise ^= (1 << random(0, 12));
+        noise = random(0, HEMISPHERE_MAX_CV); // simple random noise works best I've found
         if (cv_mode_snare == CV_MODE_TONE) {
             _tone_snare = constrain(tone_snare + cv_snare, 0, BNC_MAX_PARAM);
         } else {
@@ -157,19 +165,21 @@ public:
         } else {
             _snap = snap;
         }
-        if (cv_mode_snare == CV_MODE_DROP) {
-            _decay_snap = constrain(decay_snap + cv_snare, 0, BNC_MAX_PARAM);
+        if (cv_mode_snare == CV_MODE_DROP_OR_BLEND) {
+            _blend_snare = constrain(blend_snare + cv_snare, 0, BNC_MAX_PARAM);
         } else {
-            _decay_snap = decay_snap;
+            _blend_snare = blend_snare;
         }
         if (Clock(CH_SNARE, 1)) {
             SetEnvDecaySnare(_decay_snare);
-            SetEnvDecaySnap(_decay_snap);
+            SetEnvDecaySnap(_decay_snare);
             env_snare.Start();
+            env_noise.Start();
             env_snap.Start();
+            snare.Start();
         }
-        if (!env_snare.GetEOC()) {
-            int64_t freq_snare = Proportion(_tone_snare, BNC_MAX_PARAM, 500) + 100;
+        if (!env_noise.GetEOC()) {
+            int64_t freq_snare = Proportion(_tone_snare, BNC_MAX_PARAM, 600) + 100;
             freq_snare *= 100;
             if (!env_snap.GetEOC()) {
                 int64_t df = Proportion(env_snap.Next(), HEMISPHERE_3V_CV, freq_snare/1024);
@@ -177,14 +187,28 @@ public:
                 df *= 1024;
                 freq_snare += df;
             }
+            snare.SetFrequency(freq_snare);
 
-            levels[1] = env_snare.Next()/2;
+            // noise levels
+            levels[1] = env_noise.Next()/2;
             if (cv_mode_snare == CV_MODE_ATTEN) {
                 levels[1] = Proportion(BNC_MAX_PARAM - cv_snare, BNC_MAX_PARAM, levels[1]);
             }
-            sd_signal = Proportion(levels[1], HEMISPHERE_3V_CV, noise);
-            filter_sv.feed(sd_signal, freq_snare, TDSP::QMAX/4);
-            sd_signal = filter_sv.get_lp();
+            ns_signal = Proportion(levels[1], HEMISPHERE_3V_CV, noise);
+            filter_sv.feed(ns_signal, (Proportion(_tone_snare, BNC_MAX_PARAM, 60000) + 100000), 500);
+            ns_signal = filter_sv.get_bp();
+
+            // osc levels
+            levels[2] = env_snare.Next()/2;
+            if (cv_mode_snare == CV_MODE_ATTEN) {
+                levels[2] = Proportion(BNC_MAX_PARAM - cv_snare, BNC_MAX_PARAM, levels[2]);
+            }
+            sd_signal = Proportion(levels[2], HEMISPHERE_3V_CV, snare.Next());
+            sd_signal = filter_lp2.filter(sd_signal, freq_snare);
+
+            // blend osc and noise
+            sd_signal = Proportion(BNC_MAX_PARAM - _blend_snare, BNC_MAX_PARAM, sd_signal);
+            sd_signal += Proportion(_blend_snare, BNC_MAX_PARAM, ns_signal);
         }
 
         // Kick Drum Output
@@ -232,7 +256,7 @@ public:
             snap = constrain(snap + direction, 0, BNC_MAX_PARAM);
         }
         if (cursor == 8) {
-            decay_snap = constrain(decay_snap + direction, 0, BNC_MAX_PARAM);
+            blend_snare = constrain(blend_snare + direction, 0, BNC_MAX_PARAM);
         }
         if (cursor == 9) {
             cv_mode_snare = constrain(cv_mode_snare + direction, 0, 4);
@@ -252,7 +276,10 @@ public:
         Pack(data, PackLocation {24,6}, tone_snare);
         Pack(data, PackLocation {30,6}, decay_snare);
         Pack(data, PackLocation {36,6}, snap);
-        Pack(data, PackLocation {42,6}, decay_snap);
+        Pack(data, PackLocation {42,6}, blend_snare);
+
+        Pack(data, PackLocation {48,4}, cv_mode_kick);
+        Pack(data, PackLocation {52,4}, cv_mode_snare);
         return data;
     }
 
@@ -265,7 +292,10 @@ public:
         tone_snare = Unpack(data, PackLocation {24,6});
         decay_snare = Unpack(data, PackLocation {30,6});
         snap = Unpack(data, PackLocation {36,6});
-        decay_snap = Unpack(data, PackLocation {42,6});
+        blend_snare = Unpack(data, PackLocation {42,6});
+
+        cv_mode_kick = Unpack(data, PackLocation {48,4});
+        cv_mode_snare = Unpack(data, PackLocation {52,4});
     }
 
 protected:
@@ -284,17 +314,20 @@ private:
     VectorOscillator env_kick;
     VectorOscillator env_punch;
 
+    VectorOscillator snare;
     VectorOscillator env_snare;
+    VectorOscillator env_noise;
     VectorOscillator env_snap;
 
     uint32_t noise;
 
     TDSP::FilterLP filter_lp;
+    TDSP::FilterLP filter_lp2;
     TDSP::FilterStateVariable filter_sv;
 
     int cv_kick;
     int cv_snare;
-    int levels[2]; // For display
+    int levels[3]; // For display
 
     // Settings
     int tone_kick;
@@ -312,28 +345,29 @@ private:
     int _decay_snare;
     int snap;
     int _snap;
-    int decay_snap;
-    int _decay_snap;
+    int blend_snare;
+    int _blend_snare;
 
-    const char *CV_MODE_NAMES[5] = {"atn", "ton", "dec", "FM", "dro"};
+    const char *CV_MODE_NAMES_BD[5] = {"atn", "ton", "dec", "FM", "dro"};
+    const char *CV_MODE_NAMES_SN[5] = {"atn", "ton", "dec", "FM", "bln"};
 
     uint8_t cv_mode_kick;
     uint8_t cv_mode_snare;
 
     void DrawInterface() {
         DrawDrumBody(1, _tone_kick, _decay_kick, _punch, _decay_punch, 0);
-        DrawDrumBody(32, _tone_snare, _decay_snare, _snap, _decay_snap, 1);
+        DrawDrumBody(32, _tone_snare, _decay_snare, _snap, _blend_snare, 1);
 
         // CV modes
         gfxIcon(1, 57, CV_ICON);
-        gfxPrint(10, 55, CV_MODE_NAMES[cv_mode_kick]);
+        gfxPrint(10, 55, CV_MODE_NAMES_BD[cv_mode_kick]);
         gfxIcon(32, 57, CV_ICON);
-        gfxPrint(41, 55, CV_MODE_NAMES[cv_mode_snare]);
+        gfxPrint(41, 55, CV_MODE_NAMES_SN[cv_mode_snare]);
 
         switch (cursor) {
             // Kick drum
             case 0:
-                gfxPrint(9, 45, Proportion(_tone_kick, BNC_MAX_PARAM, 30) + 30);
+                gfxPrint(1, 45, Proportion(_tone_kick, BNC_MAX_PARAM, 30) + 30);
                 gfxIcon(22, 44, HERTZ_ICON);
                 break;
             case 1:
@@ -347,7 +381,7 @@ private:
 
             // Snare drum
             case 5:
-                gfxPrint(35, 45, Proportion(_tone_snare, BNC_MAX_PARAM, 500) + 100);
+                gfxPrint(35, 45, Proportion(_tone_snare, BNC_MAX_PARAM, 600) + 100);
                 gfxIcon(54, 44, HERTZ_ICON);
                 break;
             case 6:
@@ -355,7 +389,7 @@ private:
             case 7:
                 gfxPrint(32, 45, "snap"); break;
             case 8:
-                gfxPrint(32, 45, "drop"); break;
+                gfxPrint(32, 45, "blend"); break;
             case 9:
                 gfxInvert(32, 54, 30, 9); break;
         }
@@ -448,11 +482,12 @@ private:
     void SetEnvDecaySnare(int decay) {
         // 50 ms - 1000 ms -> 20 Hz - 1 Hz
         env_snare.SetFrequency(2000 - Proportion(decay, BNC_MAX_PARAM, 1900));
+        env_noise.SetFrequency(1000 - Proportion(decay, BNC_MAX_PARAM, 950));
     }
     void SetEnvDecaySnap(int decay) {
         // 12.5 ms - 200 ms -> 80 Hz - 5 Hz
         env_snap.SetFrequency(
-            8000 - Proportion(decay, BNC_MAX_PARAM, 7500));
+            8000 - Proportion(decay, BNC_MAX_PARAM, 4000));
     }
 };
 
