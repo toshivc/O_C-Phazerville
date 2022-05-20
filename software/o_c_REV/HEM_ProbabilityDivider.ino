@@ -142,8 +142,8 @@ public:
         }
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         // example: pack property_name at bit 0, with size of 8 bits
         Pack(data, PackLocation {0,4}, weight_1); 
         Pack(data, PackLocation {4,4}, weight_2); 
@@ -153,7 +153,7 @@ public:
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         // example: unpack value at bit 0 with size of 8 bits to property_name
         weight_1 = Unpack(data, PackLocation {0,4});
         weight_2 = Unpack(data, PackLocation {4,4});
@@ -303,5 +303,5 @@ void ProbabilityDivider_View(bool hemisphere) {ProbabilityDivider_instance[hemis
 void ProbabilityDivider_OnButtonPress(bool hemisphere) {ProbabilityDivider_instance[hemisphere].OnButtonPress();}
 void ProbabilityDivider_OnEncoderMove(bool hemisphere, int direction) {ProbabilityDivider_instance[hemisphere].OnEncoderMove(direction);}
 void ProbabilityDivider_ToggleHelpScreen(bool hemisphere) {ProbabilityDivider_instance[hemisphere].HelpScreen();}
-uint32_t ProbabilityDivider_OnDataRequest(bool hemisphere) {return ProbabilityDivider_instance[hemisphere].OnDataRequest();}
-void ProbabilityDivider_OnDataReceive(bool hemisphere, uint32_t data) {ProbabilityDivider_instance[hemisphere].OnDataReceive(data);}
+uint64_t ProbabilityDivider_OnDataRequest(bool hemisphere) {return ProbabilityDivider_instance[hemisphere].OnDataRequest();}
+void ProbabilityDivider_OnDataReceive(bool hemisphere, uint64_t data) {ProbabilityDivider_instance[hemisphere].OnDataReceive(data);}

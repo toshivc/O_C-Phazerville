@@ -72,14 +72,14 @@ public:
         }
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         // example: pack property_name at bit 0, with size of 8 bits
         // Pack(data, PackLocation {0,8}, property_name); 
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         // example: unpack value at bit 0 with size of 8 bits to property_name
         // property_name = Unpack(data, PackLocation {0,8}); 
     }
@@ -209,5 +209,5 @@ void ProbabilityMelody_View(bool hemisphere) {ProbabilityMelody_instance[hemisph
 void ProbabilityMelody_OnButtonPress(bool hemisphere) {ProbabilityMelody_instance[hemisphere].OnButtonPress();}
 void ProbabilityMelody_OnEncoderMove(bool hemisphere, int direction) {ProbabilityMelody_instance[hemisphere].OnEncoderMove(direction);}
 void ProbabilityMelody_ToggleHelpScreen(bool hemisphere) {ProbabilityMelody_instance[hemisphere].HelpScreen();}
-uint32_t ProbabilityMelody_OnDataRequest(bool hemisphere) {return ProbabilityMelody_instance[hemisphere].OnDataRequest();}
-void ProbabilityMelody_OnDataReceive(bool hemisphere, uint32_t data) {ProbabilityMelody_instance[hemisphere].OnDataReceive(data);}
+uint64_t ProbabilityMelody_OnDataRequest(bool hemisphere) {return ProbabilityMelody_instance[hemisphere].OnDataRequest();}
+void ProbabilityMelody_OnDataReceive(bool hemisphere, uint64_t data) {ProbabilityMelody_instance[hemisphere].OnDataReceive(data);}
