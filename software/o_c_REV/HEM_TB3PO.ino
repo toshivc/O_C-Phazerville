@@ -372,8 +372,8 @@ class TB_3PO : public HemisphereApplet
       }
     }
 
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
 		
         Pack(data, PackLocation {0,8}, scale);
         Pack(data, PackLocation {8,4}, root);
@@ -382,7 +382,7 @@ class TB_3PO : public HemisphereApplet
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
 		
       scale = Unpack(data, PackLocation {0,8});
       root = Unpack(data, PackLocation {8,4});
@@ -1018,10 +1018,10 @@ void TB_3PO_ToggleHelpScreen(bool hemisphere) {
     TB_3PO_instance[hemisphere].HelpScreen();
 }
 
-uint32_t TB_3PO_OnDataRequest(bool hemisphere) {
+uint64_t TB_3PO_OnDataRequest(bool hemisphere) {
     return TB_3PO_instance[hemisphere].OnDataRequest();
 }
 
-void TB_3PO_OnDataReceive(bool hemisphere, uint32_t data) {
+void TB_3PO_OnDataReceive(bool hemisphere, uint64_t data) {
     TB_3PO_instance[hemisphere].OnDataReceive(data);
 }

@@ -89,14 +89,14 @@ public:
         last_encoder_move = OC::CORE::ticks;
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         // example: pack property_name at bit 0, with size of 8 bits
         // Pack(data, PackLocation {0,8}, property_name); 
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         // example: unpack value at bit 0 with size of 8 bits to property_name
         // property_name = Unpack(data, PackLocation {0,8}); 
     }
@@ -195,10 +195,10 @@ void Scope_ToggleHelpScreen(bool hemisphere) {
     Scope_instance[hemisphere].HelpScreen();
 }
 
-uint32_t Scope_OnDataRequest(bool hemisphere) {
+uint64_t Scope_OnDataRequest(bool hemisphere) {
     return Scope_instance[hemisphere].OnDataRequest();
 }
 
-void Scope_OnDataReceive(bool hemisphere, uint32_t data) {
+void Scope_OnDataReceive(bool hemisphere, uint64_t data) {
     Scope_instance[hemisphere].OnDataReceive(data);
 }

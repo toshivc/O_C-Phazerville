@@ -227,15 +227,15 @@ public:
 
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0, 5}, steps);
         Pack(data, PackLocation {5, 2}, dir);
         Pack(data, PackLocation {7, 1}, rand);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         steps = Unpack(data, PackLocation {0, 5});
         dir = Unpack(data, PackLocation {5, 2});
         rand = Unpack(data, PackLocation {7, 1});
@@ -387,11 +387,11 @@ void Stairs_ToggleHelpScreen(bool hemisphere) {
     Stairs_instance[hemisphere].HelpScreen();
 }
 
-uint32_t Stairs_OnDataRequest(bool hemisphere) {
+uint64_t Stairs_OnDataRequest(bool hemisphere) {
     return Stairs_instance[hemisphere].OnDataRequest();
 }
 
-void Stairs_OnDataReceive(bool hemisphere, uint32_t data) {
+void Stairs_OnDataReceive(bool hemisphere, uint64_t data) {
     Stairs_instance[hemisphere].OnDataReceive(data);
 }
 

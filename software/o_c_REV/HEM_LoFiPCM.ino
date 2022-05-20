@@ -77,12 +77,12 @@ public:
         length = constrain(length += (direction * 32), 32, HEM_LOFI_PCM_BUFFER_SIZE);
     }
 
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
     }
 
 protected:
@@ -200,10 +200,10 @@ void LoFiPCM_ToggleHelpScreen(bool hemisphere) {
     LoFiPCM_instance[hemisphere].HelpScreen();
 }
 
-uint32_t LoFiPCM_OnDataRequest(bool hemisphere) {
+uint64_t LoFiPCM_OnDataRequest(bool hemisphere) {
     return LoFiPCM_instance[hemisphere].OnDataRequest();
 }
 
-void LoFiPCM_OnDataReceive(bool hemisphere, uint32_t data) {
+void LoFiPCM_OnDataReceive(bool hemisphere, uint64_t data) {
     LoFiPCM_instance[hemisphere].OnDataReceive(data);
 }

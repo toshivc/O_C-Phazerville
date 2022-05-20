@@ -83,15 +83,15 @@ public:
         }
     }
 
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,8}, pattern[0]);
         Pack(data, PackLocation {8,8}, pattern[1]);
         Pack(data, PackLocation {16,4}, end_step);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         pattern[0] = Unpack(data, PackLocation {0,8});
         pattern[1] = Unpack(data, PackLocation {8,8});
         end_step = Unpack(data, PackLocation {16,4});
@@ -196,10 +196,10 @@ void TrigSeq16_ToggleHelpScreen(bool hemisphere) {
     TrigSeq16_instance[hemisphere].HelpScreen();
 }
 
-uint32_t TrigSeq16_OnDataRequest(bool hemisphere) {
+uint64_t TrigSeq16_OnDataRequest(bool hemisphere) {
     return TrigSeq16_instance[hemisphere].OnDataRequest();
 }
 
-void TrigSeq16_OnDataReceive(bool hemisphere, uint32_t data) {
+void TrigSeq16_OnDataReceive(bool hemisphere, uint64_t data) {
     TrigSeq16_instance[hemisphere].OnDataReceive(data);
 }
