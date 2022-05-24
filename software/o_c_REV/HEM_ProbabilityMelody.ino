@@ -67,7 +67,7 @@ public:
             } else {
                 // editing scaling
                 if (cursor == 12) down = constrain(down += direction, 0, up);
-                if (cursor == 13) up = constrain(up += direction, 1, 60);
+                if (cursor == 13) up = constrain(up += direction, down, 60);
             }
         }
     }
@@ -107,16 +107,14 @@ private:
     int GetNextWeightedPitch() {
         int total_weights = 0;
 
-        for(int i = 0; i < 60; i++) {
-            if (i >= down && i < up) {
-                total_weights += weights[i % 12];
-            }
+        for(int i = down; i < up; i++) {
+            total_weights += weights[i % 12];
         }
 
         int rnd = random(0, total_weights + 1);
-        for(int i = 0; i < 60; i++) {
+        for(int i = down; i < up; i++) {
             int weight = weights[i % 12];
-            if (rnd <= weight && weight > 0 && i >= down && i <= up) {
+            if (rnd <= weight && weight > 0) {
                 return i;
             }
             rnd -= weight;
