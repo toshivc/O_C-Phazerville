@@ -155,9 +155,7 @@ public:
 
         // Logarhythm mod: Since scale can exceed 6 bits now, clamp mathematically rather than surprising the user with a roll over of larger numbers
         //Pack(data, PackLocation {27,6}, scale);
-        Pack(data, PackLocation {38,6}, constrain(scale, 0, 63));
-        // Benirose mod: cv2 output mode
-        
+        Pack(data, PackLocation {38,6}, constrain(scale, 0, 63));        
         
         return data;
     }
