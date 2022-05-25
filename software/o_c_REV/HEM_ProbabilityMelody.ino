@@ -107,12 +107,12 @@ private:
     int GetNextWeightedPitch() {
         int total_weights = 0;
 
-        for(int i = down; i < up; i++) {
+        for(int i = down; i <= up; i++) {
             total_weights += weights[i % 12];
         }
 
         int rnd = random(0, total_weights + 1);
-        for(int i = down; i < up; i++) {
+        for(int i = down; i <= up; i++) {
             int weight = weights[i % 12];
             if (rnd <= weight && weight > 0) {
                 return i;
