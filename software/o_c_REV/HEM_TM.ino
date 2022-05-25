@@ -150,12 +150,14 @@ public:
         Pack(data, PackLocation {0,16}, reg);
         Pack(data, PackLocation {16,7}, p);
         Pack(data, PackLocation {23,4}, length - 1);
+        Pack(data, PackLocation {28,6}, quant_range);
+        Pack(data, PackLocation {34,4}, cv2);
 
         // Logarhythm mod: Since scale can exceed 6 bits now, clamp mathematically rather than surprising the user with a roll over of larger numbers
         //Pack(data, PackLocation {27,6}, scale);
-        Pack(data, PackLocation {27,6}, constrain(scale, 0, 63));
+        Pack(data, PackLocation {38,6}, constrain(scale, 0, 63));
         // Benirose mod: cv2 output mode
-        Pack(data, PackLocation {33,2}, cv2);
+        
         
         return data;
     }
@@ -164,9 +166,11 @@ public:
         reg = Unpack(data, PackLocation {0,16});
         p = Unpack(data, PackLocation {16,7});
         length = Unpack(data, PackLocation {23,4}) + 1;
-        scale = Unpack(data, PackLocation {27,6});
+        quant_range = Unpack(data, PackLocation{28,6});
+        cv2 = Unpack(data, PackLocation {34,4});
+        scale = Unpack(data, PackLocation {38,6});
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
-        cv2 = Unpack(data, PackLocation {33,2});
+        
     }
 
 protected:
