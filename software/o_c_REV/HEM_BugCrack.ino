@@ -77,12 +77,12 @@ public:
         snare.SetScale((12 << 7) * 3);
 
         env_snare = WaveformManager::VectorOscillatorFromWaveform(HS::Exponential);
-        env_snare.SetScale(HEMISPHERE_3V_CV);
-        env_snare.Offset(HEMISPHERE_3V_CV);
+        env_snare.SetScale(HEMISPHERE_MAX_CV);
+        env_snare.Offset(HEMISPHERE_MAX_CV);
         env_snare.Cycle(0);
         env_noise = WaveformManager::VectorOscillatorFromWaveform(HS::Exponential);
-        env_noise.SetScale(HEMISPHERE_3V_CV);
-        env_noise.Offset(HEMISPHERE_3V_CV);
+        env_noise.SetScale(HEMISPHERE_MAX_CV);
+        env_noise.Offset(HEMISPHERE_MAX_CV);
         env_noise.Cycle(0);
         SetEnvDecaySnare(decay_snare);
 
@@ -138,7 +138,7 @@ public:
                 freq_kick += df;
             }
             kick.SetFrequency(freq_kick);
-            levels[0] = env_kick.Next()/2; // Divide by 2 to account for offset
+            levels[0] = env_kick.Next();
             if (cv_mode_kick == CV_MODE_ATTEN) {
                 levels[0] = Proportion(BNC_MAX_PARAM - cv_kick, BNC_MAX_PARAM, levels[0]);
             }
@@ -190,7 +190,7 @@ public:
             snare.SetFrequency(freq_snare);
 
             // noise levels
-            levels[1] = env_noise.Next()/2;
+            levels[1] = env_noise.Next();
             if (cv_mode_snare == CV_MODE_ATTEN) {
                 levels[1] = Proportion(BNC_MAX_PARAM - cv_snare, BNC_MAX_PARAM, levels[1]);
             }
@@ -199,7 +199,7 @@ public:
             ns_signal = filter_sv.get_bp();
 
             // osc levels
-            levels[2] = env_snare.Next()/2;
+            levels[2] = env_snare.Next();
             if (cv_mode_snare == CV_MODE_ATTEN) {
                 levels[2] = Proportion(BNC_MAX_PARAM - cv_snare, BNC_MAX_PARAM, levels[2]);
             }
