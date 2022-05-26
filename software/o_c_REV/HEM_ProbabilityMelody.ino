@@ -36,6 +36,8 @@ public:
             if (pitch != -1) {
                 Out(0, MIDIQuantizer::CV(pitch));
                 pulse_animation = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
+            } else {
+                Out(0, 0);
             }
         }
 
@@ -66,7 +68,7 @@ public:
                 weights[cursor] = constrain(weights[cursor] += direction, 0, HEM_PROB_MEL_MAX_WEIGHT);
             } else {
                 // editing scaling
-                if (cursor == 12) down = constrain(down += direction, 0, up);
+                if (cursor == 12) down = constrain(down += direction, 1, up);
                 if (cursor == 13) up = constrain(up += direction, down, 60);
             }
         }
@@ -98,8 +100,8 @@ private:
     int cursor;
     bool isEditing = false;
     int weights[12] = {10,0,0,2,0,0,0,2,0,0,4,0};
-    int up = 20;
-    int down = 0;
+    int up = 12;
+    int down = 1;
     int pitch = 0;
 
     int pulse_animation = 0;
@@ -107,12 +109,12 @@ private:
     int GetNextWeightedPitch() {
         int total_weights = 0;
 
-        for(int i = down; i <= up; i++) {
+        for(int i = down-1; i < up; i++) {
             total_weights += weights[i % 12];
         }
 
         int rnd = random(0, total_weights + 1);
-        for(int i = down; i <= up; i++) {
+        for(int i = down-1; i < up; i++) {
             int weight = weights[i % 12];
             if (rnd <= weight && weight > 0) {
                 return i;
@@ -172,21 +174,25 @@ private:
         // cursor for keys
         if (!isEditing) {
             if (cursor < 12) gfxCursor(x[cursor] - 1, p[cursor] ? 25 : 60, 6);
-            if (cursor == 12) gfxCursor(9, 23, 14);
-            if (cursor == 13) gfxCursor(38, 23, 14);
+            if (cursor == 12) gfxCursor(7, 23, 22);
+            if (cursor == 13) gfxCursor(37, 23, 22);
         }
 
         // scaling params
 
-        gfxIcon(1, 13, DOWN_BTN_ICON);
-        gfxPrint(9, 15, down);
+        gfxIcon(0, 13, DOWN_BTN_ICON);
+        gfxPrint(8, 15, ((down - 1) / 12) + 1);
+        gfxPrint(13, 15, ".");
+        gfxPrint(17, 15, ((down - 1) % 12) + 1);
 
         gfxIcon(30, 16, UP_BTN_ICON);
-        gfxPrint(38, 15, up);
+        gfxPrint(38, 15, ((up - 1) / 12) + 1);
+        gfxPrint(43, 15, ".");
+        gfxPrint(47, 15, ((up - 1) % 12) + 1);
 
         if (isEditing) {
-            if (cursor == 12) gfxInvert(9, 14, 14, 9);
-            if (cursor == 13) gfxInvert(38, 14, 14, 9);
+            if (cursor == 12) gfxInvert(9, 14, 21, 9);
+            if (cursor == 13) gfxInvert(38, 14, 21, 9);
         }
 
         if (pulse_animation > 0) {
