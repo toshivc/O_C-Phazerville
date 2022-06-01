@@ -19,18 +19,35 @@
 // SOFTWARE.
 
 #define HEM_PROB_MEL_MAX_WEIGHT 10
+#define HEM_PROB_MEL_MAX_RANGE 60
 
 class ProbabilityMelody : public HemisphereApplet {
 public:
 
     const char* applet_name() {
-        return "ProbMel";
+        return "ProbMelo";
     }
 
     void Start() {
+        down = 1;
+        up = 12;
+        pitch = 0;
     }
 
     void Controller() {
+
+        int downCv = DetentedIn(0);
+        if (downCv < 0) down = 0;        
+        if (downCv > 0) {
+            down = constrain(ProportionCV(downCv, HEM_PROB_MEL_MAX_RANGE + 1), 1, up);
+        }
+
+        int upCv = DetentedIn(1);
+        if (upCv < 0) up = 0;        
+        if (upCv > 0) {
+            up = constrain(ProportionCV(upCv, HEM_PROB_MEL_MAX_RANGE + 1), down, HEM_PROB_MEL_MAX_RANGE);
+        }
+
         if (Clock(0)) {
             pitch = GetNextWeightedPitch() + 60;
             if (pitch != -1) {
@@ -76,23 +93,47 @@ public:
         
     uint64_t OnDataRequest() {
         uint64_t data = 0;
-        // example: pack property_name at bit 0, with size of 8 bits
-        // Pack(data, PackLocation {0,8}, property_name); 
+        Pack(data, PackLocation {0, 4}, weights[0]);
+        Pack(data, PackLocation {4, 4}, weights[1]);
+        Pack(data, PackLocation {8, 4}, weights[2]);
+        Pack(data, PackLocation {12, 4}, weights[3]);
+        Pack(data, PackLocation {16, 4}, weights[4]);
+        Pack(data, PackLocation {20, 4}, weights[5]);
+        Pack(data, PackLocation {24, 4}, weights[6]);
+        Pack(data, PackLocation {28, 4}, weights[7]);
+        Pack(data, PackLocation {32, 4}, weights[8]);
+        Pack(data, PackLocation {36, 4}, weights[9]);
+        Pack(data, PackLocation {40, 4}, weights[10]);
+        Pack(data, PackLocation {44, 4}, weights[11]);
+        Pack(data, PackLocation {48, 6}, down);
+        Pack(data, PackLocation {54, 6}, up);
         return data;
     }
 
     void OnDataReceive(uint64_t data) {
-        // example: unpack value at bit 0 with size of 8 bits to property_name
-        // property_name = Unpack(data, PackLocation {0,8}); 
+        weights[0] = Unpack(data, PackLocation {0,4});
+        weights[1] = Unpack(data, PackLocation {4,4});
+        weights[2] = Unpack(data, PackLocation {8,4});
+        weights[3] = Unpack(data, PackLocation {12,4});
+        weights[4] = Unpack(data, PackLocation {16,4});
+        weights[5] = Unpack(data, PackLocation {20,4});
+        weights[6] = Unpack(data, PackLocation {24,4});
+        weights[7] = Unpack(data, PackLocation {28,4});
+        weights[8] = Unpack(data, PackLocation {32,4});
+        weights[9] = Unpack(data, PackLocation {36,4});
+        weights[10] = Unpack(data, PackLocation {40,4});
+        weights[11] = Unpack(data, PackLocation {44,4});
+        down = Unpack(data, PackLocation{48,6});
+        up = Unpack(data, PackLocation{54,6});
     }
 
 protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
-        help[HEMISPHERE_HELP_DIGITALS] = "Digital in help";
-        help[HEMISPHERE_HELP_CVS]      = "CV in help";
-        help[HEMISPHERE_HELP_OUTS]     = "Out help";
-        help[HEMISPHERE_HELP_ENCODER]  = "123456789012345678";
+        help[HEMISPHERE_HELP_DIGITALS] = "1=Clock";
+        help[HEMISPHERE_HELP_CVS]      = "1=LowRng 2=HighRng";
+        help[HEMISPHERE_HELP_OUTS]     = "A=Out";
+        help[HEMISPHERE_HELP_ENCODER]  = "Push to edit value";
         //                               "------------------" <-- Size Guide
     }
     
@@ -100,9 +141,9 @@ private:
     int cursor;
     bool isEditing = false;
     int weights[12] = {10,0,0,2,0,0,0,2,0,0,4,0};
-    int up = 12;
-    int down = 1;
-    int pitch = 0;
+    int up;
+    int down;
+    int pitch;
 
     int pulse_animation = 0;
 
