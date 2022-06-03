@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "HSProbLoopLinker.h" // singleton for linking ProbDiv and ProbMelo
+
 #define HEM_PROB_MEL_MAX_WEIGHT 10
 #define HEM_PROB_MEL_MAX_RANGE 60
 
@@ -35,6 +37,7 @@ public:
     }
 
     void Controller() {
+        loop_linker->RegisterMelo(hemisphere);
 
         int downCv = DetentedIn(0);
         if (downCv < 0) down = 0;        
@@ -48,7 +51,7 @@ public:
             up = constrain(ProportionCV(upCv, HEM_PROB_MEL_MAX_RANGE + 1), down, HEM_PROB_MEL_MAX_RANGE);
         }
 
-        if (Clock(0)) {
+        if (Clock(0) || loop_linker->Ready()) {
             pitch = GetNextWeightedPitch() + 60;
             if (pitch != -1) {
                 Out(0, MIDIQuantizer::CV(pitch));
@@ -144,6 +147,8 @@ private:
     int up;
     int down;
     int pitch;
+
+    ProbLoopLinker *loop_linker = loop_linker->get();
 
     int pulse_animation = 0;
 

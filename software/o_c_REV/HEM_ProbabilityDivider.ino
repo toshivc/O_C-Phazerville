@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "HSProbLoopLinker.h" // singleton for linking ProbDiv and ProbMelo
+
 #define HEM_PROB_DIV_MAX_WEIGHT 15
 #define HEM_PROB_DIV_MAX_LOOP_LENGTH 32
 
@@ -43,6 +45,8 @@ public:
     }
 
     void Controller() {
+        loop_linker->RegisterDiv(hemisphere);
+
         // CV 1 control over loop length
         int lengthCv = DetentedIn(0);
         if (lengthCv < 0) loop_length = 0;        
@@ -101,6 +105,7 @@ public:
             }
 
             ClockOut(0);
+            loop_linker->Trigger();
             pulse_animation = HEMISPHERE_PULSE_ANIMATION_TIME;
         }
 
@@ -193,6 +198,8 @@ private:
     int pulse_animation = 0;
     int reseed_animation = 0;
     int reset_animation = 0;
+
+    ProbLoopLinker *loop_linker = loop_linker->get();
 
     // pointer arrays that make loops easier
     const int *weights[4] = {&weight_1, &weight_2, &weight_4, &weight_8};
