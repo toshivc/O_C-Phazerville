@@ -54,6 +54,8 @@ public:
             loop_length = constrain(ProportionCV(lengthCv, HEM_PROB_DIV_MAX_LOOP_LENGTH + 1), 0, HEM_PROB_DIV_MAX_LOOP_LENGTH);
         }
 
+        loop_linker->SetLooping(loop_length > 0);
+
         // reset
         if (Clock(1)) {
             loop_step = 0;
@@ -67,6 +69,7 @@ public:
             // trigger reseed if CV2 is > 2.5v
             if (reseed > (HEMISPHERE_MAX_CV >> 1) && !reseed_high) {
                 GenerateLoop(false);
+                loop_linker->Reseed();
                 reseed_high = true;
                 reseed_animation = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
             }
@@ -82,6 +85,8 @@ public:
                 skip_steps = 0;
                 reset_animation = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
             } 
+
+            loop_linker->SetLoopStep(loop_index);
 
             // continue with active division
             if (--skip_steps > 0) {

@@ -22,6 +22,7 @@
 
 #define HEM_PROB_MEL_MAX_WEIGHT 10
 #define HEM_PROB_MEL_MAX_RANGE 60
+#define HEM_PROB_MEL_MAX_LOOP_LENGTH 32
 
 class ProbabilityMelody : public HemisphereApplet {
 public:
@@ -39,6 +40,20 @@ public:
     void Controller() {
         loop_linker->RegisterMelo(hemisphere);
 
+        // looping enabled from ProbDiv
+        if (loop_linker->IsLooping() && !isLooping) {
+            isLooping = true;
+            GenerateLoop();
+        }
+
+        // reseed from ProbDiv
+        if (loop_linker->ShouldReseed()) {
+            GenerateLoop();
+        }
+        
+        isLooping = loop_linker->IsLooping();
+
+
         int downCv = DetentedIn(0);
         if (downCv < 0) down = 0;        
         if (downCv > 0) {
@@ -52,7 +67,11 @@ public:
         }
 
         if (Clock(0) || loop_linker->Ready()) {
-            pitch = GetNextWeightedPitch() + 60;
+            if (isLooping) {
+                pitch = loop[loop_linker->GetLoopStep()] + 60;
+            } else {
+                pitch = GetNextWeightedPitch() + 60;
+            }
             if (pitch != -1) {
                 Out(0, MIDIQuantizer::CV(pitch));
                 pulse_animation = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
@@ -90,6 +109,9 @@ public:
                 // editing scaling
                 if (cursor == 12) down = constrain(down += direction, 1, up);
                 if (cursor == 13) up = constrain(up += direction, down, 60);
+            }
+            if (isLooping) {
+                GenerateLoop(); // regenerate loop on any param changes
             }
         }
     }
@@ -147,6 +169,8 @@ private:
     int up;
     int down;
     int pitch;
+    bool isLooping = false;
+    int loop[HEM_PROB_MEL_MAX_LOOP_LENGTH];
 
     ProbLoopLinker *loop_linker = loop_linker->get();
 
@@ -168,6 +192,13 @@ private:
             rnd -= weight;
         }
         return -1;
+    }
+
+    void GenerateLoop() {
+        // always fill the whole loop to make things easier
+        for (int i = 0; i < HEM_PROB_MEL_MAX_LOOP_LENGTH; i++) {
+            loop[i] = GetNextWeightedPitch();
+        }
     }
 
     void DrawKeyboard() {

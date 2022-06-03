@@ -27,12 +27,18 @@ class ProbLoopLinker {
 	uint8_t hemDiv;
 	uint8_t hemMelo;
 	uint32_t registered[2];
+	bool isLooping;
+	int loopStep;
+	bool reseed;
 
     uint32_t last_advance_tick = 0; // To prevent double-advancing
 
     ProbLoopLinker() {
     	hemDiv = 10;
     	hemMelo = 10;
+    	isLooping = false;
+    	loopStep = 0;
+    	reseed = false;
     	registered[LEFT_HEMISPHERE] = 0;
         registered[RIGHT_HEMISPHERE] = 0;
     }
@@ -70,6 +76,35 @@ public:
     	}
     	return false;
     }
+
+    void SetLooping(bool _isLooping) {
+    	isLooping = _isLooping;
+    }
+
+    bool IsLooping() {
+    	return isLooping;
+    }
+
+    void SetLoopStep(int _loopStep) {
+    	loopStep = _loopStep;
+    }
+
+    int GetLoopStep() {
+    	return loopStep;
+    }
+
+    void Reseed() {
+    	reseed = true;
+    }
+
+    int ShouldReseed() {
+    	if (reseed) {
+    		reseed = false;
+    		return true;
+    	}
+    	return false;
+    }
+
 };
 
 ProbLoopLinker *ProbLoopLinker::instance = 0;
