@@ -85,8 +85,8 @@ public:
         }
     }
 
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,8}, scale[0]);
         Pack(data, PackLocation {8,8}, scale[1]);
         Pack(data, PackLocation {16,4}, root[0]);
@@ -94,7 +94,7 @@ public:
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         scale[0] = Unpack(data, PackLocation {0,8});
         scale[1] = Unpack(data, PackLocation {8,8});
         root[0] = Unpack(data, PackLocation {16,4});
@@ -192,10 +192,10 @@ void DualQuant_ToggleHelpScreen(bool hemisphere) {
     DualQuant_instance[hemisphere].HelpScreen();
 }
 
-uint32_t DualQuant_OnDataRequest(bool hemisphere) {
+uint64_t DualQuant_OnDataRequest(bool hemisphere) {
     return DualQuant_instance[hemisphere].OnDataRequest();
 }
 
-void DualQuant_OnDataReceive(bool hemisphere, uint32_t data) {
+void DualQuant_OnDataReceive(bool hemisphere, uint64_t data) {
     DualQuant_instance[hemisphere].OnDataReceive(data);
 }

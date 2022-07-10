@@ -419,14 +419,14 @@ protected:
         return prop;
     }
 
-    /* Add value to a 32-bit storage unit at the specified location */
-    void Pack(uint32_t &data, PackLocation p, uint32_t value) {
+    /* Add value to a 64-bit storage unit at the specified location */
+    void Pack(uint64_t &data, PackLocation p, uint64_t value) {
         data |= (value << p.location);
     }
 
-    /* Retrieve value from a 32-bit storage unit at the specified location and of the specified bit size */
-    int Unpack(uint32_t data, PackLocation p) {
-        uint32_t mask = 1;
+    /* Retrieve value from a 64-bit storage unit at the specified location and of the specified bit size */
+    int Unpack(uint64_t data, PackLocation p) {
+        uint64_t mask = 1;
         for (int i = 1; i < p.size; i++) mask |= (0x01 << i);
         return (data >> p.location) & mask;
     }

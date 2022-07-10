@@ -29,43 +29,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-class ClassName : public HemisphereApplet {
+class ICONS : public HemisphereApplet {
 public:
 
-    const char* applet_name() { // Maximum 10 characters
-        return "ClassName";
+    const char* applet_name() {
+        return "ICONS";
     }
 
-	/* Run when the Applet is selected */
     void Start() {
     }
 
-	/* Run during the interrupt service routine, 16667 times per second */
     void Controller() {
     }
 
-	/* Draw the screen */
     void View() {
         gfxHeader(applet_name());
-        gfxSkyline();
-        // Add other view code as private methods
+        DrawInterface();
     }
 
-	/* Called when the encoder button for this hemisphere is pressed */
     void OnButtonPress() {
     }
 
-	/* Called when the encoder for this hemisphere is rotated
-	 * direction 1 is clockwise
-	 * direction -1 is counterclockwise
-	 */
     void OnEncoderMove(int direction) {
     }
         
-    /* Each applet may save up to 32 bits of data. When data is requested from
-     * the manager, OnDataRequest() packs it up (see HemisphereApplet::Pack()) and
-     * returns it.
-     */
     uint64_t OnDataRequest() {
         uint64_t data = 0;
         // example: pack property_name at bit 0, with size of 8 bits
@@ -73,18 +60,12 @@ public:
         return data;
     }
 
-    /* When the applet is restored (from power-down state, etc.), the manager may
-     * send data to the applet via OnDataReceive(). The applet should take the data
-     * and unpack it (see HemisphereApplet::Unpack()) into zero or more of the applet's
-     * properties.
-     */
     void OnDataReceive(uint64_t data) {
         // example: unpack value at bit 0 with size of 8 bits to property_name
         // property_name = Unpack(data, PackLocation {0,8}); 
     }
 
 protected:
-    /* Set help text. Each help section can have up to 18 characters. Be concise! */
     void SetHelp() {
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "Digital in help";
@@ -95,7 +76,56 @@ protected:
     }
     
 private:
-
+    int cursor;
+    const uint8_t *icons[38] = {
+        METER_ICON,
+        CLOCK_ICON,
+        MOD_ICON,
+        BEND_ICON,
+        AFTERTOUCH_ICON,
+        MIDI_ICON,
+        CV_ICON,
+        SCALE_ICON,
+        LOCK_ICON,
+        FAVORITE_ICON,
+        ROTATE_L_ICON,
+        ROTATE_R_ICON,
+        MONITOR_ICON,
+        AUDITION_ICON,
+        LINK_ICON,
+        CHECK_OFF_ICON,
+        CHECK_ON_ICON,
+        CHECK_ICON,
+        LOOP_ICON,
+        PLAYONCE_ICON,
+        PLAY_ICON,
+        PAUSE_ICON,
+        RESET_ICON,
+        RECORD_ICON,
+        STOP_ICON,
+        UP_BTN_ICON,
+        DOWN_BTN_ICON,
+        LEFT_BTN_ICON,
+        RIGHT_BTN_ICON,
+        METRO_L_ICON,
+        METRO_R_ICON,
+        X_NOTE_ICON,
+        NOTE_ICON,
+        NOTE4_ICON,
+        UP_DOWN_ICON,
+        LEFT_RIGHT_ICON,
+        SEGMENT_ICON,
+        WAVEFORM_ICON
+    };
+    
+    void DrawInterface() {
+        gfxSkyline();
+        for (int i = 0; i < 35; i++) {
+          int x = i * 9 % 63;
+          int y = (i / 7 * 9) + 14;
+          gfxIcon(x, y, icons[i]);
+        }
+    }
 };
 
 
@@ -107,13 +137,13 @@ private:
 ///  should prefer to handle things in the HemisphereApplet child class
 ///  above.
 ////////////////////////////////////////////////////////////////////////////////
-ClassName ClassName_instance[2];
+ICONS ICONS_instance[2];
 
-void ClassName_Start(bool hemisphere) {ClassName_instance[hemisphere].BaseStart(hemisphere);}
-void ClassName_Controller(bool hemisphere, bool forwarding) {ClassName_instance[hemisphere].BaseController(forwarding);}
-void ClassName_View(bool hemisphere) {ClassName_instance[hemisphere].BaseView();}
-void ClassName_OnButtonPress(bool hemisphere) {ClassName_instance[hemisphere].OnButtonPress();}
-void ClassName_OnEncoderMove(bool hemisphere, int direction) {ClassName_instance[hemisphere].OnEncoderMove(direction);}
-void ClassName_ToggleHelpScreen(bool hemisphere) {ClassName_instance[hemisphere].HelpScreen();}
-uint64_t ClassName_OnDataRequest(bool hemisphere) {return ClassName_instance[hemisphere].OnDataRequest();}
-void ClassName_OnDataReceive(bool hemisphere, uint64_t data) {ClassName_instance[hemisphere].OnDataReceive(data);}
+void ICONS_Start(bool hemisphere) {ICONS_instance[hemisphere].BaseStart(hemisphere);}
+void ICONS_Controller(bool hemisphere, bool forwarding) {ICONS_instance[hemisphere].BaseController(forwarding);}
+void ICONS_View(bool hemisphere) {ICONS_instance[hemisphere].BaseView();}
+void ICONS_OnButtonPress(bool hemisphere) {ICONS_instance[hemisphere].OnButtonPress();}
+void ICONS_OnEncoderMove(bool hemisphere, int direction) {ICONS_instance[hemisphere].OnEncoderMove(direction);}
+void ICONS_ToggleHelpScreen(bool hemisphere) {ICONS_instance[hemisphere].HelpScreen();}
+uint64_t ICONS_OnDataRequest(bool hemisphere) {return ICONS_instance[hemisphere].OnDataRequest();}
+void ICONS_OnDataReceive(bool hemisphere, uint64_t data) {ICONS_instance[hemisphere].OnDataReceive(data);}

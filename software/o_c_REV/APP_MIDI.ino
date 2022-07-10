@@ -22,6 +22,8 @@
 
 // See https://www.pjrc.com/teensy/td_midi.html
 
+#ifdef ENABLE_APP_MIDI
+
 #include "HSApplication.h"
 #include "HSMIDI.h"
 
@@ -907,3 +909,4 @@ void MIDI_handleEncoderEvent(const UI::Event &event) {
 }
 
 
+#endif

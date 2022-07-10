@@ -64,8 +64,8 @@ public:
 
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         Pack(data, PackLocation {0,9}, offset[0] + 256);
         Pack(data, PackLocation {10,9}, offset[1] + 256);
         Pack(data, PackLocation {19,6}, level[0]);
@@ -73,7 +73,7 @@ public:
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         offset[0] = Unpack(data, PackLocation {0,9}) - 256;
         offset[1] = Unpack(data, PackLocation {10,9}) - 256;
         level[0] = Unpack(data, PackLocation {19,6});
@@ -129,5 +129,5 @@ void AttenuateOffset_View(bool hemisphere) {AttenuateOffset_instance[hemisphere]
 void AttenuateOffset_OnButtonPress(bool hemisphere) {AttenuateOffset_instance[hemisphere].OnButtonPress();}
 void AttenuateOffset_OnEncoderMove(bool hemisphere, int direction) {AttenuateOffset_instance[hemisphere].OnEncoderMove(direction);}
 void AttenuateOffset_ToggleHelpScreen(bool hemisphere) {AttenuateOffset_instance[hemisphere].HelpScreen();}
-uint32_t AttenuateOffset_OnDataRequest(bool hemisphere) {return AttenuateOffset_instance[hemisphere].OnDataRequest();}
-void AttenuateOffset_OnDataReceive(bool hemisphere, uint32_t data) {AttenuateOffset_instance[hemisphere].OnDataReceive(data);}
+uint64_t AttenuateOffset_OnDataRequest(bool hemisphere) {return AttenuateOffset_instance[hemisphere].OnDataRequest();}
+void AttenuateOffset_OnDataReceive(bool hemisphere, uint64_t data) {AttenuateOffset_instance[hemisphere].OnDataReceive(data);}

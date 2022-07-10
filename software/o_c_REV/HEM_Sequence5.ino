@@ -46,7 +46,7 @@ public:
         int play_note = note[step] + 60 + transpose;
         play_note = constrain(play_note, 0, 127);
 
-        if (Clock(0)) StartADCLag();
+        if (Clock(0) && !Clock(1)) StartADCLag();
 
         if (EndOfADCLag()) {
             Advance(step);
@@ -80,8 +80,8 @@ public:
         play = 1; // Replay the changed step in the controller, so it can be heard
     }
 
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         for (int s = 0; s < 5; s++)
         {
             Pack(data, PackLocation {s * 5,5}, note[s]);
@@ -90,7 +90,7 @@ public:
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         for (int s = 0; s < 5; s++)
         {
             note[s] = Unpack(data, PackLocation {s * 5,5});
@@ -184,10 +184,10 @@ void Sequence5_ToggleHelpScreen(bool hemisphere) {
     Sequence5_instance[hemisphere].HelpScreen();
 }
 
-uint32_t Sequence5_OnDataRequest(bool hemisphere) {
+uint64_t Sequence5_OnDataRequest(bool hemisphere) {
     return Sequence5_instance[hemisphere].OnDataRequest();
 }
 
-void Sequence5_OnDataReceive(bool hemisphere, uint32_t data) {
+void Sequence5_OnDataReceive(bool hemisphere, uint64_t data) {
     Sequence5_instance[hemisphere].OnDataReceive(data);
 }
