@@ -66,14 +66,14 @@ public:
         
     /* No state data for this applet
      */
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
         return data;
     }
 
     /* No state data for this applet
      */
-    void OnDataReceive(uint32_t data) {
+    void OnDataReceive(uint64_t data) {
         return;
     }
 
@@ -118,5 +118,5 @@ void Button_View(bool hemisphere) {Button_instance[hemisphere].BaseView();}
 void Button_OnButtonPress(bool hemisphere) {Button_instance[hemisphere].OnButtonPress();}
 void Button_OnEncoderMove(bool hemisphere, int direction) {Button_instance[hemisphere].OnEncoderMove(direction);}
 void Button_ToggleHelpScreen(bool hemisphere) {Button_instance[hemisphere].HelpScreen();}
-uint32_t Button_OnDataRequest(bool hemisphere) {return Button_instance[hemisphere].OnDataRequest();}
-void Button_OnDataReceive(bool hemisphere, uint32_t data) {Button_instance[hemisphere].OnDataReceive(data);}
+uint64_t Button_OnDataRequest(bool hemisphere) {return Button_instance[hemisphere].OnDataRequest();}
+void Button_OnDataReceive(bool hemisphere, uint64_t data) {Button_instance[hemisphere].OnDataReceive(data);}
