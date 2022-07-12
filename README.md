@@ -1,4 +1,4 @@
-Welcome to Benisphere Suite
+Welcome to Benisphere Suite (djphazer mod)
 ===
 
 ## An active fork expanding upon Hemisphere Suite.
