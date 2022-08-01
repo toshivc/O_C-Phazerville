@@ -3,6 +3,10 @@ Welcome to Benisphere Suite
 
 ## An active fork expanding upon Hemisphere Suite.
 
+To download and install the latest release, head to [releases](https://github.com/benirose/O_C-BenisphereSuite/releases).
+
+To learn more about what makes this fork different than the original Hemisphere Suite, head to [the wiki](https://github.com/benirose/O_C-BenisphereSuite/wiki).
+
 Benisphere takes the Hemisphere Suite in a new direction, adding new applets and some enhancements to existing ones, while also removing o_C style apps to make space for these changes.
 
 ### An alternate firmware to an alternate firmware??
