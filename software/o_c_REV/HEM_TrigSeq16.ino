@@ -39,12 +39,13 @@ public:
         if (Clock(0) || Clock(1)) {
             if (Clock(1) || step >= end_step) step = -1;
             step++;
+            active_step = Step();
             bool swap = In(0) >= HEMISPHERE_3V_CV;
-            if (step < 8) {
-                if ((pattern[0] >> step) & 0x01) ClockOut(swap ? 1 : 0);
+            if (active_step < 8) {
+                if ((pattern[0] >> active_step) & 0x01) ClockOut(swap ? 1 : 0);
                 else ClockOut(swap ? 0 : 1);
             } else {
-                if ((pattern[1] >> (step - 8)) & 0x01) ClockOut(swap ? 1 : 0);
+                if ((pattern[1] >> (active_step - 8)) & 0x01) ClockOut(swap ? 1 : 0);
                 else ClockOut(swap ? 0 : 1);
             }
         }
@@ -109,12 +110,32 @@ protected:
     
 private:
     int step; // Current step
+    int active_step;
     uint8_t pattern[2];
     int end_step;
     int cursor; // 0=ch1 low, 1=ch1 hi, 2=ch2 low, 3=ch3 hi, 4=end_step
-    
+
+    int Offset() {
+        int offset = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, end_step);
+        if (offset < 0) offset += Length();
+        offset %= Length();
+        return offset;
+    }
+
+    inline int Length() const {
+        return end_step + 1;
+    }
+
+    int Step() {
+        int s = step + Offset();
+        s %= Length();
+        return s;
+    }
+
     void DrawDisplay() {
         bool stop = 0; // Stop displaying when end_step is reached
+
+        int offset = Offset();
 
         ForEachChannel(ch)
         {
@@ -137,6 +158,10 @@ private:
 
                     if (s + (ch * 8) == step) {
                         gfxLine(x + 4, y, x + 10, y);
+                    }
+
+                    if (s == offset) {
+                        gfxFrame(x - 4, y - 4, 9, 9);
                     }
 
                     // Draw the end_step cursor
