@@ -1,5 +1,17 @@
+#include <stdint.h>
+
+#define LUT_INCREMENTS_SIZE 97
 
 const int16_t kOctave = 12 * 128;
+const uint16_t kSlopeBits = 12;
+
+enum TidesLiteFlagBitMask { FLAG_EOA = 1, FLAG_EOR = 2 };
+
+struct TidesLiteSample {
+  uint16_t unipolar;
+  int16_t bipolar;
+  uint8_t flags;
+};
 
 /*
 import numpy as np
@@ -29,8 +41,46 @@ const uint32_t lut_increments[] = {
     3543489, 3569167, 3595031, 3621082, 3647321, 3673751, 3700373, 3727187,
     3754196, 3781401, 3808802, 3836402, 3864202, 3892204, 3920409, 3948818,
     3977432, 4006254, 4035285, 4064527, 4093980, 4123647, 4153528, 4183626,
-    4213943
-};
+    4213943};
+
+/*
+size_t lower_bound(uint32_t* first, uint32_t* last, const uint32_t target)) {
+  size_t len = last - first;
+
+  if (first == last) {
+    return &first;
+  }
+  uint32_t* mid = first + (last - first) / 2;
+  if (mid == &target) {
+    return mid;
+  }
+  if (target < mid)
+}
+
+int16_t ComputePitch(uint32_t phase_increment) {
+  uint32_t first = lut_increments[0];
+  uint32_t last = lut_increments[LUT_INCREMENTS_SIZE - 2];
+  int16_t pitch = 0;
+
+  if (phase_increment == 0) {
+    phase_increment = 1;
+  }
+
+  while (phase_increment > last) {
+    phase_increment >>= 1;
+    pitch += kOctave;
+  }
+  while (phase_increment < first) {
+    phase_increment <<= 1;
+    pitch -= kOctave;
+  }
+  pitch += (std::lower_bound(
+      lut_increments,
+      lut_increments + LUT_INCREMENTS_SIZE,
+      phase_increment) - lut_increments) << 4;
+  return pitch;
+}
+*/
 
 uint32_t ComputePhaseIncrement(int16_t pitch) {
   int16_t num_shifts = 0;
@@ -48,5 +98,56 @@ uint32_t ComputePhaseIncrement(int16_t pitch) {
   uint32_t phase_increment = a + ((b - a) * (pitch & 0xf) >> 4);
   // Compensate for downsampling
   return num_shifts >= 0 ? phase_increment << num_shifts
-                          : phase_increment >> -num_shifts;
+                         : phase_increment >> -num_shifts;
+}
+
+const uint64_t max_phase = 0xffffffff;
+const uint64_t max_16 = 0xffff;
+uint32_t WarpPhase(uint32_t phase, uint16_t curve) {
+  int32_t c = curve - 32767;
+  bool flip = c < 0;
+  if (flip)
+     phase = max_phase - phase;
+  uint64_t a = (uint64_t) 128 * c * c;
+  phase = (max_16 + a / max_16) * phase / ( (max_phase +  a / max_16 * phase / max_16) / max_16);
+  if (flip)
+    phase = max_phase - phase;
+  return phase;
+}
+
+uint16_t ShapePhase(uint16_t phase, uint16_t attack_curve,
+                    uint16_t decay_curve) {
+  return phase < (1UL << 15)
+             ? WarpPhase(phase << 17, attack_curve) >> 16
+             : WarpPhase((0xffff - phase) << 17, decay_curve) >> 16;
+}
+
+void GenerateSample(uint16_t slope, uint16_t att_shape, uint16_t dec_shape,
+                    uint32_t phase, TidesLiteSample &sample) {
+  uint32_t eoa = slope << 16;
+  // uint32_t skewed_phase = phase;
+  slope = slope ? slope : 1;
+  uint32_t decay_factor = (32768 << kSlopeBits) / slope;
+  uint32_t attack_factor = (32768 << kSlopeBits) / (65536 - slope);
+
+  uint32_t skewed_phase = phase;
+  if (phase <= eoa) {
+    skewed_phase = (phase >> kSlopeBits) * decay_factor;
+  } else {
+    skewed_phase = ((phase - eoa) >> kSlopeBits) * attack_factor;
+    skewed_phase += 1L << 31;
+  }
+
+  sample.unipolar = ShapePhase(skewed_phase >> 16, att_shape, dec_shape);
+  sample.bipolar = ShapePhase(skewed_phase >> 15, att_shape, dec_shape) >> 1;
+  if (skewed_phase >= (1UL << 31)) {
+    sample.bipolar = -sample.bipolar;
+  }
+
+  sample.flags = 0;
+  if (phase >= eoa) {
+    sample.flags |= FLAG_EOA;
+  } else {
+    sample.flags |= FLAG_EOR;
+  }
 }
