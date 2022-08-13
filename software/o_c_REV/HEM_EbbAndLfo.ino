@@ -13,6 +13,11 @@ public:
     int s = constrain(slope * 65535 / 127 + slope_cv, 0, 65535);
     ProcessSample(s, att_shape * 65535 / 127, dec_shape * 65535 / 127,
                    fold * 32767 / 127, phase, sample);
+    if (phase < phase_increment) {
+      eoa_reached = false;
+    } else {
+      eoa_reached = eoa_reached || (sample.flags & FLAG_EOA);
+    }
 
     output(0, (Output) out_a);
     output(1, (Output) out_b);
@@ -23,7 +28,6 @@ public:
 
   void View() {
     gfxHeader(applet_name());
-    /*
 
     int last = 50;
     for (int i = 1; i < 64; i++) {
@@ -37,7 +41,6 @@ public:
     }
     uint32_t p = phase / (0xffffffff / 64);
     gfxLine(p, 15, p, 50);
-    */
 
     switch (cursor) {
     case 0:
@@ -143,6 +146,7 @@ private:
   uint8_t out_b = BIPOLAR;
   TidesLiteSample disp_sample;
   TidesLiteSample sample;
+  bool eoa_reached = false;
 
   int knob_accel = 1 << 8;
 
@@ -157,12 +161,10 @@ private:
       Out(ch, Proportion(sample.bipolar, 32767, HEMISPHERE_MAX_CV / 2));
       break;
     case EOA:
-      //GateOut(ch, sample.flags & FLAG_EOA);
-      GateOut(ch, phase <= 0x7fffffff);
+      GateOut(ch, eoa_reached);
       break;
     case EOR:
-      //GateOut(ch, sample.flags & FLAG_EOR);
-      GateOut(ch, phase > 0x7fffffff);
+      GateOut(ch, !eoa_reached);
       break;
     }
   }
