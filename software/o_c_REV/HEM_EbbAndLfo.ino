@@ -11,11 +11,11 @@ public:
     phase += phase_increment;
     int slope_cv = In(1) * 32768 / HEMISPHERE_3V_CV;
     int s = constrain(slope * 65535 / 127 + slope_cv, 0, 65535);
-    GenerateSample(s, att_shape * 65535 / 127, dec_shape * 65535 / 127, phase,
-                   sample);
+    ProcessSample(s, att_shape * 65535 / 127, dec_shape * 65535 / 127,
+                   fold * 32767 / 127, phase, sample);
 
-    Out(0, Proportion(sample.unipolar, 65535, HEMISPHERE_MAX_CV));
-    Out(1, Proportion(sample.bipolar, 32767, HEMISPHERE_MAX_CV / 2));
+    output(0, (Output) out_a);
+    output(1, (Output) out_b);
 
     if (knob_accel > (1 << 8))
       knob_accel--;
@@ -23,29 +23,60 @@ public:
 
   void View() {
     gfxHeader(applet_name());
+    /*
 
-    gfxPrintFreq(0, 15, pitch);
-    if (cursor == 0)
-      gfxCursor(0, 23, 32);
+    int last = 50;
+    for (int i = 1; i < 64; i++) {
+      ProcessSample(slope * 65535 / 127, att_shape * 65535 / 127,
+                     dec_shape * 65535 / 127, fold * 32767 / 127,
+                     0xffffffff / 64 * i, disp_sample);
+      int next = 50 - disp_sample.unipolar * 35 / 65535;
+      gfxLine(i - 1, last, i, next);
+      last = next;
+      // gfxPixel(i, 50 - disp_sample.unipolar * 35 / 65536);
+    }
+    uint32_t p = phase / (0xffffffff / 64);
+    gfxLine(p, 15, p, 50);
+    */
 
-    gfxPrint(0, 25, slope);
-    if (cursor == 1)
-      gfxCursor(0, 33, 32);
-
-    gfxPrint(0, 35, att_shape);
-    if (cursor == 2)
-      gfxCursor(0, 43, 32);
-
-    gfxPrint(0, 45, dec_shape);
-    if (cursor == 3)
-      gfxCursor(0, 53, 32);
+    switch (cursor) {
+    case 0:
+      // gfxPrint(0, 55, "Frq:");
+      gfxPos(0, 55);
+      gfxPrintFreq(pitch);
+      break;
+    case 1:
+      gfxPrint(0, 55, "Slope: ");
+      gfxPrint(slope);
+      break;
+    case 2:
+      gfxPrint(0, 55, "Att: ");
+      gfxPrint(att_shape);
+      break;
+    case 3:
+      gfxPrint(0, 55, "Dec: ");
+      gfxPrint(dec_shape);
+      break;
+    case 4:
+      gfxPrint(0, 55, "Fold: ");
+      gfxPrint(fold);
+      break;
+    case 5:
+      gfxPrint(0, 55, "OutA: ");
+      gfxPrint(out_labels[out_a]);
+      break;
+    case 6:
+      gfxPrint(0, 55, "OutB: ");
+      gfxPrint(out_labels[out_b]);
+      break;
+    }
   }
 
   void SetHelp() {}
 
   void OnButtonPress() {
     cursor++;
-    cursor %= 4;
+    cursor %= 7;
   }
 
   void OnEncoderMove(int direction) {
@@ -71,6 +102,18 @@ public:
       dec_shape = constrain(dec_shape + direction, 0, 127);
       break;
     }
+    case 4: {
+      fold = constrain(fold + direction, 0, 127);
+      break;
+    }
+    case 5: {
+      out_a += direction;
+      out_a %= 4;
+    }
+    case 6: {
+      out_b += direction;
+      out_b %= 4;
+    }
     }
     if (knob_accel < (1 << 13))
       knob_accel <<= 1;
@@ -81,19 +124,51 @@ public:
   void OnDataReceive(uint64_t data) {}
 
 private:
+
+  enum Output {
+    UNIPOLAR,
+    BIPOLAR,
+    EOA,
+    EOR,
+  };
+
   int cursor;
   int16_t pitch;
   int slope = 64;
   int att_shape = 64;
   int dec_shape = 64;
-  int smoothness;
+  int fold = 0;
+  const char* out_labels[4] = {"Uni", "Bi", "High", "Low"};
+  uint8_t out_a = UNIPOLAR;
+  uint8_t out_b = BIPOLAR;
+  TidesLiteSample disp_sample;
   TidesLiteSample sample;
 
   int knob_accel = 1 << 8;
 
   uint32_t phase;
 
-  void gfxPrintFreq(int x, int y, int16_t pitch) {
+  void output(int ch, Output out) {
+    switch (out) {
+    case UNIPOLAR:
+      Out(ch, Proportion(sample.unipolar, 65535, HEMISPHERE_MAX_CV));
+      break;
+    case BIPOLAR:
+      Out(ch, Proportion(sample.bipolar, 32767, HEMISPHERE_MAX_CV / 2));
+      break;
+    case EOA:
+      //GateOut(ch, sample.flags & FLAG_EOA);
+      GateOut(ch, phase <= 0x7fffffff);
+      break;
+    case EOR:
+      //GateOut(ch, sample.flags & FLAG_EOR);
+      GateOut(ch, phase > 0x7fffffff);
+      break;
+    }
+  }
+
+
+  void gfxPrintFreq(int16_t pitch) {
     uint32_t num = ComputePhaseIncrement(pitch);
     uint32_t denom = 0xffffffff / 16666;
     bool swap = num < denom;
@@ -113,7 +188,6 @@ private:
     else
       digits = 4;
 
-    gfxPos(x, y);
     gfxPrint(int_part);
     gfxPrint(".");
 
