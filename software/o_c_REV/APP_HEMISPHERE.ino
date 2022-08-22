@@ -38,6 +38,8 @@ namespace menu = OC::menu;
 }
 
 #define HEMISPHERE_DOUBLE_CLICK_TIME 8000
+#define HEMISPHERE_PULSE_ANIMATION_TIME 500
+#define HEMISPHERE_PULSE_ANIMATION_TIME_LONG 1200
 
 typedef struct Applet {
   int id;
