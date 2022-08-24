@@ -75,8 +75,6 @@ public:
     }
   }
 
-  void SetHelp() {}
-
   void OnButtonPress() {
     cursor++;
     cursor %= 7;
@@ -125,6 +123,14 @@ public:
   uint64_t OnDataRequest() { return 0; }
 
   void OnDataReceive(uint64_t data) {}
+
+protected:
+    void SetHelp() {
+        help[HEMISPHERE_HELP_DIGITALS] = "";
+        help[HEMISPHERE_HELP_CVS] = "1=V/Oct 2=Slope";
+        help[HEMISPHERE_HELP_OUTS] = "A=OutA B=OutB";
+        help[HEMISPHERE_HELP_ENCODER] = "P=param T=adjust";
+    }
 
 private:
 
