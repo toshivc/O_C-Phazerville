@@ -67,8 +67,9 @@ public:
       
         // CV 2 bi-polar modulation of probability
         int pCv = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 100);
+        bool clk = Clock(0);
         
-        if (Clock(0)) {
+        if (clk) {
             // If the cursor is not on the p value, and Digital 2 is not gated, the sequence remains the same
             int prob = (cursor == 1 || Gate(1)) ? p + pCv : 0;
             prob = constrain(prob, 0, 100);
@@ -98,15 +99,14 @@ public:
 
         if (cv2 == 0) {
           // Send 8-bit proportioned CV
-          int cv = Proportion(reg & 0x00ff, 255, HEMISPHERE_MAX_CV);
-          Out(1, cv);
+          Out(1, Proportion(reg & 0x00ff, 255, HEMISPHERE_MAX_CV) );
         } else if (cv2 == 1) {
-          if (Clock(0)) {
+          if (clk) {
             ClockOut(1); 
           }
         } else if (cv2 == 2) {
           // only trigger if 1st bit is high
-          if (Clock(0) && (reg & 0x01) == 1) {
+          if (clk && (reg & 0x01) == 1) {
             ClockOut(1);
           }
         }
@@ -119,29 +119,35 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor > 4) cursor = 0;
+        isEditing = !isEditing;
     }
 
     void OnEncoderMove(int direction) {
-        if (cursor == 0) length = constrain(length += direction, TM_MIN_LENGTH, TM_MAX_LENGTH);
-        if (cursor == 1) p = constrain(p += direction, 0, 100);
-        if (cursor == 2) {
-            scale += direction;
-            if (scale >= TM_MAX_SCALE) scale = 0;
-            if (scale < 0) scale = TM_MAX_SCALE - 1;
-            quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
-        }
-        if(cursor == 3){
-           quant_range = constrain(quant_range += direction, 1, 32);
-        }
-        if(cursor == 4){
-          cv2 += direction;
-          if (cv2 > 2) {
-            cv2 = 0;
-          }
-          if (cv2 < 0) {
-            cv2 = 2;
-          }
+        if (!isEditing) {
+            cursor += direction;
+            if (cursor < 0) cursor = 4;
+            if (cursor > 4) cursor = 0;
+        } else {
+            switch (cursor) {
+            case 0:
+                length = constrain(length + direction, TM_MIN_LENGTH, TM_MAX_LENGTH);
+                break;
+            case 1:
+                p = constrain(p + direction, 0, 100);
+                break;
+            case 2:
+                scale += direction;
+                if (scale >= TM_MAX_SCALE) scale = 0;
+                if (scale < 0) scale = TM_MAX_SCALE - 1;
+                quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
+                break;
+            case 3:
+                quant_range = constrain(quant_range + direction, 1, 32);
+                break;
+            case 4:
+                cv2 = constrain(cv2 + direction, 0, 2);
+                break;
+            }
         }
     }
         
@@ -150,13 +156,13 @@ public:
         Pack(data, PackLocation {0,16}, reg);
         Pack(data, PackLocation {16,7}, p);
         Pack(data, PackLocation {23,4}, length - 1);
-        Pack(data, PackLocation {28,6}, quant_range);
-        Pack(data, PackLocation {34,4}, cv2);
+        Pack(data, PackLocation {27,5}, quant_range - 1);
+        Pack(data, PackLocation {32,4}, cv2);
 
         // Logarhythm mod: Since scale can exceed 6 bits now, clamp mathematically rather than surprising the user with a roll over of larger numbers
         //Pack(data, PackLocation {27,6}, scale);
-        Pack(data, PackLocation {38,6}, constrain(scale, 0, 63));        
-        
+        Pack(data, PackLocation {36,6}, constrain(scale, 0, 63));
+
         return data;
     }
 
@@ -164,11 +170,10 @@ public:
         reg = Unpack(data, PackLocation {0,16});
         p = Unpack(data, PackLocation {16,7});
         length = Unpack(data, PackLocation {23,4}) + 1;
-        quant_range = Unpack(data, PackLocation{28,6});
-        cv2 = Unpack(data, PackLocation {34,4});
-        scale = Unpack(data, PackLocation {38,6});
+        quant_range = Unpack(data, PackLocation{27,5}) + 1;
+        cv2 = Unpack(data, PackLocation {32,4});
+        scale = Unpack(data, PackLocation {36,6});
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
-        
     }
 
 protected:
@@ -184,6 +189,7 @@ protected:
 private:
     int length; // Sequence length
     int cursor;  // 0 = length, 1 = p, 2 = scale
+    bool isEditing = false;
     braids::Quantizer quantizer;
 
     // Settings
@@ -226,6 +232,13 @@ private:
         if (cursor == 2) gfxCursor(13, 33, 30); // Scale Cursor
         if (cursor == 3) gfxCursor(49, 33, 14); // Quant Range Cursor // APD
         if (cursor == 4) gfxCursor(27, 43, (cv2 == 2) ? 18 : 10); // cv2 mode
+        if (isEditing) {
+            if (cursor == 0) gfxInvert(13, 14, 12, 9);
+            if (cursor == 1) gfxInvert(45, 14, 18, 9);
+            if (cursor == 2) gfxInvert(13, 24, 30, 9);
+            if (cursor == 3) gfxInvert(49, 24, 14, 9);
+            if (cursor == 4) gfxInvert(27, 34, (cv2 == 2) ? 18 : 10, 9); // cv2 mode
+        }
     }
 
     void DrawIndicator() {
