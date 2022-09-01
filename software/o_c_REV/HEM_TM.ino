@@ -127,6 +127,8 @@ public:
             cursor += direction;
             if (cursor < 0) cursor = 4;
             if (cursor > 4) cursor = 0;
+
+            ResetCursor();  // Reset blink so it's immediately visible when moved
         } else {
             switch (cursor) {
             case 0:
@@ -205,12 +207,11 @@ private:
         gfxBitmap(1, 14, 8, LOOP_ICON);
         gfxPrint(12 + pad(10, length), 15, length);
         gfxPrint(32, 15, "p=");
-        if (cursor == 1 || Gate(1)) {
+        if (cursor == 1 || Gate(1)) { // p unlocked
             int pCv = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 100);
             int prob = constrain(p + pCv, 0, 100);
-            if (cursor == 1) gfxCursor(45, 23, 18); // Probability Cursor
             gfxPrint(pad(100, prob), prob);
-        } else {
+        } else { // p is disabled
             gfxBitmap(49, 14, 8, LOCK_ICON);
         }
         gfxBitmap(1, 24, 8, SCALE_ICON);
@@ -228,16 +229,21 @@ private:
         }
 
         //gfxPrint(1, 35, tmp);
-        if (cursor == 0) gfxCursor(13, 23, 12); // Length Cursor
-        if (cursor == 2) gfxCursor(13, 33, 30); // Scale Cursor
-        if (cursor == 3) gfxCursor(49, 33, 14); // Quant Range Cursor // APD
-        if (cursor == 4) gfxCursor(27, 43, (cv2 == 2) ? 18 : 10); // cv2 mode
+        switch (cursor) {
+            case 0: gfxCursor(13, 23, 12); break; // Length Cursor
+            case 1: gfxCursor(45, 23, 18); break; // Probability Cursor
+            case 2: gfxCursor(12, 33, 25); break; // Scale Cursor
+            case 3: gfxCursor(49, 33, 14); break; // Quant Range Cursor // APD
+            case 4: gfxCursor(27, 43, (cv2 == 2) ? 18 : 10); // cv2 mode
+        }
         if (isEditing) {
-            if (cursor == 0) gfxInvert(13, 14, 12, 9);
-            if (cursor == 1) gfxInvert(45, 14, 18, 9);
-            if (cursor == 2) gfxInvert(13, 24, 30, 9);
-            if (cursor == 3) gfxInvert(49, 24, 14, 9);
-            if (cursor == 4) gfxInvert(27, 34, (cv2 == 2) ? 18 : 10, 9); // cv2 mode
+            switch (cursor) {
+                case 0: gfxInvert(13, 14, 12, 9); break;
+                case 1: gfxInvert(45, 14, 18, 9); break;
+                case 2: gfxInvert(12, 24, 25, 9); break;
+                case 3: gfxInvert(49, 24, 14, 9); break;
+                case 4: gfxInvert(27, 34, (cv2 == 2) ? 18 : 10, 9); // cv2 mode
+            }
         }
     }
 
