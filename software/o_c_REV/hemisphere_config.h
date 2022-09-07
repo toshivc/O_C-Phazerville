@@ -11,7 +11,7 @@
 // * Category filtering is deprecated at 1.8, but I'm leaving the per-applet categorization
 // alone to avoid breaking forked codebases by other developers.
 
-#define HEMISPHERE_AVAILABLE_APPLETS 49
+#define HEMISPHERE_AVAILABLE_APPLETS 54
 
 //////////////////  id  cat   class name
 #define HEMISPHERE_APPLETS { \
@@ -23,9 +23,10 @@
     DECLARE_APPLET( 51, 0x80, BugCrack), \
     DECLARE_APPLET(  4, 0x14, Brancher), \
     DECLARE_APPLET( 31, 0x04, Burst), \
-    DECLARE_APPLET( 57, 0x10, Button), \
+    DECLARE_APPLET( 65, 0x10, Button), \
     DECLARE_APPLET( 12, 0x10, Calculate),\
     DECLARE_APPLET( 32, 0x0a, Carpeggio), \
+    DECLARE_APPLET( 64, 0x08, Chordinator), \
     DECLARE_APPLET(  6, 0x04, ClockDivider), \
     DECLARE_APPLET( 28, 0x04, ClockSkip), \
     DECLARE_APPLET( 30, 0x10, Compare), \
@@ -41,9 +42,12 @@
     DECLARE_APPLET( 21, 0x01, LowerRenz), \
     DECLARE_APPLET( 50, 0x04, Metronome), \
     DECLARE_APPLET( 33, 0x10, MixerBal), \
+    DECLARE_APPLET( 20, 0x02, Palimpsest), \
     DECLARE_APPLET( 59, 0x04, ProbabilityDivider), \
     DECLARE_APPLET( 62, 0x04, ProbabilityMelody), \
+    DECLARE_APPLET( 44, 0x01, RunglBook), \
     DECLARE_APPLET( 26, 0x08, ScaleDuet), \
+    DECLARE_APPLET( 40, 0x40, Schmitt), \
     DECLARE_APPLET( 23, 0x80, Scope), \
     DECLARE_APPLET( 14, 0x02, Sequence5), \
     DECLARE_APPLET( 48, 0x45, ShiftGate), \
@@ -69,12 +73,8 @@
     DECLARE_APPLET(127, 0x80, DIAGNOSTIC), \
     DECLARE_APPLET(150, 0x20, hMIDIIn), \
     DECLARE_APPLET( 27, 0x20, hMIDIOut), \
-    DECLARE_APPLET( 62, 0x08, Chordinator), \
     DECLARE_APPLET( 45, 0x02, EnigmaJr), \
     DECLARE_APPLET( 17, 0x50, GatedVCA), \
-    DECLARE_APPLET( 20, 0x02, Palimpsest), \
-    DECLARE_APPLET( 44, 0x01, RunglBook), \
-    DECLARE_APPLET( 40, 0x40, Schmitt), \
     DECLARE_APPLET( 46, 0x08, Squanch), \
     DECLARE_APPLET( 37, 0x40, Trending), \
 */
