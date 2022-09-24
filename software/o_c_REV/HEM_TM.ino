@@ -31,8 +31,6 @@
 #include "braids_quantizer_scales.h"
 #include "OC_scales.h"
 
-// Logarhythm mod: Allow all scales, even though only the first 64 serialize correctly
-//#define TM_MAX_SCALE 63
 #define TM_MAX_SCALE OC::Scales::NUM_SCALES
 
 #define TM_MIN_LENGTH 2
@@ -72,43 +70,37 @@ public:
         if (clk) {
             // If the cursor is not on the p value, and Digital 2 is not gated, the sequence remains the same
             int prob = (cursor == 1 || Gate(1)) ? p + pCv : 0;
-            prob = constrain(prob, 0, 100);
 
-            // Grab the bit that's about to be shifted away
-            int last = (reg >> (length - 1)) & 0x01;
-
-            // Does it change?
-            if (random(0, 99) < prob) last = 1 - last;
-
-            // Shift left, then potentially add the bit from the other side
-            reg = (reg << 1) + last;
+            AdvanceRegister( constrain(prob, 0, 100) );
         }
  
         // Send 5-bit quantized CV
-        int32_t note = reg & 0x1f;
-
         // APD: Scale this to the range of notes allowed by quant_range: 32 should be all
         // This defies the faithful Turing Machine sim aspect of this code but gives a useful addition that the Disting adds to the concept
-        // scaled = note * quant_range / 0x1f
-        note *= quant_range;
-        simfloat x = int2simfloat(note) / (int32_t)0x1f;
-        note = simfloat2int(x);
-        //tmp = note;
-        
+        int32_t note = Proportion(reg & 0x1f, 0x1f, quant_range);
         Out(0, quantizer.Lookup(note + 64));
 
-        if (cv2 == 0) {
+        switch (cv2) {
+        case 0:
           // Send 8-bit proportioned CV
           Out(1, Proportion(reg & 0x00ff, 255, HEMISPHERE_MAX_CV) );
-        } else if (cv2 == 1) {
-          if (clk) {
-            ClockOut(1); 
-          }
-        } else if (cv2 == 2) {
-          // only trigger if 1st bit is high
-          if (clk && (reg & 0x01) == 1) {
+          break;
+        case 1:
+          if (clk)
             ClockOut(1);
-          }
+          break;
+        case 2:
+          // only trigger if 1st bit is high
+          if (clk && (reg & 0x01) == 1)
+            ClockOut(1);
+          break;
+        case 3: // duplicate of Out A
+          Out(1, quantizer.Lookup(note + 64));
+          break;
+        case 4: // alternative 6-bit pitch
+          note = Proportion( (reg >> 8 & 0x3f), 0x3f, quant_range);
+          Out(1, quantizer.Lookup(note + 64));
+          break;
         }
     }
 
@@ -147,7 +139,7 @@ public:
                 quant_range = constrain(quant_range + direction, 1, 32);
                 break;
             case 4:
-                cv2 = constrain(cv2 + direction, 0, 2);
+                cv2 = constrain(cv2 + direction, 0, 4);
                 break;
             }
         }
@@ -160,10 +152,7 @@ public:
         Pack(data, PackLocation {23,4}, length - 1);
         Pack(data, PackLocation {27,5}, quant_range - 1);
         Pack(data, PackLocation {32,4}, cv2);
-
-        // Logarhythm mod: Since scale can exceed 6 bits now, clamp mathematically rather than surprising the user with a roll over of larger numbers
-        //Pack(data, PackLocation {27,6}, scale);
-        Pack(data, PackLocation {36,6}, constrain(scale, 0, 63));
+        Pack(data, PackLocation {36,8}, constrain(scale, 0, 255));
 
         return data;
     }
@@ -174,7 +163,7 @@ public:
         length = Unpack(data, PackLocation {23,4}) + 1;
         quant_range = Unpack(data, PackLocation{27,5}) + 1;
         cv2 = Unpack(data, PackLocation {32,4});
-        scale = Unpack(data, PackLocation {36,6});
+        scale = Unpack(data, PackLocation {36,8});
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
     }
 
@@ -183,7 +172,7 @@ protected:
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "1=Clock 2=p Gate";
         help[HEMISPHERE_HELP_CVS]      = "1=Length 2=p Mod";
-        help[HEMISPHERE_HELP_OUTS]     = "A=Quant5-bit B=CV8";
+        help[HEMISPHERE_HELP_OUTS]     = "A=Quant5-bit B=CV2";
         help[HEMISPHERE_HELP_ENCODER]  = "Len/Prob/Scl/Range";
         //                               "------------------" <-- Size Guide
     }
@@ -200,8 +189,8 @@ private:
     //int8_t scale; // Scale used for quantized output
     int scale;  // Logarhythm: hold larger values
     //int tmp = 0;
-    int quant_range;  // APD
-    int cv2 = 0;
+    uint8_t quant_range;  // APD
+    uint8_t cv2 = 0; // 2nd output mode: 0=mod; 1=trig; 2=trig-on-msb; 3=duplicate of A; 4=alternate pitch
 
     void DrawSelector() {
         gfxBitmap(1, 14, 8, LOOP_ICON);
@@ -219,13 +208,21 @@ private:
         gfxBitmap(41, 24, 8, NOTE4_ICON);
         gfxPrint(49, 25, quant_range); // APD
         gfxPrint(1, 35, "CV2:");
-        if (cv2 == 0) {
-          gfxBitmap(28, 35, 8, WAVEFORM_ICON);
-        } else {
-          gfxBitmap(28, 35, 8, CLOCK_ICON);
-          if (cv2 == 2) {
+        switch (cv2) {
+        case 0: // modulation output
+            gfxBitmap(28, 35, 8, WAVEFORM_ICON);
+            break;
+        case 2: // clock out only on msb
             gfxPrint(36, 35, "1");
-          }
+        case 1: // clock out icon
+            gfxBitmap(28, 35, 8, CLOCK_ICON);
+            break;
+        case 3: // double output A
+            gfxBitmap(28, 35, 8, LINK_ICON);
+            break;
+        case 4: // alternate 6-bit pitch
+            gfxBitmap(28, 35, 8, CV_ICON);
+            break;
         }
 
         //gfxPrint(1, 35, tmp);
@@ -259,7 +256,7 @@ private:
 
     void AdvanceRegister(int prob) {
         // Before shifting, determine the fate of the last bit
-        int last = (reg >> 15) & 0x01;
+        int last = (reg >> (length - 1)) & 0x01;
         if (random(0, 99) < prob) last = 1 - last;
 
         // Shift left, then potentially add the bit from the other side
