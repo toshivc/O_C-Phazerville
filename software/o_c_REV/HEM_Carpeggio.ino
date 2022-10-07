@@ -44,6 +44,7 @@ public:
         if (Clock(1)) { // Reset
             step = 0; 
             reset = true;
+            pitch_out_for_step();
         }
 
         if (Clock(0)) {
