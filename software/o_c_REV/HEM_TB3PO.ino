@@ -379,6 +379,7 @@ class TB_3PO : public HemisphereApplet
         Pack(data, PackLocation {8,4}, root);
         Pack(data, PackLocation {12,4}, density_encoder);
         Pack(data, PackLocation {16,16}, seed);
+        Pack(data, PackLocation {32,8}, octave_offset);
         return data;
     }
 
@@ -388,6 +389,7 @@ class TB_3PO : public HemisphereApplet
       root = Unpack(data, PackLocation {8,4});
       density_encoder = Unpack(data, PackLocation {12,4});
       seed = Unpack(data, PackLocation {16,16});
+      octave_offset = Unpack(data, PackLocation {32,8});
 
       //const braids::Scale & quant_scale = OC::Scales::GetScale(scale);
       set_quantizer_scale(scale);
@@ -396,6 +398,7 @@ class TB_3PO : public HemisphereApplet
       root = constrain(root, 0, 11);
       density_encoder = constrain(density_encoder, 0, 14); // Internally just positive
       density = density_encoder;
+      octave_offset = constrain(octave_offset,-3,3);
       
       // Restore all seed-derived settings!
       regenerate_all();
