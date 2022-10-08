@@ -30,12 +30,14 @@ public:
     void Start() {
         for (int s = 0; s < 5; s++) note[s] = random(0, 30);
         play = 1;
+        reset = true;
     }
 
     void Controller() {
         // Reset sequencer
         if (Clock(1)) {
             step = 0;
+            reset = true;
             ClockOut(1);
         }
 
@@ -46,7 +48,7 @@ public:
         int play_note = note[step] + 60 + transpose;
         play_note = constrain(play_note, 0, 127);
 
-        if (Clock(0) && !Clock(1)) StartADCLag();
+        if (Clock(0)) StartADCLag();
 
         if (EndOfADCLag()) {
             Advance(step);
@@ -114,9 +116,12 @@ private:
     int note[5]; // Sequence value (0 - 30)
     int step = 0; // Current sequencer step
     bool play; // Play the note
+    bool reset;
 
     void Advance(int starting_point) {
-        if (++step == 5) step = 0;
+        if (!reset) step++;
+        reset = false;
+        if (step == 5) step = 0;
         // If all the steps have been muted, stay where we were
         if (step_is_muted(step) && step != starting_point) Advance(starting_point);
     }
