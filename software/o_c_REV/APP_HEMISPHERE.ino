@@ -96,7 +96,11 @@ public:
         {
             int index = get_applet_index_by_id(values_[h]);
             SetApplet(h, index);
-            uint64_t data = (uint64_t(values_[8 + h]) << 48) + (uint64_t(values_[6 + h]) << 32) + (values_[4 + h] << 16) + values_[2 + h];
+            uint64_t data =
+                (uint64_t(values_[8 + h]) << 48) |
+                (uint64_t(values_[6 + h]) << 32) |
+                (uint64_t(values_[4 + h]) << 16) |
+                (uint64_t(values_[2 + h]));
             available_applets[index].OnDataReceive(h, data);
         }
         ClockSetup.OnDataReceive(0, uint64_t(values_[HEMISPHERE_CLOCK_DATA]));
