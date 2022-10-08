@@ -33,15 +33,24 @@ public:
             step[ch] = 0;
         }
         cursor = 0;
+        reset = true;
     }
 
     void Controller() {
-        if (Clock(0) || Clock(1)) {
+        if (Clock(1)) {
+            reset = true;
+            ForEachChannel(ch) step[ch] = 0;
+        }
+
+        if (Clock(0)) {
             bool swap = In(0) >= HEMISPHERE_3V_CV;
+            if (!reset) {
+                ForEachChannel(ch) step[ch]++;
+            }
+            reset = false;
             ForEachChannel(ch)
             {
-                if (Clock(1) || step[ch] >= end_step[ch]) step[ch] = -1;
-                step[ch]++;
+                if (step[ch] > end_step[ch]) step[ch] = 0;
                 if ((pattern[ch] >> step[ch]) & 0x01) ClockOut(swap ? (1 - ch) : ch);
             }
 
@@ -112,6 +121,7 @@ private:
     uint8_t pattern[2];
     int end_step[2];
     int cursor; // 0=ch1 low, 1=ch1 hi, 2=c1 end_step,  3=ch2 low, 4=ch3 hi, 5=ch2 end_step
+    bool reset;
     
     void DrawDisplay() {
         ForEachChannel(ch)
