@@ -17,7 +17,7 @@
 #define HEMISPHERE_APPLETS { \
     DECLARE_APPLET(  8, 0x01, ADSREG), \
     DECLARE_APPLET( 34, 0x01, ADEG), \
-    DECLARE_APPLET( 15, 0x02, Euclid), \
+    DECLARE_APPLET( 15, 0x02, AnnularFusion), \
     DECLARE_APPLET( 47, 0x09, ASR), \
     DECLARE_APPLET( 56, 0x10, AttenuateOffset), \
     DECLARE_APPLET( 51, 0x80, BugCrack), \
