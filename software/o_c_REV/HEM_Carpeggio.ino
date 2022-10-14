@@ -35,14 +35,19 @@ public:
         step = 0;
         replay = 0;
         transpose = 0;
+        reset = true;
         ImprintChord(2);
         pitch_out_for_step();
     }
 
     void Controller() {
-        if (Clock(1)) step = 0; // Reset
+        if (Clock(1)) { // Reset
+            step = 0; 
+            reset = true;
+            pitch_out_for_step();
+        }
 
-        if (Clock(0) && !Gate(1)) {
+        if (Clock(0)) {
             // Are the X or Y position being set? If so, get step coordinates. Otherwise,
             // simply play current step and advance it. This way, the applet can be used as
             // a more conventional arpeggiator as well as a Cartesian one.
@@ -54,7 +59,11 @@ public:
                 step = (y * 4) + x;
                 pitch_out_for_step();
             } else {
-                if (++step > 15) step = 0;
+                if (!reset) {
+                    ++step;
+                }
+                reset = false;
+                if (step > 15) step = 0;
                 pitch_out_for_step();
             }
             replay = 0;
@@ -134,6 +143,7 @@ private:
     uint8_t step; // Current step number
     int16_t sequence[16];
     bool replay; // When the encoder is moved, re-quantize the output
+    bool reset;
 
     // Settings
     int chord; // Selected chord

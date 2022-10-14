@@ -28,7 +28,7 @@ class ProbabilityMelody : public HemisphereApplet {
 public:
 
     const char* applet_name() {
-        return "ProbMelo";
+        return "ProbMeloD";
     }
 
     void Start() {
