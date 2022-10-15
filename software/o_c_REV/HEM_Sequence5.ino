@@ -29,37 +29,27 @@ public:
 
     void Start() {
         for (int s = 0; s < 5; s++) note[s] = random(0, 30);
-        play = 1;
-        reset = true;
     }
 
     void Controller() {
-        // Reset sequencer
-        if (Clock(1)) {
+        if (Clock(1)) { // reset
             step = 0;
             reset = true;
-            ClockOut(1);
         }
-
-        int transpose = 0;
-        if (DetentedIn(0)) {
-            transpose = In(0) / 128; // 128 ADC steps per semitone
+        if (Clock(0)) { // clock
+            if (!reset) Advance(step);
+            reset = false;
+            // send trigger on first step
+            if (step == 0) ClockOut(1);
         }
+        
+        // continuously compute the note
+        int transpose = DetentedIn(0) / 128; // 128 ADC steps per semitone
         int play_note = note[step] + 60 + transpose;
         play_note = constrain(play_note, 0, 127);
+        // set CV output
+        Out(0, MIDIQuantizer::CV(play_note));
 
-        if (Clock(0)) StartADCLag();
-
-        if (EndOfADCLag()) {
-            Advance(step);
-            if (step == 0) ClockOut(1);
-            play = 1;
-        }
-
-        if (play) {
-            int cv = MIDIQuantizer::CV(play_note);
-            Out(0, cv);
-        }
     }
 
     void View() {
@@ -79,7 +69,6 @@ public:
             note[cursor] = constrain(note[cursor] += direction, 0, 30);
             muted &= ~(0x01 << cursor);
         }
-        play = 1; // Replay the changed step in the controller, so it can be heard
     }
 
     uint64_t OnDataRequest() {
@@ -115,13 +104,10 @@ private:
     char muted = 0; // Bitfield for muted steps; ((muted >> step) & 1) means muted
     int note[5]; // Sequence value (0 - 30)
     int step = 0; // Current sequencer step
-    bool play; // Play the note
-    bool reset;
+    bool reset = true;
 
     void Advance(int starting_point) {
-        if (!reset) step++;
-        reset = false;
-        if (step == 5) step = 0;
+        if (++step == 5) step = 0;
         // If all the steps have been muted, stay where we were
         if (step_is_muted(step) && step != starting_point) Advance(starting_point);
     }
