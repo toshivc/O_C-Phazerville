@@ -447,6 +447,7 @@ protected:
     }
 
     bool EndOfADCLag(int ch = 0) {
+        if (adc_lag_countdown[ch] < 0) return false;
         return (--adc_lag_countdown[ch] == 0);
     }
 
