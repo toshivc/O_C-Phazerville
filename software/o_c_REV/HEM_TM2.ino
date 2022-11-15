@@ -179,28 +179,29 @@ public:
         
     uint64_t OnDataRequest() {
         uint64_t data = 0;
-        Pack(data, PackLocation {0,16}, reg);
-        Pack(data, PackLocation {16,7}, p);
-        Pack(data, PackLocation {23,4}, length - 1);
-        Pack(data, PackLocation {27,5}, quant_range - 1);
-        Pack(data, PackLocation {32,3}, outmode[0]);
-        Pack(data, PackLocation {35,3}, outmode[1]);
+        Pack(data, PackLocation {0,7}, p);
+        Pack(data, PackLocation {7,5}, length - 1);
+        Pack(data, PackLocation {12,5}, quant_range - 1);
+        Pack(data, PackLocation {17,3}, outmode[0]);
+        Pack(data, PackLocation {20,3}, outmode[1]);
+        Pack(data, PackLocation {23,8}, constrain(scale, 0, 255));
 
-        Pack(data, PackLocation {38,6}, constrain(scale, 0, 63));
+        Pack(data, PackLocation {32,32}, reg);
 
         return data;
     }
 
     void OnDataReceive(uint64_t data) {
-        reg = Unpack(data, PackLocation {0,16});
-        reg2 = ~reg;
-        p = Unpack(data, PackLocation {16,7});
-        length = Unpack(data, PackLocation {23,4}) + 1;
-        quant_range = Unpack(data, PackLocation{27,5}) + 1;
-        outmode[0] = Unpack(data, PackLocation {32,3});
-        outmode[1] = Unpack(data, PackLocation {35,3});
-        scale = Unpack(data, PackLocation {38,6});
+        p = Unpack(data, PackLocation {0,7});
+        length = Unpack(data, PackLocation {7,5}) + 1;
+        quant_range = Unpack(data, PackLocation{12,5}) + 1;
+        outmode[0] = Unpack(data, PackLocation {17,3});
+        outmode[1] = Unpack(data, PackLocation {20,3});
+        scale = Unpack(data, PackLocation {23,8});
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
+
+        reg = Unpack(data, PackLocation {32,32});
+        reg2 = ~reg;
     }
 
 protected:
