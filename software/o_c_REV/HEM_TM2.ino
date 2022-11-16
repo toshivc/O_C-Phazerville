@@ -50,7 +50,7 @@ public:
         reg2 = ~reg;
         p = 0;
         length = 16;
-        quant_range = 24;  //APD: Quantizer range
+        quant_range = 24;
         cursor = 0;
         quantizer.Init();
         scale = OC::Scales::SCALE_SEMI;
@@ -58,26 +58,22 @@ public:
     }
 
     void Controller() {
+        bool clk = Clock(0);
 
-        // CV 1 control over length
-        int lengthCv = DetentedIn(0);
-        if (lengthCv < 0) length = TM2_MIN_LENGTH;
-        if (lengthCv > 0) {
-            length = constrain(ProportionCV(lengthCv, TM2_MAX_LENGTH + 1), TM2_MIN_LENGTH, TM2_MAX_LENGTH);
-        }
+        // CV 1 bi-polar modulation of length
+        len_mod = constrain(length + Proportion(DetentedIn(0), HEMISPHERE_MAX_CV, TM2_MAX_LENGTH), TM2_MIN_LENGTH, TM2_MAX_LENGTH);
       
         // CV 2 bi-polar modulation of probability
-        int pCv = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 100);
-        bool clk = Clock(0);
+        p_mod = constrain(p + Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 100), 0, 100);
         
+        // Advance the register on clock, flipping bits as necessary
         if (clk) {
             // If the cursor is not on the p value, and Digital 2 is not gated, the sequence remains the same
-            int prob = (cursor == 1 || Gate(1)) ? p + pCv : 0;
-            prob = constrain(prob, 0, 100);
+            int prob = (cursor == 1 || Gate(1)) ? p_mod : 0;
 
             // Grab the bit that's about to be shifted away
-            int last = (reg >> (length - 1)) & 0x01;
-            int last2 = (reg2 >> (length - 1)) & 0x01;
+            int last = (reg >> (len_mod - 1)) & 0x01;
+            int last2 = (reg2 >> (len_mod - 1)) & 0x01;
 
             // Does it change?
             if (random(0, 99) < prob) last = 1 - last;
@@ -97,8 +93,6 @@ public:
         note *= quant_range;
         simfloat x = int2simfloat(note) / (int32_t)0x1f;
         note = simfloat2int(x);
-
-        Out(0, quantizer.Lookup(note + 64));
         */
 
         ForEachChannel(ch) {
@@ -109,11 +103,11 @@ public:
             case 1: // pitch 2
               Out(ch, quantizer.Lookup(note2 + 64));
               break;
-            case 2: // mod A - 8-bit proportioned CV
-              Out(ch, Proportion(reg & 0x00ff, 255, HEMISPHERE_MAX_CV) );
+            case 2: // mod A - 8-bit bi-polar proportioned CV
+              Out(ch, Proportion( int8_t(reg & 0xff), 0x80, HEMISPHERE_MAX_CV) );
               break;
-            case 3: // mod B - 8-bit proportioned CV
-              Out(ch, Proportion(reg2 & 0x00ff, 255, HEMISPHERE_MAX_CV) );
+            case 3: // mod B
+              Out(ch, Proportion( int8_t(reg2 & 0xff), 0x80, HEMISPHERE_MAX_CV) );
               break;
             case 4: // trig A
               if (clk && (reg & 0x01) == 1) // trigger if 1st bit is high
@@ -216,7 +210,8 @@ protected:
     
 private:
     int length; // Sequence length
-    int cursor;  // 0 = length, 1 = p, 2 = scale
+    int len_mod; // actual length after CV mod
+    int cursor;  // 0 = length, 1 = p, 2 = scale, 3=range, 4=OutA, 5=OutB
     bool isEditing = false;
     braids::Quantizer quantizer;
 
@@ -224,6 +219,7 @@ private:
     uint32_t reg; // 32-bit sequence register
     uint32_t reg2; // DJP
     int p; // Probability of bit flipping on each cycle
+    int p_mod;
     int scale; // Scale used for quantized output
     int quant_range;
 
@@ -234,12 +230,10 @@ private:
 
     void DrawSelector() {
         gfxBitmap(1, 14, 8, LOOP_ICON);
-        gfxPrint(12 + pad(10, length), 15, length);
+        gfxPrint(12 + pad(10, len_mod), 15, len_mod);
         gfxPrint(32, 15, "p=");
         if (cursor == 1 || Gate(1)) { // p unlocked
-            int pCv = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 100);
-            int prob = constrain(p + pCv, 0, 100);
-            gfxPrint(pad(100, prob), prob);
+            gfxPrint(pad(100, p_mod), p_mod);
         } else { // p is disabled
             gfxBitmap(49, 14, 8, LOCK_ICON);
         }
