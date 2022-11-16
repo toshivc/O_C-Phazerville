@@ -37,23 +37,19 @@ public:
     }
 
     void Controller() {
-        if (Clock(1)) {
-            reset = true;
-            ForEachChannel(ch) step[ch] = 0;
+        if (Clock(1)) { // reset
+            ForEachChannel(ch) step[ch] = -1;
         }
 
-        if (Clock(0)) {
+        if (Clock(0)) { // clock advance
             bool swap = In(0) >= HEMISPHERE_3V_CV;
-            if (!reset) {
-                ForEachChannel(ch) step[ch]++;
-            }
-            reset = false;
             ForEachChannel(ch)
             {
-                if (step[ch] > end_step[ch]) step[ch] = 0;
-                if ((pattern[ch] >> step[ch]) & 0x01) ClockOut(swap ? (1 - ch) : ch);
+                if (step[ch] >= end_step[ch]) step[ch] = -1;
+                step[ch]++;
+                active_step[ch] = Step(ch);
+                if ((pattern[ch] >> active_step[ch]) & 0x01) ClockOut(swap ? (1 - ch) : ch);
             }
-
         }
     }
 

@@ -33,18 +33,16 @@ public:
         step = 0;
         end_step = 15;
         cursor = 0;
-        reset = true;
     }
 
     void Controller() {
-        reset = Clock(1);
+        if (Clock(1)) step = -1; // reset regardless of clock
 
         if (Clock(0)) {
             bool swap = In(0) >= HEMISPHERE_3V_CV;
-            if (reset || step >= end_step) step = -1;
+            if (step >= end_step) step = -1;
             step++;
-            reset = false;
-            active_step = Step();
+            active_step = Step(); // actual step after Offset modulation
             if (active_step < 8) {
                 if ((pattern[0] >> active_step) & 0x01) ClockOut(swap ? 1 : 0);
                 else ClockOut(swap ? 0 : 1);
@@ -118,7 +116,6 @@ private:
     uint8_t pattern[2];
     int end_step;
     int cursor; // 0=ch1 low, 1=ch1 hi, 2=ch2 low, 3=ch3 hi, 4=end_step
-    bool reset;
 
     int Offset() {
         int offset = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, end_step);
