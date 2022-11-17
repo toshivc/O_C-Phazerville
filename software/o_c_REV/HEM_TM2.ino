@@ -118,10 +118,10 @@ public:
                 ClockOut(ch);
               break;
             case 6: // gate A
-              Out(ch, (reg & 0x01)*HEMISPHERE_MAX_CV);
+              GateOut(ch, (reg & 0x01));
               break;
             case 7: // gate B
-              Out(ch, (reg2 & 0x01)*HEMISPHERE_MAX_CV);
+              GateOut(ch, (reg2 & 0x01));
               break;
             }
         }
