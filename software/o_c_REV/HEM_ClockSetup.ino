@@ -47,6 +47,7 @@ public:
                 clock_m->Stop();
             else {
                 clock_m->Start();
+                clock_m->Reset();
             }
         }
 
