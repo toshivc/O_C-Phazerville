@@ -335,8 +335,11 @@ public:
 
         if (ch == 0 && !physical) {
             ClockManager *clock_m = clock_m->get();
-            if (clock_m->IsRunning()) clocked = clock_m->Tock();
-            else if (master_clock_bus) clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
+            // Logical Clock only on RIGHT hemisphere if forwarding is on
+            if ( hemisphere == 0 || clock_m->IsForwarded() ) {
+                if (clock_m->IsRunning()) clocked = clock_m->Tock();
+                else if (master_clock_bus) clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
+            }
         }
 
         if (clocked) {

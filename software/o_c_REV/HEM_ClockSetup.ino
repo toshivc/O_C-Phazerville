@@ -41,10 +41,12 @@ public:
 
     void OnEncoderMove(int direction) {
         if (cursor == 0) { // Source
-            if (clock_m->IsRunning() || clock_m->IsPaused()) clock_m->Stop();
+            if (direction > 0) // right turn toggles Forwarding
+                clock_m->ToggleForwarding();
+            else if (clock_m->IsRunning()) // left turn toggles clock
+                clock_m->Stop();
             else {
                 clock_m->Start();
-                clock_m->Pause();
             }
         }
 
@@ -105,16 +107,17 @@ private:
         graphics.drawLine(0, 12, 127, 12);
 
         // Clock Source
+        gfxIcon(1, 15, CLOCK_ICON);
         if (clock_m->IsRunning()) {
-            gfxIcon(1, 15, PLAY_ICON);
-            gfxPrint(16, 15, "Internal");
+            gfxIcon(10, 15, PLAY_ICON);
         } else if (clock_m->IsPaused()) {
-            gfxIcon(1, 15, PAUSE_ICON);
-            gfxPrint(16, 15, "Internal");
+            gfxIcon(10, 15, PAUSE_ICON);
         } else {
-            gfxIcon(1, 15, CLOCK_ICON);
-            gfxPrint(16, 15, "Forward");
+            gfxIcon(10, 15, STOP_ICON);
         }
+        gfxPrint(20, 15, "<Clk/Fwd>");
+        if (clock_m->IsForwarded())
+            gfxIcon(76, 15, LINK_ICON);
 
         // Tempo
         gfxIcon(1, 25, NOTE4_ICON);
@@ -126,7 +129,7 @@ private:
         gfxPrint(1, 35, "x");
         gfxPrint(clock_m->GetMultiply());
 
-        if (cursor == 0) gfxCursor(16, 23, 46);
+        if (cursor == 0) gfxCursor(20, 23, 54);
         if (cursor == 1) gfxCursor(23, 33, 18);
         if (cursor == 2) gfxCursor(8, 43, 12);
     }

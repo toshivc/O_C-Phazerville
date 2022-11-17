@@ -89,7 +89,7 @@ public:
     }
 
     void Start() {
-        forwarded = 0;
+        // forwarded = 0; // NJM- logical clock can be forwarded, too
         running = 1;
         Unpause();
     }
