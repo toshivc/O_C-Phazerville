@@ -20,8 +20,8 @@
 
 #include "HSMIDI.h"
 
-#define SEQ5_STEPS 5
-// NOTE: Not claiming >5 when saving, or restoring when loading!
+// DON'T GO PAST 8!
+#define SEQ5_STEPS 8
 
 class Sequence5 : public HemisphereApplet {
 public:
@@ -76,7 +76,7 @@ public:
 
     uint64_t OnDataRequest() {
         uint64_t data = 0;
-        for (int s = 0; s < 5; s++)
+        for (int s = 0; s < SEQ5_STEPS; s++)
         {
             Pack(data, PackLocation {s * 5,5}, note[s]);
         }
@@ -85,7 +85,7 @@ public:
     }
 
     void OnDataReceive(uint64_t data) {
-        for (int s = 0; s < 5; s++)
+        for (int s = 0; s < SEQ5_STEPS; s++)
         {
             note[s] = Unpack(data, PackLocation {s * 5,5});
         }
@@ -119,8 +119,8 @@ private:
         // Sliders
         for (int s = 0; s < SEQ5_STEPS; s++)
         {
-            int x = 6 + (12 * s);
-            //int x = 6 + (7 * s); // APD:  narrower to fit more
+            //int x = 6 + (12 * s);
+            int x = 6 + (7 * s); // APD:  narrower to fit more
             
             if (!step_is_muted(s)) {
                 gfxLine(x, 25, x, 63);
@@ -128,19 +128,17 @@ private:
                 // When cursor, there's a heavier bar and a solid slider
                 if (s == cursor) {
                     gfxLine(x + 1, 25, x + 1, 63);
-                    gfxRect(x - 4, BottomAlign(note[s]), 9, 3);
-                    //gfxRect(x - 2, BottomAlign(note[s]), 5, 3);  // APD
+                    //gfxRect(x - 4, BottomAlign(note[s]), 9, 3);
+                    gfxRect(x - 2, BottomAlign(note[s]), 5, 3);  // APD
                 } else 
                 {
-                  gfxFrame(x - 4, BottomAlign(note[s]), 9, 3);
-                  //gfxFrame(x - 2, BottomAlign(note[s]), 5, 3);  // APD
+                  //gfxFrame(x - 4, BottomAlign(note[s]), 9, 3);
+                  gfxFrame(x - 2, BottomAlign(note[s]), 5, 3);  // APD
                 }
                 
                 // When on this step, there's an indicator circle
                 if (s == step) 
                 {
-
-                  
                   gfxCircle(x, 20, 3);  //Original
 
                   // APD
