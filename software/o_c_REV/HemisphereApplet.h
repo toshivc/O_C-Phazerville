@@ -333,10 +333,13 @@ public:
             if (ch == 1) clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
         }
 
-        if (ch == 0 && !physical) {
+        if (!physical) {
             ClockManager *clock_m = clock_m->get();
-            if (clock_m->IsRunning()) clocked = clock_m->Tock();
-            else if (master_clock_bus) clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
+            // Logical Clock only on trig 1 or 3 if forwarding is on
+            if ( ch == 0 && (hemisphere == 0 || clock_m->IsForwarded()) ) {
+                if (clock_m->IsRunning()) clocked = clock_m->Tock();
+                else if (master_clock_bus) clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
+            }
         }
 
         if (clocked) {
