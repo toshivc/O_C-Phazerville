@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// #include <Arduino.h>
 #include "OC_core.h"
-//#include "HemisphereApplet.h"
 
 #define PROB_UP 500
 #define PROB_DN 500
@@ -197,14 +195,11 @@ private:
         if (cursor < 3) {
             gfxPrint(1, 15, "Range");
             gfxPrint(43, 15, range);
-            if (cursor == 0) gfxCursor(43, 22, 18);
 
             gfxPrint(1, 25, "Step");
             gfxPrint(43, 25, step);
-            if (cursor == 1) gfxCursor(43, 32, 18);
             gfxPrint(1, 35, "Smooth");
             gfxPrint(43, 35, smoothness);
-            if (cursor == 2) gfxCursor(43, 42, 18);
         } else {
 
             gfxPrint(1, 15, "Y TRIG");
@@ -213,23 +208,28 @@ private:
             } else {
                 gfxPrint(43, 15, "TR2");
             }
-            if (cursor == 3) gfxCursor(43, 22, 18);
     
             gfxPrint(1, 25, "Y CLK /");
             gfxPrint(43, 25, yClkDiv);
-            if (cursor == 4) gfxCursor(43, 32, 18);
 
-            gfxPrint(1, 35, "CV Rng");
+            gfxPrint(1, 35, "CVRng");
             if (cvRange == 0) {
-                gfxPrint(43, 35, ".5st");
+                gfxPrint(40, 35, ".5st");
             } else if (cvRange == 1) {
-                gfxPrint(43, 35, "1 st");
+                gfxPrint(40, 35, "1 st");
             } else if (cvRange == 2) {
-                gfxPrint(43, 35, "1oct");
+                gfxPrint(40, 35, "1oct");
             } else if (cvRange == 3) {
-                gfxPrint(43, 35, "FULL");
+                gfxPrint(40, 35, "FULL");
             }
-            if (cursor == 5) gfxCursor(43, 42, 24);
+        }
+        switch (cursor) {
+            case 0: gfxCursor(43, 22, 18); break;
+            case 1: gfxCursor(43, 32, 18); break;
+            case 2: gfxCursor(43, 42, 18); break;
+            case 3: gfxCursor(43, 22, 18); break;
+            case 4: gfxCursor(43, 32, 18); break;
+            case 5: gfxCursor(40, 42, 24); break;
         }
 
         // gfxPrint(1, 38, "x");
