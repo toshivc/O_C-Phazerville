@@ -121,16 +121,17 @@ private:
      
     
     void DrawWaveform() {
-        int inc = HEM_LOFI_PCM_BUFFER_SIZE / 256;
+        //int inc = HEM_LOFI_PCM_BUFFER_SIZE / 1024;
+        int inc = rate_factor;
         int disp[32];
-        int high = 128;
+        int high = HEMISPHERE_3V_CV;
         int pos = head - (inc * 15) - random(1,3); // Try to center the head
-        if (head < 0) head += length;
+        if (pos < 0) pos += length;
         for (int i = 0; i < 32; i++)
         {
             int v = pcm[pos];
-            if (v < 0) v = 0;
-            if (v > high) high = v;
+            //if (v < 0) v = 0;
+            //if (v > high) high = v;
             pos += inc;
             if (pos >= HEM_LOFI_PCM_BUFFER_SIZE) pos -= length;
             disp[i] = v;
