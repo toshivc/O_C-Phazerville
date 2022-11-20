@@ -18,20 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#define HEM_LOFI_PCM_BUFFER_SIZE 2048
-#define HEM_LOFI_PCM_SPEED 8
-#define LOFI_PCM2CV(S) ((uint32_t)S << 8) - 32767;
+#define HEM_LOFI_PCM_BUFFER_SIZE 4096
+#define HEM_LOFI_PCM_SPEED 4
+#define LOFI_PCM2CV(S) ((uint32_t)S << 8) - 32512 //32767 is 128 << 8 32512 is 127 << 8 // 0-126 is neg, 127 is 0, 128-254 is pos
+#define CLIPLIMIT 32512
 
 class LoFiPCM : public HemisphereApplet {
 public:
 
     const char* applet_name() { // Maximum 10 characters
-        return "LoFi Tape";
+        return "LoFi Echo";
     }
 
     void Start() {
         countdown = HEM_LOFI_PCM_SPEED;
-        for (int i = 0; i < HEM_LOFI_PCM_BUFFER_SIZE; i++) pcm[i] = 127;
+        for (int i = 0; i < HEM_LOFI_PCM_BUFFER_SIZE; i++) pcm[i] = 127; //char is unsigned in teensy (0-255)?
+        selected = 1; //for gui
     }
 
     void Controller() {
@@ -40,41 +42,46 @@ public:
 
         countdown--;
         if (countdown == 0) {
-            if (play || record || gated_record) head++;
+            head++;
             if (head >= length) {
-                head = 0;
-                record = 0;
+                head = 0;               
                 ClockOut(1);
             }
 
-            if (record || gated_record) {
-                uint32_t s = (In(0) + 32767) >> 8;
-                pcm[head] = (char)s;
-            }
-
-            uint32_t s = LOFI_PCM2CV(pcm[head]);
-            int SOS = In(1); // Sound-on-sound
-            int live = Proportion(SOS, HEMISPHERE_MAX_CV, In(0));
-            int loop = play ? Proportion(HEMISPHERE_MAX_CV - SOS, HEMISPHERE_MAX_CV, s) : 0;
-            Out(0, live + loop);
+            int dt = delaytime_pct * length / 100; //convert delaytime to length in samples 
+            int writehead = (head+length + dt) % length; //have to add the extra length to keep modulo positive in case delaytime is neg
+            int tapeout = LOFI_PCM2CV(pcm[head]); // get the char out from the array and convert back to cv (de-offset)
+            uint32_t feedbackmix = (constrain((tapeout * feedback / 100 + In(0)), -CLIPLIMIT, CLIPLIMIT) + CLIPLIMIT) >> 8; //add to the feedback, offset and bitshift down
+            pcm[writehead] = (char)feedbackmix;
+            
+            uint32_t s = play ? LOFI_PCM2CV(pcm[head]) : 0;
+            //int SOS = In(1); // Sound-on-sound
+            //int live = Proportion(SOS, HEMISPHERE_MAX_CV, In(0)); //max_cv is 7680 scales vol. of live 
+            //int loop = play ? Proportion(HEMISPHERE_MAX_CV - SOS, HEMISPHERE_MAX_CV, s) : 0;
+            Out(0, s);
             countdown = HEM_LOFI_PCM_SPEED;
         }
     }
 
     void View() {
         gfxHeader(applet_name());
-        DrawTransportBar();
+        DrawSelector();
         DrawWaveform();
     }
 
     void OnButtonPress() {
-        record = 1 - record;
-        play = 0;
-        head = 0;
+        selected = 1 - selected;
+        ResetCursor();
     }
 
     void OnEncoderMove(int direction) {
-        length = constrain(length += (direction * 32), 32, HEM_LOFI_PCM_BUFFER_SIZE);
+        if (selected == 0) delaytime_pct = constrain(delaytime_pct += direction, 0, 99);
+        if (selected == 1) feedback = constrain(feedback += direction, 0, 99);
+
+        //amp_offset_cv = Proportion(amp_offset_pct, 100, HEMISPHERE_MAX_CV);
+        //p[cursor] = constrain(p[cursor] += direction, 0, 100);
+
+    
     }
 
     uint64_t OnDataRequest() {
@@ -97,18 +104,16 @@ protected:
     
 private:
     char pcm[HEM_LOFI_PCM_BUFFER_SIZE];
-    bool record = 0; // Record activated via button
+    bool record = 0; // Record always on
     bool gated_record = 0; // Record gated via digital in
-    bool play = 0;
+    bool play = 0; //play always on
     int head = 0; // Locatioon of play/record head
+    int delaytime_pct = 50; //delaytime as percentage of delayline buffer
+    int feedback = 50;
     int countdown = HEM_LOFI_PCM_SPEED;
     int length = HEM_LOFI_PCM_BUFFER_SIZE;
-    
-    void DrawTransportBar() {
-        DrawStop(3, 15);
-        DrawPlay(26, 15);
-        DrawRecord(50, 15);
-    }
+    int selected; //for gui
+     
     
     void DrawWaveform() {
         int inc = HEM_LOFI_PCM_BUFFER_SIZE / 256;
@@ -134,7 +139,22 @@ private:
         }
     }
     
-    void DrawStop(int x, int y) {
+
+    
+    void DrawSelector()
+    {
+        for (int param = 0; param < 2; param++)
+        {
+            gfxPrint(31 * param, 15, param ? "Fb: " : "Ln: ");
+            gfxPrint(16, 15, delaytime_pct);
+            gfxPrint(48, 15, feedback);
+            if (param == selected) gfxCursor(0 + (31 * param), 23, 30);
+        }
+    }
+    
+    
+    
+ /*   void DrawStop(int x, int y) {
         if (record || play || gated_record) gfxFrame(x, y, 11, 11);
         else gfxRect(x, y, 11, 11);
     }
@@ -152,7 +172,6 @@ private:
             gfxLine(x, y + 10, x + 10, y + 5);
         }
     }
-    
     void DrawRecord(int x, int y) {
         gfxCircle(x + 5, y + 5, 5);
         if (record || gated_record) {
@@ -162,6 +181,7 @@ private:
             }
         }
     }
+*/    
     
 };
 
