@@ -23,10 +23,6 @@
 // #define CLIPLIMIT 6144 // 4V
 #define CLIPLIMIT HEMISPHERE_3V_CV
 
-const uint16_t CrushMask[14] = { 0x0000, 0x0001, 0x0003, 0x0007,
-                                 0x000f, 0x001f, 0x003f, 0x007f,
-                                 0x00ff, 0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff };
-
 class LoFiPCM : public HemisphereApplet {
 public:
 
@@ -51,11 +47,12 @@ public:
                     //ClockOut(1);
                 }
 
-                int cv = In(0);
+                int16_t cv = In(0);
                 int cv2 = DetentedIn(1);
 
                 // bitcrush the input
-                cv = cv & (~CrushMask[depth]);
+                cv = cv >> depth;
+                cv = cv << depth;
 
                 // mix input into the buffer ahead, respecting feedback
                 int dt = dt_pct * length / 100; //convert delaytime to length in samples 
@@ -145,27 +142,16 @@ private:
     int cursor; //for gui
     
     void DrawWaveform() {
-        //int inc = HEM_LOFI_PCM_BUFFER_SIZE / 1024;
-        int inc = rate_mod;
-        int disp[32];
-        int high = HEMISPHERE_3V_CV;
-        int pos = head - (inc * 15) - random(1,3); // Try to center the head
+        int inc = rate_mod/2 + 1;
+        int pos = head - (inc * 31) - random(1,3); // Try to center the head
         if (pos < 0) pos += length;
-        for (int i = 0; i < 32; i++)
+        for (int i = 0; i < 64; i++)
         {
-            int v = pcm[pos];
-            //if (v < 0) v = 0;
-            //if (v > high) high = v;
+            int height = Proportion(pcm[pos], CLIPLIMIT, 16);
+            gfxLine(i, 46, i, 46+height);
+
             pos += inc;
-            if (pos >= HEM_LOFI_PCM_BUFFER_SIZE) pos -= length;
-            disp[i] = v;
-        }
-        
-        for (int x = 0; x < 32; x++)
-        {
-            int height = Proportion(disp[x], high, 30);
-            int margin = (32 - height) / 2;
-            gfxLine(x * 2, 30 + margin, x * 2, height + 30 + margin);
+            if (pos >= length) pos -= length;
         }
     }
     
@@ -180,7 +166,6 @@ private:
                 if (param == cursor) gfxCursor(0 + (31 * param), 23, 30);
             }
         } else {
-            //gfxPrint(0, 15, "XxX");
             gfxIcon(0, 15, WAVEFORM_ICON);
             gfxIcon(8, 15, BURST_ICON);
             gfxIcon(22, 15, LEFT_RIGHT_ICON);
