@@ -29,29 +29,22 @@ const uint16_t CLOCK_TEMPO_MAX = 300;
 
 class ClockManager {
     static ClockManager *instance;
-    uint32_t ticks_per_tock; // Based on the selected tempo in BPM
-    uint32_t last_tock_tick; // The tick of the most recent tock
-    uint32_t last_tock_check; // To avoid checking the tock more than once per tick
-    bool tock; // The most recent tock value
+
     uint16_t tempo; // The set tempo, for display somewhere else
-    bool running; // Specifies whether the clock is running for interprocess communication
-    bool paused; // Specifies whethr the clock is paused
-    int8_t tocks_per_beat; // Multiplier
-    bool cycle; // Alternates for each tock, for display purposes
-    byte count; // Multiple counter
-    bool forwarded; // Master clock forwarding is enabled when true
+    uint32_t ticks_per_tock; // Based on the selected tempo in BPM
+    bool running = 0; // Specifies whether the clock is running for interprocess communication
+    bool paused = 0; // Specifies whethr the clock is paused
+    bool forwarded = 0; // Master clock forwarding is enabled when true
+
+    uint32_t last_tock_tick[2] = {0,0}; // The tick of the most recent tock
+    uint32_t last_tock_check[2] = {0,0}; // To avoid checking the tock more than once per tick
+    bool tock = 0; // The most recent tock value
+    int8_t tocks_per_beat[2] = {1, 1}; // Multiplier
+    bool cycle[2] = {0,0}; // Alternates for each tock, for display purposes
+    byte count[2] = {0,0}; // Multiple counter
 
     ClockManager() {
         SetTempoBPM(120);
-        SetMultiply(1);
-        running = 0;
-        paused = 0;
-        cycle = 0;
-        last_tock_tick = 0;
-        last_tock_check = 0;
-        count = 0;
-        tock = 0;
-        forwarded = 0;
     }
 
 public:
@@ -60,9 +53,9 @@ public:
         return instance;
     }
 
-    void SetMultiply(int8_t multiply) {
+    void SetMultiply(int8_t multiply, bool ch = 0) {
         multiply = constrain(multiply, 1, 24);
-        tocks_per_beat = multiply;
+        tocks_per_beat[ch] = multiply;
     }
 
     /* Set ticks per tock, based on one million ticks per minute divided by beats per minute.
@@ -75,17 +68,17 @@ public:
         tempo = bpm;
     }
 
-    int8_t GetMultiply() {return tocks_per_beat;}
+    int8_t GetMultiply(bool ch = 0) {return tocks_per_beat[ch];}
 
     /* Gets the current tempo. This can be used between client processes, like two different
      * hemispheres.
      */
     uint16_t GetTempo() {return tempo;}
 
-    void Reset() {
-        last_tock_tick = OC::CORE::ticks;
-        count = 0;
-        cycle = 1 - cycle;
+    void Reset(bool ch = 0) {
+        last_tock_tick[ch] = OC::CORE::ticks;
+        count[ch] = 0;
+        cycle[ch] = 1 - cycle[ch];
     }
 
     void Start(bool p = 0) {
@@ -111,23 +104,23 @@ public:
 
     bool IsForwarded() {return forwarded;}
 
-    /* Returns true if the clock should fire on this tick, based on the current tempo */
-    bool Tock() {
+    /* Returns true if the clock should fire on this tick, based on the current tempo and multiplier */
+    bool Tock(bool ch = 0) {
         uint32_t now = OC::CORE::ticks;
-        if (now != last_tock_check) {
-            last_tock_check = now;
-            if (now >= (last_tock_tick + (ticks_per_tock / static_cast<uint32_t>(tocks_per_beat)))) {
+        if (now != last_tock_check[ch]) {
+            last_tock_check[ch] = now;
+            if (now >= (last_tock_tick[ch] + (ticks_per_tock / static_cast<uint32_t>(tocks_per_beat[ch])))) {
                 tock = 1;
-                last_tock_tick = now;
-                if (++count >= tocks_per_beat) Reset();
+                last_tock_tick[ch] = now;
+                if (++count[ch] >= tocks_per_beat[ch]) Reset(ch);
             } else tock = 0;
         }
         return tock;
     }
 
-    bool EndOfBeat() {return count == 0;}
+    bool EndOfBeat(bool ch = 0) {return count[ch] == 0;}
 
-    bool Cycle() {return cycle;}
+    bool Cycle(bool ch = 0) {return cycle[ch];}
 };
 
 ClockManager *ClockManager::instance = 0;

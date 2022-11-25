@@ -68,8 +68,8 @@ typedef int32_t simfloat;
 
 // Specifies where data goes in flash storage for each selcted applet, and how big it is
 typedef struct PackLocation {
-    int location;
-    int size;
+    uint8_t location;
+    uint8_t size;
 } PackLocation;
 
 class HemisphereApplet {
@@ -329,11 +329,11 @@ public:
 
         if (ch == 0) { // clock triggers
             if (hemisphere == LEFT_HEMISPHERE) {
-                if (!physical && clock_m->IsRunning()) clocked = clock_m->Tock();
+                if (!physical && clock_m->IsRunning()) clocked = clock_m->Tock(hemisphere);
                 else clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
             } else { // right side is special
                 if (master_clock_bus) { // forwarding from left
-                    if (!physical && clock_m->IsRunning()) clocked = clock_m->Tock();
+                    if (!physical && clock_m->IsRunning()) clocked = clock_m->Tock(hemisphere);
                     else clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
                 } 
                 else clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_3>();
@@ -448,11 +448,11 @@ protected:
      *     // etc...
      * }
      */
-    void StartADCLag(int ch = 0) {
+    void StartADCLag(bool ch = 0) {
         adc_lag_countdown[ch] = HEMISPHERE_ADC_LAG;
     }
 
-    bool EndOfADCLag(int ch = 0) {
+    bool EndOfADCLag(bool ch = 0) {
         if (adc_lag_countdown[ch] < 0) return false;
         return (--adc_lag_countdown[ch] == 0);
     }

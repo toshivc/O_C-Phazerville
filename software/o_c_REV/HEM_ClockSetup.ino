@@ -36,7 +36,7 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor > 2) cursor = 0;
+        if (++cursor > 3) cursor = 0;
     }
 
     void OnEncoderMove(int direction) {
@@ -57,7 +57,8 @@ public:
             break;
 
         case 2: // Set multiplier
-            clock_m->SetMultiply(clock_m->GetMultiply() + direction);
+        case 3:
+            clock_m->SetMultiply(clock_m->GetMultiply(cursor-2) + direction, cursor-2);
             break;
         }
     }
@@ -66,8 +67,9 @@ public:
         uint64_t data = 0;
         Pack(data, PackLocation { 0, 1 }, clock_m->IsRunning() || clock_m->IsPaused());
         Pack(data, PackLocation { 1, 9 }, clock_m->GetTempo());
-        Pack(data, PackLocation { 10, 5 }, clock_m->GetMultiply());
-        Pack(data, PackLocation { 15, 1 }, clock_m->IsForwarded());
+        Pack(data, PackLocation { 10, 5 }, clock_m->GetMultiply(0));
+        Pack(data, PackLocation { 15, 5 }, clock_m->GetMultiply(1));
+        Pack(data, PackLocation { 20, 1 }, clock_m->IsForwarded());
         return data;
     }
 
@@ -78,8 +80,9 @@ public:
             clock_m->Stop();
         }
         clock_m->SetTempoBPM(Unpack(data, PackLocation { 1, 9 }));
-        clock_m->SetMultiply(Unpack(data, PackLocation { 10, 5 }));
-        clock_m->SetForwarding(Unpack(data, PackLocation { 15, 1 }));
+        clock_m->SetMultiply(Unpack(data, PackLocation { 10, 5 }), 0);
+        clock_m->SetMultiply(Unpack(data, PackLocation { 15, 5 }), 1);
+        clock_m->SetForwarding(Unpack(data, PackLocation { 20, 1 }));
     }
 
 protected:
@@ -101,8 +104,8 @@ private:
         // needs to extend across the screen
         graphics.setPrintPos(1, 2);
         graphics.print("Clock Setup");
-        gfxLine(0, 10, 62, 10);
-        gfxLine(0, 12, 62, 12);
+        //gfxLine(0, 10, 62, 10);
+        //gfxLine(0, 12, 62, 12);
         graphics.drawLine(0, 10, 127, 10);
         graphics.drawLine(0, 12, 127, 12);
 
@@ -127,11 +130,16 @@ private:
 
         // Multiply
         gfxPrint(1, 35, "x");
-        gfxPrint(clock_m->GetMultiply());
+        gfxPrint(clock_m->GetMultiply(0));
+
+        // secondary multiplier when forwarding internal clock
+        gfxPrint(33, 35, "x");
+        gfxPrint(clock_m->GetMultiply(1));
 
         if (cursor == 0) gfxCursor(20, 23, 54);
         if (cursor == 1) gfxCursor(23, 33, 18);
         if (cursor == 2) gfxCursor(8, 43, 12);
+        if (cursor == 3) gfxCursor(40, 43, 12);
     }
 };
 

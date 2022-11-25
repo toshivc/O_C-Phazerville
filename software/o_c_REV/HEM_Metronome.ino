@@ -34,9 +34,9 @@ public:
 
         // Outputs
         if (clock_m->IsRunning()) {
-            if (clock_m->Tock()) {
+            if (clock_m->Tock(hemisphere)) {
                 ClockOut(0);
-                if (clock_m->EndOfBeat()) ClockOut(1);
+                if (clock_m->EndOfBeat(hemisphere)) ClockOut(1);
             }
         }
     }
@@ -98,7 +98,7 @@ private:
         gfxCircle(40,51,1); // Winder
 
         // Pendulum arm
-        if (clock_m->Cycle()) gfxLine(29,50,21,31);
+        if (clock_m->Cycle(hemisphere)) gfxLine(29,50,21,31);
         else gfxLine(29,50,37,32);
     }
 
