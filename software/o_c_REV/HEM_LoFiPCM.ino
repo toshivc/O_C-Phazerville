@@ -54,11 +54,11 @@ public:
                 cv = cv >> depth;
                 cv = cv << depth;
 
+                // int dt = dt_pct * length / 100; //convert delaytime to length in samples 
+                head_w = (head + length + dt_pct*length/100) % length; //have to add the extra length to keep modulo positive in case delaytime is neg
+
                 // mix input into the buffer ahead, respecting feedback
-                int dt = dt_pct * length / 100; //convert delaytime to length in samples 
-                int writehead = (head+length + dt) % length; //have to add the extra length to keep modulo positive in case delaytime is neg
-                int16_t feedbackmix = constrain((pcm[head] * fdbk_g / 100 + cv), -CLIPLIMIT, CLIPLIMIT);
-                pcm[writehead] = feedbackmix;
+                pcm[head_w] = constrain((pcm[head] * fdbk_g / 100 + cv), -CLIPLIMIT, CLIPLIMIT);
                 
                 Out(0, pcm[head]);
                 Out(1, pcm[length-1 - head]); // reverse buffer!
@@ -119,10 +119,10 @@ public:
 protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
-        help[HEMISPHERE_HELP_DIGITALS] = "1=Mute 2=Fdbk=100%";
+        help[HEMISPHERE_HELP_DIGITALS] = "1=Pause 2= Fb=100";
         help[HEMISPHERE_HELP_CVS]      = "1=Audio 2=RateMod";
         help[HEMISPHERE_HELP_OUTS]     = "A=Audio B=Reverse";
-        help[HEMISPHERE_HELP_ENCODER]  = "Time/Fdbk/Speed";
+        help[HEMISPHERE_HELP_ENCODER]  = "Time/Fbk/Rate/Bits";
         //                               "------------------" <-- Size Guide
     }
     
@@ -131,15 +131,16 @@ private:
 
     int16_t pcm[HEM_LOFI_PCM_BUFFER_SIZE];
     bool play = 0; //play always on unless gated on Digital 1
-    int head = 0; // Location of play/record head
-    int dt_pct = 50; //delaytime as percentage of delayline buffer
-    int feedback = 50;
-    int fdbk_g = feedback;
-    int countdown = HEM_LOFI_PCM_SPEED;
-    int rate = HEM_LOFI_PCM_SPEED;
-    int rate_mod = rate;
-    int depth = 4; // bit depth reduction aka bitcrush
-    int cursor; //for gui
+    uint16_t head = 0; // Location of read/play head
+    uint16_t head_w = 0; // Location of write/record head
+    int8_t dt_pct = 50; //delaytime as percentage of delayline buffer
+    int8_t feedback = 50;
+    int8_t fdbk_g = feedback;
+    int8_t countdown = HEM_LOFI_PCM_SPEED;
+    uint8_t rate = HEM_LOFI_PCM_SPEED;
+    uint8_t rate_mod = rate;
+    int depth = 1; // bit reduction depth aka bitcrush
+    uint8_t cursor; //for gui
     
     void DrawWaveform() {
         int inc = rate_mod/2 + 1;
@@ -158,13 +159,12 @@ private:
     void DrawSelector()
     {
         if (cursor < 2) {
-            for (int param = 0; param < 2; param++)
-            {
+            for (int param = 0; param < 2; param++) {
                 gfxIcon(31 * param, 15, param ? GAUGE_ICON : CLOCK_ICON );
-                gfxPrint(4 + pad(100, dt_pct), 15, dt_pct);
-                gfxPrint(36 + pad(1000, fdbk_g), 15, fdbk_g);
-                if (param == cursor) gfxCursor(0 + (31 * param), 23, 30);
             }
+            gfxPrint(4 + pad(100, dt_pct), 15, dt_pct);
+            gfxPrint(36 + pad(1000, fdbk_g), 15, fdbk_g);
+            gfxCursor(0 + (31 * cursor), 23, 30);
         } else {
             gfxIcon(0, 15, WAVEFORM_ICON);
             gfxIcon(8, 15, BURST_ICON);
