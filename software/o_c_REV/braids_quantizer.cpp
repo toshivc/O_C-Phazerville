@@ -85,6 +85,14 @@ int32_t Quantizer::Process(int32_t pitch, int32_t root, int32_t transpose) {
       q = num_notes_ - 1;
     }
 
+    q += transpose;
+    octave += q / num_notes_;
+    q %= num_notes_;
+    if (q < 0) {
+      q += num_notes_;
+      octave--;
+    }
+
     note_number_ = octave * num_notes_ + q;
     codeword_ = notes_[q] + octave * span_;
     previous_boundary_ = q == 0
@@ -97,6 +105,7 @@ int32_t Quantizer::Process(int32_t pitch, int32_t root, int32_t transpose) {
       : notes_[q + 1] + octave * span_;
     next_boundary_ = (9 * next_boundary_ + 7 * codeword_) >> 4;
 
+    transpose_ = transpose;
     pitch = codeword_;
   }
   pitch += root;
