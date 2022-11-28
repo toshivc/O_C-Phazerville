@@ -78,7 +78,7 @@ public:
         uint64_t data = 0;
         for (int s = 0; s < SEQ5_STEPS; s++)
         {
-            Pack(data, PackLocation {s * 5,5}, note[s]);
+            Pack(data, PackLocation {uint8_t(s * 5),5}, note[s]);
         }
         Pack(data, PackLocation{25,5}, muted);
         return data;
@@ -87,7 +87,7 @@ public:
     void OnDataReceive(uint64_t data) {
         for (int s = 0; s < SEQ5_STEPS; s++)
         {
-            note[s] = Unpack(data, PackLocation {s * 5,5});
+            note[s] = Unpack(data, PackLocation {uint8_t(s * 5),5});
         }
         muted = Unpack(data, PackLocation {25,5});
     }
