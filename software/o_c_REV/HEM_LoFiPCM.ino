@@ -88,16 +88,16 @@ public:
     void OnEncoderMove(int direction) {
         switch (cursor) {
         case 0:
-            dt_pct = constrain(dt_pct += direction, 0, 99);
+            dt_pct = constrain(dt_pct + direction, 0, 99);
             break;
         case 1:
-            feedback = constrain(feedback += direction, 0, 125);
+            feedback = constrain(feedback + direction, 0, 125);
             break;
         case 2:
-            rate = constrain(rate += direction, 1, 32);
+            rate = constrain(rate + direction, 1, 32);
             break;
         case 3:
-            depth = constrain(depth += direction, 0, 13);
+            depth = constrain(depth + direction, 0, 13);
             break;
         }
 
