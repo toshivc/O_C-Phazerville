@@ -64,12 +64,12 @@ typedef int32_t simfloat;
 
 // Hemisphere-specific macros
 #define BottomAlign(h) (62 - h)
-#define ForEachChannel(ch) for(int ch = 0; ch < 2; ch++)
+#define ForEachChannel(ch) for(int_fast8_t ch = 0; ch < 2; ch++)
 
 // Specifies where data goes in flash storage for each selcted applet, and how big it is
 typedef struct PackLocation {
-    uint8_t location;
-    uint8_t size;
+    size_t location;
+    size_t size;
 } PackLocation;
 
 class HemisphereApplet {
@@ -433,7 +433,7 @@ protected:
     /* Retrieve value from a 64-bit storage unit at the specified location and of the specified bit size */
     int Unpack(uint64_t data, PackLocation p) {
         uint64_t mask = 1;
-        for (int i = 1; i < p.size; i++) mask |= (0x01 << i);
+        for (size_t i = 1; i < p.size; i++) mask |= (0x01 << i);
         return (data >> p.location) & mask;
     }
 
@@ -473,7 +473,7 @@ private:
     bool master_clock_bus; // Clock forwarding was on during the last ISR cycle
     bool applet_started; // Allow the app to maintain state during switching
     int last_view_tick; // Tick number of the most recent view
-    int help_active;
+    bool help_active;
     bool changed_cv[2]; // Has the input changed by more than 1/8 semitone since the last read?
     int last_cv[2]; // For change detection
 };
