@@ -67,7 +67,8 @@ public:
         uint64_t data = 0;
         Pack(data, PackLocation { 0, 1 }, clock_m->IsRunning() || clock_m->IsPaused());
         Pack(data, PackLocation { 1, 9 }, clock_m->GetTempo());
-        Pack(data, PackLocation { 10, 5 }, clock_m->GetMultiply(0));
+        Pack(data, PackLocation { 10, 5 }, clock_m->GetMultiply());
+        Pack(data, PackLocation { 15, 1 }, clock_m->IsForwarded());
         return data;
     }
 
@@ -79,6 +80,7 @@ public:
         }
         clock_m->SetTempoBPM(Unpack(data, PackLocation { 1, 9 }));
         clock_m->SetMultiply(Unpack(data, PackLocation { 10, 5 }));
+        clock_m->SetForwarding(Unpack(data, PackLocation { 15, 1 }));
     }
 
 protected:
