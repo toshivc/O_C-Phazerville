@@ -18,6 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#define MIDI_CLOCK 0xF8
+#define MIDI_START 0xFA
+#define MIDI_STOP  0xFC
+
 class ClockSetup : public HemisphereApplet {
 public:
 
@@ -27,9 +31,18 @@ public:
 
     void Start() { }
 
-    // When the ClockSetup is active, the selected applets should continue to function, so
-    // there's no need to have a controller for ClockSetup.
-    void Controller() { }
+    // The ClockSetup controller handles MIDI Clock and Transport Start/Stop
+    void Controller() {
+        if (start_q){
+            start_q = 0;
+            usbMIDI.sendRealTime(MIDI_START);
+        }
+        if (stop_q){
+            stop_q = 0;
+            usbMIDI.sendRealTime(MIDI_STOP);
+        }
+        if (clock_m->IsRunning() && clock_m->MIDITock()) usbMIDI.sendRealTime(MIDI_CLOCK);
+    }
 
     void View() {
         DrawInterface();
@@ -45,10 +58,14 @@ public:
             if (direction > 0) // right turn toggles Forwarding
                 clock_m->ToggleForwarding();
             else if (clock_m->IsRunning()) // left turn toggles clock
+            {
+                stop_q = 1;
                 clock_m->Stop();
+            }
             else {
-                clock_m->Start();
+                start_q = 1;
                 clock_m->Reset();
+                clock_m->Start();
             }
             break;
 
@@ -95,6 +112,8 @@ protected:
 
 private:
     char cursor; // 0=Source, 1=Tempo, 2=Multiply
+    bool start_q;
+    bool stop_q;
     ClockManager *clock_m = clock_m->get();
 
     void DrawInterface() {

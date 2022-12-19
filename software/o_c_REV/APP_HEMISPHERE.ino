@@ -136,7 +136,9 @@ public:
             }
         }
 
-        if (clock_setup) ClockSetup.Controller(LEFT_HEMISPHERE, clock_m->IsForwarded());
+        // if (clock_setup)
+        // NJM: always execute ClockSetup controller - it handles MIDI clock out
+        ClockSetup.Controller(LEFT_HEMISPHERE, clock_m->IsForwarded());
 
         for (int h = 0; h < 2; h++)
         {

@@ -24,6 +24,8 @@
 #ifndef CLOCK_MANAGER_H
 #define CLOCK_MANAGER_H
 
+#define MIDI_CLOCK_LATENCY 30
+
 const uint16_t CLOCK_TEMPO_MIN = 10;
 const uint16_t CLOCK_TEMPO_MAX = 300;
 
@@ -36,12 +38,12 @@ class ClockManager {
     bool paused = 0; // Specifies whethr the clock is paused
     bool forwarded = 0; // Master clock forwarding is enabled when true
 
-    uint32_t last_tock_tick[2] = {0,0}; // The tick of the most recent tock
-    uint32_t last_tock_check[2] = {0,0}; // To avoid checking the tock more than once per tick
+    uint32_t beat_tick[3] = {0,0,0}; // The tick to count from
+    uint32_t last_tock_check[3] = {0,0,0}; // To avoid checking the tock more than once per tick
     bool tock = 0; // The most recent tock value
-    int8_t tocks_per_beat[2] = {1, 1}; // Multiplier
-    bool cycle[2] = {0,0}; // Alternates for each tock, for display purposes
-    byte count[2] = {0,0}; // Multiple counter
+    int8_t tocks_per_beat[3] = {1, 1, 24}; // Multiplier
+    bool cycle = 0; // Alternates for each tock, for display purposes
+    int8_t count[3] = {0,0,0}; // Multiple counter
 
     ClockManager() {
         SetTempoBPM(120);
@@ -64,7 +66,7 @@ public:
      */
     void SetTempoBPM(uint16_t bpm) {
         bpm = constrain(bpm, CLOCK_TEMPO_MIN, CLOCK_TEMPO_MAX);
-        ticks_per_tock = 1000000 / bpm;
+        ticks_per_tock = 1000000 / bpm; // NJM: scale by 24 to reduce rounding errors
         tempo = bpm;
     }
 
@@ -75,10 +77,13 @@ public:
      */
     uint16_t GetTempo() {return tempo;}
 
-    void Reset(bool ch = 0) {
-        last_tock_tick[ch] = OC::CORE::ticks;
-        count[ch] = 0;
-        cycle[ch] = 1 - cycle[ch];
+    void Reset() {
+        for (int ch = 0; ch < 3; ch++) {
+            beat_tick[ch] = OC::CORE::ticks;
+            count[ch] = 0;
+        }
+        beat_tick[2] -= MIDI_CLOCK_LATENCY;
+        cycle = 1 - cycle;
     }
 
     void Start(bool p = 0) {
@@ -105,22 +110,32 @@ public:
     bool IsForwarded() {return forwarded;}
 
     /* Returns true if the clock should fire on this tick, based on the current tempo and multiplier */
-    bool Tock(bool ch = 0) {
+    bool Tock(int ch = 0) {
         uint32_t now = OC::CORE::ticks;
-        if (now != last_tock_check[ch]) {
-            last_tock_check[ch] = now;
-            if (now >= (last_tock_tick[ch] + (ticks_per_tock / static_cast<uint32_t>(tocks_per_beat[ch])))) {
-                tock = 1;
-                last_tock_tick[ch] = now;
-                if (++count[ch] >= tocks_per_beat[ch]) Reset(ch);
-            } else tock = 0;
+        if (now == last_tock_check[ch]) return false; // cancel redundant check
+        last_tock_check[ch] = now;
+
+        tock = (now - beat_tick[ch]) >= (count[ch]+1)*ticks_per_tock / static_cast<uint32_t>(tocks_per_beat[ch]);
+        if (tock) {
+            if (++count[ch] >= tocks_per_beat[ch])
+            {
+                beat_tick[ch] += ticks_per_tock;
+                count[ch] = 0;
+                if (ch == 0) cycle = 1 - cycle;
+            }
         }
+
         return tock;
+    }
+
+    // Returns true if MIDI Clock should be sent on this tick
+    bool MIDITock() {
+        return Tock(2);
     }
 
     bool EndOfBeat(bool ch = 0) {return count[ch] == 0;}
 
-    bool Cycle(bool ch = 0) {return cycle[ch];}
+    bool Cycle(bool ch = 0) {return cycle;}
 };
 
 ClockManager *ClockManager::instance = 0;
