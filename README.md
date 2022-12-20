@@ -3,7 +3,7 @@ Welcome to Benisphere Suite, djphazer mod (Phazerville Suite)
 
 ## An active fork expanding upon Hemisphere Suite.
 
-Using [Benisphere](https://github.com/benirose/O_C-BenisphereSuite) as a starting point, this "phazerville" branch takes the Hemisphere Suite in new directions, with many new applets and enhancements to existing ones, while also removing most full-width apps and MIDI-related stuff, abandoning the original minimalist approach, with the goal of cramming as much functionality and flexibility into the nifty dual-applet design as possible.
+Using [Benisphere](https://github.com/benirose/O_C-BenisphereSuite) as a starting point, this "phazerville" branch takes the Hemisphere Suite in new directions, with many new applets and enhancements to existing ones, while also removing some full-width apps, abandoning the original minimalist approach, with the goal of cramming as much functionality and flexibility into the nifty dual-applet design as possible.
 
 I've merged bleeding-edge features from various other branches, and confirmed that it compiles and runs on my uO_C.
 
@@ -14,8 +14,8 @@ I've merged bleeding-edge features from various other branches, and confirmed th
 * AnnularFusion got a makeover, now includes configurable CV input modulation (credit to [qiemem](https://github.com/qiemem/O_C-HemisphereSuite/tree/expanded-clock-div) and [adegani](https://github.com/adegani/O_C-HemisphereSuite))
 * Sequence5 -> SequenceX (8 steps max) (from [logarhythm](https://github.com/Logarhythm1/O_C-HemisphereSuite))
 * EbbAndLfo (via [qiemem](https://github.com/qiemem/O_C-HemisphereSuite/tree/trig-and-tides)) - mini implementation of MI Tides, with v/oct tracking
-* Improved internal clock and left-to-right clock forwarding controls
-* Modal-editing style navigation on some applets (TB-3PO, DualTM)
+* Improved internal clock controls, independent multipliers for each Hemisphere, MIDI Clock out via USB
+* Modal-editing style navigation on some applets (TB-3PO, DualTM, CVRec)
 
 ### How do I try it?
 
@@ -23,7 +23,9 @@ I might release a .hex file if there is demand... I just need to make sure I und
 
 ### How do I build it?
 
-You can download this repo and build the code following the ["Method B" instruction](https://ornament-and-cri.me/firmware/#method_b) from the Ornament and Crime website. Very specific legacy versions of the Arduino IDE and Teensyduino add-on are required to build, and are not installable on 64-bit only systems, like Mac OS. You must use an older version (Mojave or before) or a VM to install these versions.
+Building the code is fairly simple using Platform IO, a Python-based build toolchain, available as either a [standalone CLI](https://platformio.org/install/cli) or a [plugin within VSCode](https://platformio.org/install/ide?install=vscode). The project lives within the `software/o_c_REV` directory.
+
+You might still be able to build this repo following the ["Method B" instruction](https://ornament-and-cri.me/firmware/#method_b) from the Ornament and Crime website.
 
 ### Credits
 
