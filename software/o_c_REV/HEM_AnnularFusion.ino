@@ -29,7 +29,7 @@ class AnnularFusion : public HemisphereApplet {
 public:
 
     const char* applet_name() {
-        return "AnnularFu";
+        return "EuclidX";
     }
 
     void Start() {
@@ -99,27 +99,31 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor > 7) cursor = 0;
-        ResetCursor();
+        isEditing = !isEditing;
     }
 
     void OnEncoderMove(int direction) {
-        int ch = cursor < NUM_PARAMS ? 0 : 1;
-        int f = cursor - (ch * NUM_PARAMS); // Cursor function
-        switch (f) {
-        case 0:
-            actual_length[ch] = length[ch] = constrain(length[ch] + direction, 3, 32);
-            if (beats[ch] > length[ch]) beats[ch] = length[ch];
-            if (offset[ch] >= length[ch]) offset[ch] = length[ch]-1;
-            break;
-        case 1:
-            actual_beats[ch] = beats[ch] = constrain(beats[ch] + direction, 1, length[ch]);
-            break;
-        case 2:
-            actual_offset[ch] = offset[ch] = constrain(offset[ch] + direction, 0, length[ch] - 1);
-            break;
-        case 3: // CV destination
-            cv_dest[ch] = constrain(cv_dest[ch] + direction, 0, 5);
+        if (!isEditing) {
+            cursor = constrain(cursor + direction, 0, 7);
+            ResetCursor();
+        } else {
+            int ch = cursor < NUM_PARAMS ? 0 : 1;
+            int f = cursor - (ch * NUM_PARAMS); // Cursor function
+            switch (f) {
+            case 0:
+                actual_length[ch] = length[ch] = constrain(length[ch] + direction, 3, 32);
+                if (beats[ch] > length[ch]) beats[ch] = length[ch];
+                if (offset[ch] >= length[ch]) offset[ch] = length[ch]-1;
+                break;
+            case 1:
+                actual_beats[ch] = beats[ch] = constrain(beats[ch] + direction, 1, length[ch]);
+                break;
+            case 2:
+                actual_offset[ch] = offset[ch] = constrain(offset[ch] + direction, 0, length[ch] - 1);
+                break;
+            case 3: // CV destination
+                cv_dest[ch] = constrain(cv_dest[ch] + direction, 0, 5);
+            }
         }
     }
 
@@ -160,6 +164,7 @@ protected:
 private:
     int step;
     int cursor = 0; // Ch1: 0=Length, 1=Hits; Ch2: 2=Length 3=Hits
+    bool isEditing = false;
     uint32_t pattern[2];
 
     // Settings
@@ -214,10 +219,12 @@ private:
             case 0:
             case 1:
             case 2:
-                gfxCursor(4 + f * spacing, y + 7, 12);
+                gfxCursor(4 + f * spacing, y + 7, 13);
+                if (isEditing) gfxInvert(4+f*spacing, y-1, 13, 9);
                 break;
             case 3: // CV dest selection
-                gfxBitmap(1 + 3 * spacing, y, 8, CV_ICON);
+                gfxBitmap(1 + 3 * spacing, y+1, 8, CV_ICON);
+                if (isEditing) gfxInvert(3*spacing, y, 9, 7);
                 break;
             }
 
