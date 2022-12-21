@@ -64,7 +64,11 @@ public:
         len_mod = constrain(length + Proportion(DetentedIn(0), HEMISPHERE_MAX_CV, TM2_MAX_LENGTH), TM2_MIN_LENGTH, TM2_MAX_LENGTH);
       
         // CV 2 bi-polar modulation of probability
-        p_mod = constrain(p + Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 100), 0, 100);
+        //p_mod = constrain(p + Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 100), 0, 100);
+        p_mod = p;
+
+        // CV 2 bi-polar transpose before quantize
+        int note_trans = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, quant_range);
         
         // Advance the register on clock, flipping bits as necessary
         if (clk) {
@@ -98,10 +102,10 @@ public:
         ForEachChannel(ch) {
             switch (outmode[ch]) {
             case 0: // pitch 1
-              Out(ch, quantizer.Lookup(note + 64));
+              Out(ch, quantizer.Lookup(note + note_trans + 64));
               break;
             case 1: // pitch 2
-              Out(ch, quantizer.Lookup(note2 + 64));
+              Out(ch, quantizer.Lookup(note2 + note_trans + 64));
               break;
             case 2: // mod A - 8-bit bi-polar proportioned CV
               Out(ch, Proportion( int8_t(reg & 0xff), 0x80, HEMISPHERE_MAX_CV) );
