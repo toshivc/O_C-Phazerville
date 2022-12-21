@@ -64,7 +64,6 @@ public:
             }
             else {
                 start_q = 1;
-                clock_m->Reset();
                 clock_m->Start();
             }
             break;

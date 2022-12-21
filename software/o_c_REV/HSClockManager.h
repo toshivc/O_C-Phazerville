@@ -24,7 +24,7 @@
 #ifndef CLOCK_MANAGER_H
 #define CLOCK_MANAGER_H
 
-#define MIDI_CLOCK_LATENCY 30
+#define MIDI_CLOCK_LATENCY 20
 
 const uint16_t CLOCK_TEMPO_MIN = 10;
 const uint16_t CLOCK_TEMPO_MAX = 300;
@@ -66,7 +66,7 @@ public:
      */
     void SetTempoBPM(uint16_t bpm) {
         bpm = constrain(bpm, CLOCK_TEMPO_MIN, CLOCK_TEMPO_MAX);
-        ticks_per_tock = 1000000 / bpm; // NJM: scale by 24 to reduce rounding errors
+        ticks_per_tock = 1000000 / bpm;
         tempo = bpm;
     }
 
@@ -82,12 +82,13 @@ public:
             beat_tick[ch] = OC::CORE::ticks;
             count[ch] = 0;
         }
-        beat_tick[2] -= MIDI_CLOCK_LATENCY;
-        cycle = 1 - cycle;
+        //beat_tick[2] -= MIDI_CLOCK_LATENCY;
+        cycle = 0;
     }
 
     void Start(bool p = 0) {
         // forwarded = 0; // NJM- logical clock can be forwarded, too
+        Reset();
         running = 1;
         paused = p;
     }
@@ -99,7 +100,14 @@ public:
 
     void Pause() {paused = 1;}
 
-    void ToggleForwarding() {forwarded = 1 - forwarded;}
+    void ToggleForwarding() {
+        forwarded = 1 - forwarded;
+        if (forwarded) {
+            // sync start point on next beat for multiplier
+            count[1] = 0;
+            beat_tick[1] = beat_tick[0] + ticks_per_tock;
+        }
+    }
 
     void SetForwarding(bool f) {forwarded = f;}
 
@@ -112,15 +120,15 @@ public:
     /* Returns true if the clock should fire on this tick, based on the current tempo and multiplier */
     bool Tock(int ch = 0) {
         uint32_t now = OC::CORE::ticks;
-        if (now == last_tock_check[ch]) return false; // cancel redundant check
+        if (now == last_tock_check[ch] || beat_tick[ch] > now) return false; // cancel redundant check
         last_tock_check[ch] = now;
 
         tock = (now - beat_tick[ch]) >= (count[ch]+1)*ticks_per_tock / static_cast<uint32_t>(tocks_per_beat[ch]);
         if (tock) {
-            if (++count[ch] >= tocks_per_beat[ch])
+            if (++count[ch] >= tocks_per_beat[ch]) // multiplier has been met or exceeded
             {
-                beat_tick[ch] += ticks_per_tock;
-                count[ch] = 0;
+                beat_tick[ch] += ticks_per_tock; // jump one beat ahead
+                count[ch] = 0; // reset counter
                 if (ch == 0) cycle = 1 - cycle;
             }
         }
