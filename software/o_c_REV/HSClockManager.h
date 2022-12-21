@@ -123,7 +123,7 @@ public:
         if (now == last_tock_check[ch] || beat_tick[ch] > now) return false; // cancel redundant check
         last_tock_check[ch] = now;
 
-        tock = (now - beat_tick[ch]) >= (count[ch]+1)*ticks_per_tock / static_cast<uint32_t>(tocks_per_beat[ch]);
+        tock = (now - beat_tick[ch]) >= count[ch]*ticks_per_tock / static_cast<uint32_t>(tocks_per_beat[ch]);
         if (tock) {
             if (++count[ch] >= tocks_per_beat[ch]) // multiplier has been met or exceeded
             {
