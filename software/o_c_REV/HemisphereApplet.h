@@ -329,8 +329,8 @@ public:
 
         if (ch == 0) { // clock triggers
             if (hemisphere == LEFT_HEMISPHERE) {
-                if (!physical && clock_m->IsRunning()) clocked = clock_m->Tock(hemisphere);
-                else clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
+                clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
+                if (!physical && clock_m->IsRunning()) clocked = clock_m->Tock(hemisphere, clocked);
             } else { // right side is special
                 if (master_clock_bus) { // forwarding from left
                     if (!physical && clock_m->IsRunning()) clocked = clock_m->Tock(hemisphere);

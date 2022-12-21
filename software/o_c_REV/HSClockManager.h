@@ -29,6 +29,9 @@
 const uint16_t CLOCK_TEMPO_MIN = 10;
 const uint16_t CLOCK_TEMPO_MAX = 300;
 
+const uint32_t CLOCK_TICKS_MIN = 1000000 / CLOCK_TEMPO_MAX;
+const uint32_t CLOCK_TICKS_MAX = 1000000 / CLOCK_TEMPO_MIN;
+
 class ClockManager {
     static ClockManager *instance;
 
@@ -38,6 +41,7 @@ class ClockManager {
     bool paused = 0; // Specifies whethr the clock is paused
     bool forwarded = 0; // Master clock forwarding is enabled when true
 
+    uint32_t clock_tick = 0; // tick when a physical clock was received on DIGITAL 1
     uint32_t beat_tick[3] = {0,0,0}; // The tick to count from
     uint32_t last_tock_check[3] = {0,0,0}; // To avoid checking the tock more than once per tick
     bool tock = 0; // The most recent tock value
@@ -77,13 +81,13 @@ public:
      */
     uint16_t GetTempo() {return tempo;}
 
-    void Reset() {
+    void Reset(int count_skip = 0) {
         for (int ch = 0; ch < 3; ch++) {
             beat_tick[ch] = OC::CORE::ticks;
-            count[ch] = 0;
+            count[ch] = count_skip;
         }
         //beat_tick[2] -= MIDI_CLOCK_LATENCY;
-        cycle = 0;
+        cycle = 1 - cycle;
     }
 
     void Start(bool p = 0) {
@@ -118,8 +122,20 @@ public:
     bool IsForwarded() {return forwarded;}
 
     /* Returns true if the clock should fire on this tick, based on the current tempo and multiplier */
-    bool Tock(int ch = 0) {
+    bool Tock(int ch = 0, bool clocked = 0) {
         uint32_t now = OC::CORE::ticks;
+        // if physical clocks arrive, adapt to external tempo
+        if (clocked) {
+            if (clock_tick && clock_tick != now) {
+                uint32_t clock_diff = now - clock_tick;
+                bool skip_one = clock_diff > ticks_per_tock;
+                ticks_per_tock = constrain(clock_diff, CLOCK_TICKS_MIN, CLOCK_TICKS_MAX); // time since last clock is new tempo
+                tempo = 1000000 / ticks_per_tock; // imprecise, for display purposes
+                Reset( skip_one ? 1 : 0 ); // if clock is late, avoid double trigger
+            }
+            clock_tick = now;
+        }
+
         if (now == last_tock_check[ch] || beat_tick[ch] > now) return false; // cancel redundant check
         last_tock_check[ch] = now;
 
