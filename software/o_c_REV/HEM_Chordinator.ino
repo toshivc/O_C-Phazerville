@@ -77,7 +77,7 @@ public:
     }
 
     uint16_t mask = chord_mask;
-    for (size_t i = 0; i < active_scale.num_notes; i++) {
+    for (int i = 0; i < int(active_scale.num_notes); i++) {
       if (mask & 1) {
         gfxRect(5 * i, 25, 4, 4);
       } else {
@@ -119,7 +119,8 @@ public:
       }
       update_chord_quantizer();
     } else {
-      cursor = constrain(cursor + direction, 0, 1+active_scale.num_notes);
+      cursor =
+          constrain(cursor + direction, 0, 1 + int(active_scale.num_notes));
       ResetCursor();
     }
   }
@@ -180,7 +181,7 @@ private:
     int rel_pitch = pitch % active_scale.span;
     int d = active_scale.span;
     size_t p = 0;
-    for (size_t i = 0; i < active_scale.num_notes; i++) {
+    for (int i = 0; i < (int) active_scale.num_notes; i++) {
       int e = abs(rel_pitch - active_scale.notes[i]);
       if (e < d) {
         p = i;
