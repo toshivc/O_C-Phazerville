@@ -24,19 +24,19 @@
 #ifndef CLOCK_MANAGER_H
 #define CLOCK_MANAGER_H
 
-#define MIDI_CLOCK_LATENCY 20
+#define CLOCK_PPQN 4
 
-const uint16_t CLOCK_TEMPO_MIN = 10;
-const uint16_t CLOCK_TEMPO_MAX = 300;
+static constexpr uint16_t CLOCK_TEMPO_MIN = 10;
+static constexpr uint16_t CLOCK_TEMPO_MAX = 300;
+static constexpr uint32_t CLOCK_TICKS_MIN = 1000000 / CLOCK_TEMPO_MAX;
+static constexpr uint32_t CLOCK_TICKS_MAX = 1000000 / CLOCK_TEMPO_MIN;
 
-const uint32_t CLOCK_TICKS_MIN = 1000000 / CLOCK_TEMPO_MAX;
-const uint32_t CLOCK_TICKS_MAX = 1000000 / CLOCK_TEMPO_MIN;
 
 class ClockManager {
     static ClockManager *instance;
 
     uint16_t tempo; // The set tempo, for display somewhere else
-    uint32_t ticks_per_tock; // Based on the selected tempo in BPM
+    uint32_t ticks_per_beat; // Based on the selected tempo in BPM
     bool running = 0; // Specifies whether the clock is running for interprocess communication
     bool paused = 0; // Specifies whethr the clock is paused
     bool forwarded = 0; // Master clock forwarding is enabled when true
@@ -44,10 +44,10 @@ class ClockManager {
     uint32_t clock_tick = 0; // tick when a physical clock was received on DIGITAL 1
     uint32_t beat_tick[3] = {0,0,0}; // The tick to count from
     uint32_t last_tock_check[3] = {0,0,0}; // To avoid checking the tock more than once per tick
-    bool tock = 0; // The most recent tock value
-    int8_t tocks_per_beat[3] = {1, 1, 24}; // Multiplier
+    bool tock[3] = {0,0,0}; // The current tock value
+    int tocks_per_beat[3] = {1, 1, 24}; // Multiplier
     bool cycle = 0; // Alternates for each tock, for display purposes
-    int8_t count[3] = {0,0,0}; // Multiple counter
+    int count[3] = {0,0,0}; // Multiple counter, 0 is a special case when first starting the clock
 
     ClockManager() {
         SetTempoBPM(120);
@@ -59,7 +59,7 @@ public:
         return instance;
     }
 
-    void SetMultiply(int8_t multiply, bool ch = 0) {
+    void SetMultiply(int multiply, bool ch = 0) {
         multiply = constrain(multiply, 1, 24);
         tocks_per_beat[ch] = multiply;
     }
@@ -70,24 +70,78 @@ public:
      */
     void SetTempoBPM(uint16_t bpm) {
         bpm = constrain(bpm, CLOCK_TEMPO_MIN, CLOCK_TEMPO_MAX);
-        ticks_per_tock = 1000000 / bpm;
+        ticks_per_beat = 1000000 / bpm;
         tempo = bpm;
     }
 
-    int8_t GetMultiply(bool ch = 0) {return tocks_per_beat[ch];}
+    int GetMultiply(bool ch = 0) {return tocks_per_beat[ch];}
 
     /* Gets the current tempo. This can be used between client processes, like two different
      * hemispheres.
      */
     uint16_t GetTempo() {return tempo;}
 
-    void Reset(int count_skip = 0) {
+    void Reset(bool count_skip = 0) {
         for (int ch = 0; ch < 3; ch++) {
             beat_tick[ch] = OC::CORE::ticks;
             count[ch] = count_skip;
         }
-        //beat_tick[2] -= MIDI_CLOCK_LATENCY;
         cycle = 1 - cycle;
+    }
+
+    // used to align the internal clock with incoming clock pulses
+    void Nudge(int diff) {
+        for (int ch = 0; ch < 3; ch++) {
+            beat_tick[ch] += diff;
+        }
+    }
+
+    // called on every tick when clock is running, before all Controllers
+    void SyncTrig(bool clocked) {
+        uint32_t now = OC::CORE::ticks;
+
+        // Reset only when all multipliers have been met
+        bool reset = 1;
+
+        // count and calculate Tocks
+        for (int ch = 0; ch < 3; ch++) {
+            uint32_t next_tock_tick = beat_tick[ch] + count[ch]*ticks_per_beat / static_cast<uint32_t>(tocks_per_beat[ch]);
+            tock[ch] = now >= next_tock_tick;
+            if (tock[ch]) ++count[ch]; // increment multiplier counter
+
+            reset = reset && (count[ch] > tocks_per_beat[ch]); // multiplier has been exceeded
+        }
+        if (reset) Reset(1); // skip one
+
+        // handle syncing to physical clocks
+        if (clocked && clock_tick) {
+
+            uint32_t clock_diff = now - clock_tick; // 4 PPQN clock input
+            if (CLOCK_PPQN * clock_diff > CLOCK_TICKS_MAX) clock_tick = 0; // too slow, reset clock tracking
+
+            // if there is a previous clock tick, update tempo and sync
+            if (clock_tick && clock_diff) {
+                // update the tempo
+                ticks_per_beat = constrain(CLOCK_PPQN * clock_diff, CLOCK_TICKS_MIN, CLOCK_TICKS_MAX); // time since last clock is new tempo
+                tempo = 1000000 / ticks_per_beat; // imprecise, for display purposes
+
+                int ticks_per_clock = ticks_per_beat / CLOCK_PPQN; // rounded down
+                //int clock_err = ticks_per_beat % CLOCK_PPQN; // rounding error
+
+                // time since last beat
+                int tick_offset = now - beat_tick[2];
+
+                // too long ago? time til next beat
+                if (tick_offset > ticks_per_clock / 2) tick_offset -= ticks_per_beat;
+
+                // within half a clock pulse of the nearest beat
+                if (abs(tick_offset) <= ticks_per_clock / 2)
+                    Nudge(tick_offset); // nudge the beat towards us
+
+            }
+        }
+        // clock has been physically ticked
+        if (clocked) clock_tick = now;
     }
 
     void Start(bool p = 0) {
@@ -109,7 +163,7 @@ public:
         if (forwarded) {
             // sync start point on next beat for multiplier
             count[1] = 0;
-            beat_tick[1] = beat_tick[0] + ticks_per_tock;
+            beat_tick[1] = beat_tick[0] + ticks_per_beat;
         }
     }
 
@@ -122,34 +176,8 @@ public:
     bool IsForwarded() {return forwarded;}
 
     /* Returns true if the clock should fire on this tick, based on the current tempo and multiplier */
-    bool Tock(int ch = 0, bool clocked = 0) {
-        uint32_t now = OC::CORE::ticks;
-        // if physical clocks arrive, adapt to external tempo
-        if (clocked) {
-            if (clock_tick && clock_tick != now) {
-                uint32_t clock_diff = now - clock_tick;
-                bool skip_one = clock_diff > ticks_per_tock;
-                ticks_per_tock = constrain(clock_diff, CLOCK_TICKS_MIN, CLOCK_TICKS_MAX); // time since last clock is new tempo
-                tempo = 1000000 / ticks_per_tock; // imprecise, for display purposes
-                Reset( skip_one ? 1 : 0 ); // if clock is late, avoid double trigger
-            }
-            clock_tick = now;
-        }
-
-        if (now == last_tock_check[ch] || beat_tick[ch] > now) return false; // cancel redundant check
-        last_tock_check[ch] = now;
-
-        tock = (now - beat_tick[ch]) >= count[ch]*ticks_per_tock / static_cast<uint32_t>(tocks_per_beat[ch]);
-        if (tock) {
-            if (++count[ch] >= tocks_per_beat[ch]) // multiplier has been met or exceeded
-            {
-                beat_tick[ch] += ticks_per_tock; // jump one beat ahead
-                count[ch] = 0; // reset counter
-                if (ch == 0) cycle = 1 - cycle;
-            }
-        }
-
-        return tock;
+    bool Tock(int ch = 0) {
+        return tock[ch];
     }
 
     // Returns true if MIDI Clock should be sent on this tick

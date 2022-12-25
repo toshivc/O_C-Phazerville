@@ -136,7 +136,10 @@ public:
             }
         }
 
-        // if (clock_setup)
+        // Advance internal clock, sync to external pulse
+        if (clock_m->IsRunning())
+            clock_m->SyncTrig( OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>() );
+
         // NJM: always execute ClockSetup controller - it handles MIDI clock out
         ClockSetup.Controller(LEFT_HEMISPHERE, clock_m->IsForwarded());
 
