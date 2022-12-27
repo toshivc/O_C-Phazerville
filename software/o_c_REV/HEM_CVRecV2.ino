@@ -46,7 +46,6 @@ public:
 
         if (Clock(0) ) { // sequence advance
             if (!reset) step++;
-            reset = false;
             if (step > end || step < start) step = start;
             bool rec = 0;
             ForEachChannel(ch)
@@ -64,9 +63,10 @@ public:
                     }
                 }
             }
-            if (rec) {
+            if (rec && !reset) {
                 if (--punch_out == 0) mode = 0;
             }
+            reset = false;
         }
 
         ForEachChannel(ch)
