@@ -185,7 +185,7 @@ public:
         return Tock(2);
     }
 
-    bool EndOfBeat(bool ch = 0) {return count[ch] == 0;}
+    bool EndOfBeat(bool ch = 0) {return count[ch] == 1;}
 
     bool Cycle(bool ch = 0) {return cycle;}
 };
