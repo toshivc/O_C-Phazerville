@@ -24,10 +24,10 @@ const Scale &Scales::GetScale(int index) {
 }
 
 const char* const scale_names_short[] = {
-    "USER1",
-    "USER2",
-    "USER3",
-    "USER4",
+    "USR1",
+    "USR2",
+    "USR3",
+    "USR4",
     "OFF ",
     "SEMI",
     "IONI",
