@@ -37,15 +37,17 @@ public:
     }
 
     void Controller() {
-        bool reset = Clock(1);
+        if (Clock(1)) reset = true;
 
-        if (Clock(0) || reset) {
-            step++;
+        if (reset) {
+            step = start;
+            if (punch_out) punch_out = end - start;
+        }
+
+        if (Clock(0) ) { // sequence advance
+            if (!reset) step++;
+            reset = false;
             if (step > end || step < start) step = start;
-            if (reset) {
-                step = start;
-                if (punch_out) punch_out = end - start;
-            }
             bool rec = 0;
             ForEachChannel(ch)
             {
@@ -152,6 +154,7 @@ private:
     simfloat signal[2];
     bool smooth;
     bool isEditing = 0;
+    bool reset = true;
 
     // Transport
     int mode = 0; // 0=Playback, 1=Rec Track 1, 2=Rec Track 2, 3= Rec Tracks 1 & 2
