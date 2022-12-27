@@ -49,33 +49,38 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor > 3) cursor = 0;
+        isEditing = !isEditing;
     }
 
     void OnEncoderMove(int direction) {
-        switch (cursor) {
-        case 0: // Source
-            if (direction > 0) // right turn toggles Forwarding
-                clock_m->ToggleForwarding();
-            else if (clock_m->IsRunning()) // left turn toggles clock
-            {
-                stop_q = 1;
-                clock_m->Stop();
-            }
-            else {
-                start_q = 1;
-                clock_m->Start();
-            }
-            break;
+        if (!isEditing) {
+            cursor = constrain(cursor + direction, 0, 3);
+            ResetCursor();
+        } else {
+            switch (cursor) {
+            case 0: // Source
+                if (direction > 0) // right turn toggles Forwarding
+                    clock_m->ToggleForwarding();
+                else if (clock_m->IsRunning()) // left turn toggles clock
+                {
+                    stop_q = 1;
+                    clock_m->Stop();
+                }
+                else {
+                    start_q = 1;
+                    clock_m->Start();
+                }
+                break;
 
-        case 1: // Set tempo
-            clock_m->SetTempoBPM(clock_m->GetTempo() + direction);
-            break;
+            case 1: // Set tempo
+                clock_m->SetTempoBPM(clock_m->GetTempo() + direction);
+                break;
 
-        case 2: // Set multiplier
-        case 3:
-            clock_m->SetMultiply(clock_m->GetMultiply(cursor-2) + direction, cursor-2);
-            break;
+            case 2: // Set multiplier
+            case 3:
+                clock_m->SetMultiply(clock_m->GetMultiply(cursor-2) + direction, cursor-2);
+                break;
+            }
         }
     }
 
@@ -111,6 +116,7 @@ protected:
 
 private:
     char cursor; // 0=Source, 1=Tempo, 2=Multiply
+    bool isEditing = false;
     bool start_q;
     bool stop_q;
     ClockManager *clock_m = clock_m->get();
@@ -152,10 +158,24 @@ private:
         gfxPrint(33, 35, "x");
         gfxPrint(clock_m->GetMultiply(1));
 
-        if (cursor == 0) gfxCursor(20, 23, 54);
-        if (cursor == 1) gfxCursor(23, 33, 18);
-        if (cursor == 2) gfxCursor(8, 43, 12);
-        if (cursor == 3) gfxCursor(40, 43, 12);
+        switch (cursor) {
+        case 0:
+            gfxCursor(20, 23, 54);
+            if (isEditing) gfxInvert(20, 14, 54, 9);
+            break;
+        case 1:
+            gfxCursor(23, 33, 18);
+            if (isEditing) gfxInvert(23, 24, 18, 9);
+            break;
+        case 2:
+            gfxCursor(8, 43, 12);
+            if (isEditing) gfxInvert(8, 34, 12, 9);
+            break;
+        case 3:
+            gfxCursor(40, 43, 12);
+            if (isEditing) gfxInvert(40, 34, 12, 9);
+            break;
+        }
     }
 };
 
