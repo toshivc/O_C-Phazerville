@@ -161,8 +161,6 @@ const char* const scale_names_short[] = {
     "10S3",
     "8S3",
 
-
-  #ifdef HEM_LOGARHYTHM_MOD_SCALES
     "5+7", // Root +5th + 7th (5+7), 
     "5+6", // Root + 5th + 6th (5+6), 
     "3b7-",// Minor Triad + 7 (3b+5+7), 
@@ -173,7 +171,6 @@ const char* const scale_names_short[] = {
     "3b+", // major triad (Triad), 
     "3b-", // minor triad (3b+5), 
     "HAR-",// Harmonic Minor (Harm Minor),
-    #endif
     
     };
 
@@ -315,7 +312,6 @@ const char* const scale_names[] = {
     "15-5-SD3[10]",
     "12-4-SD3[8]",
 
-    #ifdef HEM_LOGARHYTHM_MOD_SCALES
     "5th+7th", // Root +5th + 7th (5+7), 
     "5th+6th", // Root + 5th + 6th (5+6), 
     "Triad min+7",// Minor Triad + 7 (3b+5+7), 
@@ -326,7 +322,6 @@ const char* const scale_names[] = {
     "TriadMaj", // major triad (Triad), 
     "TriadMin",// minor triad (3b+5), 
     "HarmonicMin",// Harmonic Minor (Harm Minor),
-    #endif
 
     };
 
