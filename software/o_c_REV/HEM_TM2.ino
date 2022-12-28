@@ -199,7 +199,7 @@ public:
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
 
         reg = Unpack(data, PackLocation {32,32});
-        reg2 = ~reg;
+        reg2 = Unpack(data, PackLocation {0, 32}); // lol it could be fun
     }
 
 protected:
