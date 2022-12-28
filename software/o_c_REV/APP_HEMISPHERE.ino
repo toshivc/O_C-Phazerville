@@ -192,10 +192,13 @@ public:
     }
 
     void DelegateSelectButtonPush(int hemisphere) {
-        if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME && hemisphere == first_click) {
+        if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME) {
             // This is a double-click, so activate corresponding help screen, leave
             // Select Mode, and reset the double-click timer
-            SetHelpScreen(hemisphere);
+            if (hemisphere == first_click)
+                SetHelpScreen(hemisphere);
+            else // up + down simultaneous
+                clock_setup = 1;
             select_mode = -1;
             click_tick = 0;
         } else {
@@ -208,12 +211,13 @@ public:
                 // If we're in the clock setup screen, we want to exit the setup without turning on Select Mode
                 if (hemisphere == select_mode) select_mode = -1; // Leave Select Mode is same button is pressed
                 else select_mode = hemisphere; // Otherwise, set Select Mode
-                click_tick = OC::CORE::ticks;
             }
+            click_tick = OC::CORE::ticks;
             first_click = hemisphere;
         }
 
-        clock_setup = 0; // Turn off clock setup with any button press
+        if (click_tick)
+            clock_setup = 0; // Turn off clock setup with any single button press
     }
 
     void DelegateEncoderMovement(const UI::Event &event) {
