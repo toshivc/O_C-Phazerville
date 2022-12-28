@@ -1,4 +1,5 @@
 // Copyright (c) 2018, Jason Justian
+// Copyright (c) 2022, Nicholas J. Michalek
 //
 // Based on Braids Quantizer, Copyright 2015 Émilie Gillet.
 //
@@ -26,7 +27,7 @@
  * Thanks to Tom Whitwell for creating the concept, and for clarifying some things
  * Thanks to Jon Wheeler for the CV length and probability updates
  *
- * adapted as DualTM by djphazer (Nicholas J. Michalek)
+ * Heavily adapted as DualTM from ShiftReg/TM by djphazer (Nicholas J. Michalek)
  */
 
 #include "braids_quantizer.h"
@@ -60,16 +61,47 @@ public:
     void Controller() {
         bool clk = Clock(0);
 
-        // CV 1 bi-polar modulation of length
-        len_mod = constrain(length + Proportion(DetentedIn(0), HEMISPHERE_MAX_CV, TM2_MAX_LENGTH), TM2_MIN_LENGTH, TM2_MAX_LENGTH);
-      
-        // CV 2 bi-polar modulation of probability
-        //p_mod = constrain(p + Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 100), 0, 100);
-        p_mod = p;
+        int cv_data[2];
+        cv_data[0] = DetentedIn(0);
+        cv_data[1] = DetentedIn(1);
 
-        // CV 2 bi-polar transpose before quantize
-        int note_trans = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, quant_range);
-        
+        // default to no mod
+        p_mod = p;
+        len_mod = length;
+        range_mod = quant_range;
+        int note_trans1 = 0;
+        int note_trans2 = 0;
+        int note_trans3 = 0;
+
+        // process CV inputs
+        ForEachChannel(ch) {
+            // 0=length; 1=p_mod; 2=range; 3=trans1; 4=trans2; 5=trans1+2
+            switch (cvmode[ch]) {
+            case 0: // bi-polar modulation of length
+                len_mod = constrain(len_mod + Proportion(cv_data[ch], HEMISPHERE_MAX_CV, TM2_MAX_LENGTH), TM2_MIN_LENGTH, TM2_MAX_LENGTH);
+                break;
+
+            case 1: // bi-polar modulation of probability
+                p_mod = constrain(p_mod + Proportion(cv_data[ch], HEMISPHERE_MAX_CV, 100), 0, 100);
+                break;
+
+            case 2: // bi-polar modulation of note range
+                range_mod = constrain(range_mod + Proportion(cv_data[ch], HEMISPHERE_MAX_CV, 32), 1, 32);
+                break;
+
+            case 3: // bi-polar transpose before quantize
+                note_trans1 = Proportion(cv_data[ch], HEMISPHERE_MAX_CV, range_mod);
+                break;
+            case 4:
+                note_trans2 = Proportion(cv_data[ch], HEMISPHERE_MAX_CV, range_mod);
+                break;
+            case 5:
+                note_trans3 = Proportion(cv_data[ch], HEMISPHERE_MAX_CV, range_mod);
+                break;
+            default: break;
+            }
+        }
+
         // Advance the register on clock, flipping bits as necessary
         if (clk) {
             // If the cursor is not on the p value, and Digital 2 is not gated, the sequence remains the same
@@ -88,10 +120,10 @@ public:
             reg2 = (reg2 << 1) + last2;
         }
  
-        // Send 5-bit scaled and quantized CV
+        // Send 8-bit scaled and quantized CV
         // scaled = note * quant_range / 0x1f
-        int32_t note = Proportion(reg & 0x1f, 0x1f, quant_range);
-        int32_t note2 = Proportion(reg2 & 0x1f, 0x1f, quant_range);
+        int32_t note = Proportion(reg & 0xff, 0xff, range_mod);
+        int32_t note2 = Proportion(reg2 & 0xff, 0xff, range_mod);
 
         /*
         note *= quant_range;
@@ -101,17 +133,20 @@ public:
 
         ForEachChannel(ch) {
             switch (outmode[ch]) {
+            case -1: // pitch 1+2
+              Out(ch, quantizer.Lookup(note + note2 + note_trans3 + 64));
+              break;
             case 0: // pitch 1
-              Out(ch, quantizer.Lookup(note + note_trans + 64));
+              Out(ch, quantizer.Lookup(note + note_trans1 + note_trans3 + 64));
               break;
             case 1: // pitch 2
-              Out(ch, quantizer.Lookup(note2 + note_trans + 64));
+              Out(ch, quantizer.Lookup(note2 + note_trans2 + note_trans3 + 64));
               break;
             case 2: // mod A - 8-bit bi-polar proportioned CV
-              Out(ch, Proportion( int8_t(reg & 0xff), 0x80, HEMISPHERE_MAX_CV) );
+              Out(ch, Proportion( int(reg & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
               break;
             case 3: // mod B
-              Out(ch, Proportion( int8_t(reg2 & 0xff), 0x80, HEMISPHERE_MAX_CV) );
+              Out(ch, Proportion( int(reg2 & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
               break;
             case 4: // trig A
               if (clk && (reg & 0x01) == 1) // trigger if 1st bit is high
@@ -126,6 +161,9 @@ public:
               break;
             case 7: // gate B
               GateOut(ch, (reg2 & 0x01));
+              break;
+            case 8: // gate A+B
+              Out(ch, ((reg & 0x01)+(reg2 & 0x01))*HEMISPHERE_3V_CV);
               break;
             }
         }
@@ -143,10 +181,7 @@ public:
 
     void OnEncoderMove(int direction) {
         if (!isEditing) {
-            cursor += direction;
-            if (cursor < 0) cursor = 5;
-            if (cursor > 5) cursor = 0;
-
+            cursor = constrain(cursor + direction, 0, 7);
             ResetCursor();  // Reset blink so it's immediately visible when moved
         } else {
             switch (cursor) {
@@ -166,10 +201,16 @@ public:
                 quant_range = constrain(quant_range + direction, 1, 32);
                 break;
             case 4:
-                outmode[0] = constrain(outmode[0] + direction, 0, 7);
+                outmode[0] = constrain(outmode[0] + direction, -1, 8);
                 break;
             case 5:
-                outmode[1] = constrain(outmode[1] + direction, 0, 7);
+                outmode[1] = constrain(outmode[1] + direction, -1, 8);
+                break;
+            case 6:
+                cvmode[0] = constrain(cvmode[0] + direction, 0, 5);
+                break;
+            case 7:
+                cvmode[1] = constrain(cvmode[1] + direction, 0, 5);
                 break;
             }
         }
@@ -180,11 +221,14 @@ public:
         Pack(data, PackLocation {0,7}, p);
         Pack(data, PackLocation {7,5}, length - 1);
         Pack(data, PackLocation {12,5}, quant_range - 1);
-        Pack(data, PackLocation {17,3}, outmode[0]);
-        Pack(data, PackLocation {20,3}, outmode[1]);
-        Pack(data, PackLocation {23,8}, constrain(scale, 0, 255));
+        Pack(data, PackLocation {17,4}, outmode[0]+1);
+        Pack(data, PackLocation {21,4}, outmode[1]+1);
+        Pack(data, PackLocation {25,8}, constrain(scale, 0, 255));
+        Pack(data, PackLocation {33,4}, cvmode[0]);
+        Pack(data, PackLocation {37,4}, cvmode[1]);
 
-        Pack(data, PackLocation {32,32}, reg);
+        // maybe don't bother saving the damn register
+        //Pack(data, PackLocation {32,32}, reg);
 
         return data;
     }
@@ -193,10 +237,12 @@ public:
         p = Unpack(data, PackLocation {0,7});
         length = Unpack(data, PackLocation {7,5}) + 1;
         quant_range = Unpack(data, PackLocation{12,5}) + 1;
-        outmode[0] = Unpack(data, PackLocation {17,3});
-        outmode[1] = Unpack(data, PackLocation {20,3});
-        scale = Unpack(data, PackLocation {23,8});
+        outmode[0] = Unpack(data, PackLocation {17,4}) - 1;
+        outmode[1] = Unpack(data, PackLocation {21,4}) - 1;
+        scale = Unpack(data, PackLocation {25,8});
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
+        cvmode[0] = Unpack(data, PackLocation {33,4});
+        cvmode[1] = Unpack(data, PackLocation {37,4});
 
         reg = Unpack(data, PackLocation {32,32});
         reg2 = Unpack(data, PackLocation {0, 32}); // lol it could be fun
@@ -206,7 +252,7 @@ protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "1=Clock 2=p Gate";
-        help[HEMISPHERE_HELP_CVS]      = "1=Length 2=p Mod";
+        help[HEMISPHERE_HELP_CVS]      = "Assignable";
         help[HEMISPHERE_HELP_OUTS]     = "A=Quant5-bit B=CV2";
         help[HEMISPHERE_HELP_ENCODER]  = "Len/Prob/Scl/Range";
         //                               "------------------" <-- Size Guide
@@ -215,7 +261,7 @@ protected:
 private:
     int length; // Sequence length
     int len_mod; // actual length after CV mod
-    int cursor;  // 0 = length, 1 = p, 2 = scale, 3=range, 4=OutA, 5=OutB
+    int cursor;  // 0 = length, 1 = p, 2 = scale, 3=range, 4=OutA, 5=OutB, 6=CV1, 7=CV2
     bool isEditing = false;
     braids::Quantizer quantizer;
 
@@ -226,11 +272,17 @@ private:
     int p_mod;
     int scale; // Scale used for quantized output
     int quant_range;
+    int range_mod;
 
     // output modes:
     // 0=pitch A; 2=mod A; 4=trig A; 6=gate A
     // 1=pitch B; 3=mod B; 5=trig B; 7=gate B
+    // -1=pitch A+B; 8=gate A+B
     int outmode[2] = {0, 5};
+
+    // CV input mappings:
+    // 0=length; 1=p_mod; 2=range; 3=trans1; 4=trans2; 5=trans1+2
+    int cvmode[2] = {0, 5};
 
     void DrawSelector() {
         gfxBitmap(1, 14, 8, LOOP_ICON);
@@ -241,34 +293,69 @@ private:
         } else { // p is disabled
             gfxBitmap(49, 14, 8, LOCK_ICON);
         }
-        gfxBitmap(1, 24, 8, SCALE_ICON);
+        gfxBitmap(1, 25, 8, SCALE_ICON);
         gfxPrint(12, 25, OC::scale_names_short[scale]);
-        gfxBitmap(41, 24, 8, NOTE4_ICON);
-        gfxPrint(49, 25, quant_range); // APD
-        gfxPrint(1, 35, "A:");
-        gfxPrint(32, 35, "B:");
+        gfxBitmap(41, 25, 8, UP_DOWN_ICON);
+        gfxPrint(49, 25, range_mod); // APD
 
-        ForEachChannel(ch) {
-            switch (outmode[ch]) {
-            case 0: // pitch output
-            case 1:
-                gfxBitmap(13 + ch*32, 35, 8, NOTE_ICON);
-                break;
-            case 2: // mod output
-            case 3:
-                gfxBitmap(13 + ch*32, 35, 8, WAVEFORM_ICON);
-                break;
-            case 4: // trig output
-            case 5:
-                gfxBitmap(13 + ch*32, 35, 8, CLOCK_ICON);
-                break;
-            case 6: // gate output
-            case 7:
-                gfxBitmap(13 + ch*32, 35, 8, METER_ICON);
-                break;
+        if (cursor < 6) {
+            gfxPrint(1, 36, "A:");
+            gfxPrint(32, 36, "B:");
+
+            ForEachChannel(ch) {
+                switch (outmode[ch]) {
+                case -1: gfxBitmap(24+ch*32, 35, 3, SUP_ONE);
+                case 0: // pitch output
+                case 1:
+                    gfxBitmap(15 + ch*32, 35, 8, NOTE_ICON);
+                    break;
+                case 2: // mod output
+                case 3:
+                    gfxBitmap(15 + ch*32, 35, 8, WAVEFORM_ICON);
+                    break;
+                case 4: // trig output
+                case 5:
+                    gfxBitmap(15 + ch*32, 35, 8, CLOCK_ICON);
+                    break;
+                case 8: gfxBitmap(24+ch*32, 35, 3, SUB_TWO);
+                case 6: // gate output
+                case 7:
+                    gfxBitmap(15 + ch*32, 35, 8, METER_ICON);
+                    break;
+                }
+                // indicator for reg1 or reg2
+                gfxBitmap(24+ch*32, 35, 3, (outmode[ch] % 2) ? SUB_TWO : SUP_ONE);
             }
-            // indicator for reg1 or reg2
-            gfxBitmap(22+ch*32, 35, 3, (outmode[ch] % 2) ? SUB_TWO : SUP_ONE);
+        } else { // CV inputs
+            gfxIcon(1, 35, CV_ICON);
+            gfxBitmap(9, 35, 3, SUP_ONE);
+            gfxIcon(32, 35, CV_ICON);
+            gfxBitmap(40, 35, 3, SUB_TWO);
+
+            ForEachChannel(ch) {
+                // 0=length; 1=p_mod; 2=range; 3=trans1; 4=trans2; 5=trans1+2
+                switch (cvmode[ch]) {
+                case 0:
+                    gfxIcon(15 + ch*32, 35, LOOP_ICON);
+                    break;
+                case 1:
+                    gfxPrint(15 + ch*32, 35, "p");
+                    break;
+                case 2:
+                    gfxIcon(15 + ch*32, 35, UP_DOWN_ICON);
+                    break;
+                case 3:
+                    gfxIcon(15 + ch*32, 35, BEND_ICON);
+                    gfxBitmap(24+ch*32, 35, 3, SUP_ONE);
+                    break;
+                case 5:
+                    gfxBitmap(24+ch*32, 35, 3, SUP_ONE);
+                case 4:
+                    gfxIcon(15 + ch*32, 35, BEND_ICON);
+                    gfxBitmap(24+ch*32, 35, 3, SUB_TWO);
+                    break;
+                }
+            }
         }
 
         switch (cursor) {
@@ -276,8 +363,10 @@ private:
             case 1: gfxCursor(45, 23, 18); break; // Probability Cursor
             case 2: gfxCursor(12, 33, 25); break; // Scale Cursor
             case 3: gfxCursor(49, 33, 14); break; // Quant Range Cursor // APD
-            case 4: gfxCursor(12, 43, 10); break; // Out A
-            case 5: gfxCursor(44, 43, 10); break; // Out B
+            case 6:
+            case 4: gfxCursor(14, 43, 10); break; // Out A / CV 1
+            case 7:
+            case 5: gfxCursor(46, 43, 10); break; // Out B / CV 2
         }
         if (isEditing) {
             switch (cursor) {
@@ -285,8 +374,10 @@ private:
                 case 1: gfxInvert(45, 14, 18, 9); break;
                 case 2: gfxInvert(12, 24, 25, 9); break;
                 case 3: gfxInvert(49, 24, 14, 9); break;
-                case 4: gfxInvert(12, 34, 14, 9); break;
-                case 5: gfxInvert(44, 34, 14, 9); break;
+                case 6:
+                case 4: gfxInvert(14, 34, 14, 9); break;
+                case 7:
+                case 5: gfxInvert(46, 34, 14, 9); break;
             }
         }
     }
