@@ -122,45 +122,6 @@ const int16_t wav_unipolar_fold[] = {
     32451, 32476, 32501, 32526, 32551, 32576, 32601, 32625, 32649, 32673, 32697,
     32720, 32744, 32767, 32767};
 
-/*
-size_t lower_bound(uint32_t* first, uint32_t* last, const uint32_t target)) {
-  size_t len = last - first;
-
-  if (first == last) {
-    return &first;
-  }
-  uint32_t* mid = first + (last - first) / 2;
-  if (mid == &target) {
-    return mid;
-  }
-  if (target < mid)
-}
-
-int16_t ComputePitch(uint32_t phase_increment) {
-  uint32_t first = lut_increments[0];
-  uint32_t last = lut_increments[LUT_INCREMENTS_SIZE - 2];
-  int16_t pitch = 0;
-
-  if (phase_increment == 0) {
-    phase_increment = 1;
-  }
-
-  while (phase_increment > last) {
-    phase_increment >>= 1;
-    pitch += kOctave;
-  }
-  while (phase_increment < first) {
-    phase_increment <<= 1;
-    pitch -= kOctave;
-  }
-  pitch += (std::lower_bound(
-      lut_increments,
-      lut_increments + LUT_INCREMENTS_SIZE,
-      phase_increment) - lut_increments) << 4;
-  return pitch;
-}
-*/
-
 inline int16_t Interpolate1022(const int16_t *table, uint32_t phase) {
   int32_t a = table[phase >> 22];
   int32_t b = table[(phase >> 22) + 1];
@@ -192,30 +153,90 @@ uint32_t ComputePhaseIncrement(int16_t pitch) {
                          : phase_increment >> -num_shifts;
 }
 
-const uint64_t max_phase = 0xffffffff;
-const uint64_t max_16 = 0xffff;
-uint32_t WarpPhase(uint32_t phase, uint16_t curve) {
-  int32_t c = curve - 32767;
+int16_t ComputePitch(uint32_t phase_increment) {
+  uint32_t first = lut_increments[0];
+  uint32_t last = lut_increments[LUT_INCREMENTS_SIZE - 2];
+  int16_t pitch = 0;
+
+  if (phase_increment == 0) {
+    phase_increment = 1;
+  }
+
+  while (phase_increment > last) {
+    phase_increment >>= 1;
+    pitch += kOctave;
+  }
+
+  while (phase_increment < first) {
+    phase_increment <<= 1;
+    pitch -= kOctave;
+  }
+
+  int i = 0;
+  int j = LUT_INCREMENTS_SIZE - 1;
+  while (j - i > 1) {
+    int k = i + (j - i) / 2;
+    uint32_t mid = lut_increments[k];
+    if (phase_increment < mid) {
+      j = k;
+    } else {
+      i = k;
+    }
+  }
+  pitch += (i << 4);
+  return pitch;
+}
+
+
+const uint32_t max_16 = 0xffff;
+const uint32_t max_8 = 0xff;
+
+uint32_t WarpPhase(uint16_t phase, uint16_t curve) {
+  int32_t c = (curve - 32767) >> 8;
   bool flip = c < 0;
   if (flip)
-    phase = max_phase - phase;
-  uint64_t a = (uint64_t)128 * c * c;
-  phase = (max_16 + a / max_16) * phase /
-          ((max_phase + a / max_16 * phase / max_16) / max_16);
+    phase = max_16 - phase;
+  uint32_t a = 128 * c * c;
+  phase = (max_8 + a / max_8) * phase /
+          ((max_16 + a / max_8 * phase / max_8) / max_8);
   if (flip)
-    phase = max_phase - phase;
+    phase = max_16 - phase;
   return phase;
 }
 
 uint16_t ShapePhase(uint16_t phase, uint16_t attack_curve,
                     uint16_t decay_curve) {
   return phase < (1UL << 15)
-             ? WarpPhase(phase << 17, attack_curve) >> 16
-             : WarpPhase((0xffff - phase) << 17, decay_curve) >> 16;
+             ? WarpPhase(phase << 1, attack_curve)
+             : WarpPhase((0xffff - phase) << 1, decay_curve);
 }
 
-void ProcessSample(uint16_t slope, uint16_t att_shape, uint16_t dec_shape,
-                    int16_t fold, uint32_t phase, TidesLiteSample &sample) {
+uint16_t ShapePhase(uint16_t phase, uint16_t shape) {
+  uint32_t att = 0;
+  uint32_t dec = 0;
+  if (shape < 1 * 65536 / 4) {
+    shape *= 4;
+    att = 0;
+    dec = 65535 - shape;
+  } else if (shape < 2 * 65536 / 4) {
+    // shape between -24576 and 81
+    shape = (shape - 65536 / 4) * 4;
+    att = shape;
+    dec = shape;
+  } else if (shape < 3 * 65536 / 4) {
+    shape = (shape - 2 * 65536 / 4) * 4;
+    att = 65535;
+    dec = 65535 - shape;
+  } else {
+    shape = (shape - 3 * 65536 / 4) * 4;
+    att = 65535 - shape;
+    dec = shape;
+  }
+  return ShapePhase(phase, att, dec);
+}
+
+void ProcessSample(uint16_t slope, uint16_t shape, int16_t fold, uint32_t phase,
+                   TidesLiteSample &sample) {
   uint32_t eoa = slope << 16;
   // uint32_t skewed_phase = phase;
   slope = slope ? slope : 1;
@@ -230,8 +251,8 @@ void ProcessSample(uint16_t slope, uint16_t att_shape, uint16_t dec_shape,
     skewed_phase += 1L << 31;
   }
 
-  sample.unipolar = ShapePhase(skewed_phase >> 16, att_shape, dec_shape);
-  sample.bipolar = ShapePhase(skewed_phase >> 15, att_shape, dec_shape) >> 1;
+  sample.unipolar = ShapePhase(skewed_phase >> 16, shape);
+  sample.bipolar = ShapePhase(skewed_phase >> 15, shape) >> 1;
   if (skewed_phase >= (1UL << 31)) {
     sample.bipolar = -sample.bipolar;
   }
