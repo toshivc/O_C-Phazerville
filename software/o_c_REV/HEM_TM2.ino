@@ -269,8 +269,8 @@ protected:
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "1=Clock 2=p Gate";
         help[HEMISPHERE_HELP_CVS]      = "Assignable";
-        help[HEMISPHERE_HELP_OUTS]     = "A=Quant5-bit B=CV2";
-        help[HEMISPHERE_HELP_ENCODER]  = "Len/Prob/Scl/Range";
+        help[HEMISPHERE_HELP_OUTS]     = "Assignable";
+        help[HEMISPHERE_HELP_ENCODER]  = "Select/Push 2 Edit";
         //                               "------------------" <-- Size Guide
     }
     
