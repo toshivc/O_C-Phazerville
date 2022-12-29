@@ -63,8 +63,8 @@ public:
                 sample_num = LoopInt(++sample_num, 63);
 
                 for (int n = 0; n < 2; n++) {
-                  int sample = Proportion(In(n), HEMISPHERE_MAX_CV, 128);
-                  sample = constrain(sample, -128, 127) + 127;
+                  int sample = Proportion(In(n) + HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV + HEMISPHERE_3V_CV, 255);
+                  sample = constrain(sample, 0, 255);
                   snapshot[n][sample_num] = (uint8_t)sample;
                 }
             }
@@ -75,11 +75,11 @@ public:
 
     void View() {
         gfxHeader(applet_name());
-        DrawBPM();
         
         if(current_display == 4) {
             DrawInput(-1);
         } else {
+            DrawBPM();
             DrawInput((current_display & 2) == 2);
             PrintInput();
         }
@@ -91,21 +91,25 @@ public:
     }
 
     void OnButtonPress() {
-        if (OC::CORE::ticks - last_encoder_move < SCOPE_CURRENT_SETTING_TIMEOUT) {
-            current_setting = LoopInt(++current_setting, 2);
-        }
-        last_encoder_move = OC::CORE::ticks;
+        if (current_setting == 2) // FREEZE button
+            freeze = !freeze;
+        else if (OC::CORE::ticks - last_encoder_move < SCOPE_CURRENT_SETTING_TIMEOUT) // params visible? toggle edit
+            isEditing = !isEditing;
+        else // show params
+            last_encoder_move = OC::CORE::ticks;
     }
 
     void OnEncoderMove(int direction) {
-        if(current_setting == 0) {
-            if (sample_ticks < 32) sample_ticks += direction;
-            else sample_ticks += direction * 10;
-            sample_ticks = constrain(sample_ticks, 2, 64000);
-        } else if(current_setting == 1) {
-            current_display = LoopInt(++current_display, 4);
-        } else if(current_setting == 2) {
-            freeze = direction > 0;
+        if (!isEditing) { // switch setting
+            current_setting = constrain(current_setting + direction, 0, 2);
+        } else { // edit
+            if(current_setting == 0) {
+                if (sample_ticks < 32) sample_ticks += direction;
+                else sample_ticks += direction * 10;
+                sample_ticks = constrain(sample_ticks, 2, 64000);
+            } else if(current_setting == 1) {
+                current_display = constrain(current_display + direction, 0, 4);
+            }
         }
         last_encoder_move = OC::CORE::ticks;
     }
@@ -144,6 +148,7 @@ private:
     // Scope
     int current_display;
     int current_setting;
+    bool isEditing = false;
     uint8_t snapshot[2][64];
     int sample_ticks; // Ticks between samples
     int sample_countdown; // Last time a sample was taken
@@ -181,6 +186,8 @@ private:
                 gfxPrint(1, 26, "Freeze ");
                 gfxPrint(freeze ? "ON" : "OFF");
             }
+
+            if (isEditing) gfxInvert(1, 25, 31, 9);
         }
     }
 
@@ -192,14 +199,21 @@ private:
     }
 
     void DrawInput(int input) {
-        int max = input < 0 ? 40 : 28;
+        int max = input < 0 ? 54 : 28;
         for (int s = 0; s < 64; s++)
         {
             int n = s + sample_num;
+            int px, py;
             if (n > 63) n -= 64;
-            int px = input < 0 ? Proportion(snapshot[0][n], 255, max) + 12 : n;
-            int py = Proportion(snapshot[input < 0 ? 1 : input][n], 255, max);
-            gfxPixel(px, (max - py) + 24);
+            if (input < 0) { // X-Y mode
+                px = Proportion(snapshot[0][n], 255, 63);
+                py = Proportion(snapshot[1][n], 255, max);
+                gfxPixel(px, constrain((max - py) + 10, 0, 63));
+            } else {
+                px = n;
+                py = Proportion(snapshot[input][n], 255, max);
+                gfxPixel(px, (max - py) + 24);
+            }
         }
     }
 };
