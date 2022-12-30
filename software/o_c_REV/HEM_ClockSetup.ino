@@ -49,36 +49,24 @@ public:
     }
 
     void OnButtonPress() {
-        isEditing = !isEditing;
+        if (cursor == 0) PlayStop();
+        else if (cursor == 1) clock_m->ToggleForwarding();
+        else isEditing = !isEditing;
     }
 
     void OnEncoderMove(int direction) {
         if (!isEditing) {
-            cursor = constrain(cursor + direction, 0, 3);
+            cursor = constrain(cursor + direction, 0, 4);
             ResetCursor();
         } else {
             switch (cursor) {
-            case 0: // Source
-                if (direction > 0) // right turn toggles Forwarding
-                    clock_m->ToggleForwarding();
-                else if (clock_m->IsRunning()) // left turn toggles clock
-                {
-                    stop_q = 1;
-                    clock_m->Stop();
-                }
-                else {
-                    start_q = 1;
-                    clock_m->Start();
-                }
-                break;
-
-            case 1: // Set tempo
+            case 2: // Set tempo
                 clock_m->SetTempoBPM(clock_m->GetTempo() + direction);
                 break;
 
-            case 2: // Set multiplier
-            case 3:
-                clock_m->SetMultiply(clock_m->GetMultiply(cursor-2) + direction, cursor-2);
+            case 3: // Set multiplier
+            case 4:
+                clock_m->SetMultiply(clock_m->GetMultiply(cursor-3) + direction, cursor-3);
                 break;
             }
         }
@@ -115,11 +103,21 @@ protected:
     }
 
 private:
-    char cursor; // 0=Source, 1=Tempo, 2=Multiply
+    char cursor; // 0=Play/Stop, 1=Forwarding, 2=Tempo, 3,4=Multiply
     bool isEditing = false;
     bool start_q;
     bool stop_q;
     ClockManager *clock_m = clock_m->get();
+
+    void PlayStop() {
+        if (clock_m->IsRunning()) {
+            stop_q = 1;
+            clock_m->Stop();
+        } else {
+            start_q = 1;
+            clock_m->Start();
+        }
+    }
 
     void DrawInterface() {
         // Header: This is sort of a faux applet, so its header
@@ -134,46 +132,40 @@ private:
         // Clock Source
         gfxIcon(1, 15, CLOCK_ICON);
         if (clock_m->IsRunning()) {
-            gfxIcon(10, 15, PLAY_ICON);
+            gfxIcon(12, 15, PLAY_ICON);
         } else if (clock_m->IsPaused()) {
-            gfxIcon(10, 15, PAUSE_ICON);
+            gfxIcon(12, 15, PAUSE_ICON);
         } else {
-            gfxIcon(10, 15, STOP_ICON);
+            gfxIcon(12, 15, STOP_ICON);
         }
-        gfxPrint(20, 15, "<Clk/Fwd>");
-        if (clock_m->IsForwarded())
-            gfxIcon(76, 15, LINK_ICON);
+        gfxPrint(26, 15, "Fwd ");
+        gfxIcon(50, 15, clock_m->IsForwarded() ? CHECK_ON_ICON : CHECK_OFF_ICON);
 
         // Tempo
-        gfxIcon(1, 25, NOTE4_ICON);
-        gfxPrint(9, 25, "= ");
+        gfxIcon(1, 26, NOTE4_ICON);
+        gfxPrint(9, 26, "= ");
         gfxPrint(pad(100, clock_m->GetTempo()), clock_m->GetTempo());
         gfxPrint(" BPM");
 
         // Multiply
-        gfxPrint(1, 35, "x");
+        gfxPrint(1, 37, "x");
         gfxPrint(clock_m->GetMultiply(0));
 
         // secondary multiplier when forwarding internal clock
-        gfxPrint(33, 35, "x");
+        gfxPrint(33, 37, "x");
         gfxPrint(clock_m->GetMultiply(1));
 
         switch (cursor) {
-        case 0:
-            gfxCursor(20, 23, 54);
-            if (isEditing) gfxInvert(20, 14, 54, 9);
+        case 0: gfxFrame(11, 14, 10, 10); break; // Play/Stop
+        case 1: gfxFrame(49, 14, 10, 10); break; // Forwarding
+
+        case 2: // BPM
+            isEditing ? gfxInvert(22, 25, 18, 9) : gfxCursor(22, 34, 18);
             break;
-        case 1:
-            gfxCursor(23, 33, 18);
-            if (isEditing) gfxInvert(23, 24, 18, 9);
-            break;
-        case 2:
-            gfxCursor(8, 43, 12);
-            if (isEditing) gfxInvert(8, 34, 12, 9);
-            break;
-        case 3:
-            gfxCursor(40, 43, 12);
-            if (isEditing) gfxInvert(40, 34, 12, 9);
+
+        case 3: // Multipliers
+        case 4:
+            isEditing ? gfxInvert(8 + 32*(cursor-3), 36, 12, 9) : gfxCursor(8 + 32*(cursor-3), 45, 12);
             break;
         }
     }
