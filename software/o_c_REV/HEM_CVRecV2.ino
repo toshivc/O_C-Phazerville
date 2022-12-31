@@ -38,16 +38,27 @@ public:
 
     void Controller() {
         if (Clock(1)) reset = true;
-
         if (reset) {
             step = start;
             if (punch_out) punch_out = end - start;
         }
 
+        // check for deferred recording
+        if (EndOfADCLag() && punch_out && mode) {
+            ForEachChannel(ch)
+            {
+                if (mode & (0x01 << ch)) { // Record this channel
+                    cv[ch][step] = In(ch);
+                }
+            }
+            if (!reset) {
+                if (--punch_out == 0) mode = 0;
+            }
+        }
+
         if (Clock(0) ) { // sequence advance
             if (!reset) step++;
             if (step > end || step < start) step = start;
-            bool rec = 0;
             ForEachChannel(ch)
             {
                 signal[ch] = int2simfloat(cv[ch][step]);
@@ -55,17 +66,10 @@ public:
                 if (next_step > end) next_step = start;
                 if (smooth) rise[ch] = (int2simfloat(cv[ch][next_step]) - int2simfloat(cv[ch][step])) / ClockCycleTicks(0);
                 else rise[ch] = 0;
+            }
 
-                if (mode & (0x01 << ch)) { // Record this channel
-                    if (punch_out > 0) {
-                        rec = 1;
-                        cv[ch][step] = In(ch);
-                    }
-                }
-            }
-            if (rec && !reset) {
-                if (--punch_out == 0) mode = 0;
-            }
+            // defer recording
+            StartADCLag();
             reset = false;
         }
 
