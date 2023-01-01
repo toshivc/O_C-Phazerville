@@ -38,7 +38,7 @@
 
 #define TM2_MIN_LENGTH 2
 #define TM2_MAX_LENGTH 32
-#define TM2_SMOOTHING 128
+#define TM2_SMOOTHING 4
 
 class DualTM : public HemisphereApplet {
 public:
@@ -305,9 +305,13 @@ private:
     // 0=length; 1=p_mod; 2=range; 3=trans1; 4=trans2; 5=trans1+2
     int cvmode[2] = {0, 5};
 
-    int slew(int value_, int value = 0) {
-        value_ = (value_ * (smooth_mod*TM2_SMOOTHING - 1) + value) / (smooth_mod*TM2_SMOOTHING);
-        return value_; 
+    int slew(int old_val, const int new_val = 0) {
+        // more smoothing causes more ticks to be skipped
+        if (OC::CORE::ticks % smooth_mod) return old_val;
+
+        int s = smooth_mod * TM2_SMOOTHING;
+        old_val = (old_val * (s - 1) + new_val) / s;
+        return old_val; 
     }
 
     void DrawSelector() {
