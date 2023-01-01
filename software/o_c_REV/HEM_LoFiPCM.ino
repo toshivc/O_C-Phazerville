@@ -36,7 +36,8 @@ public:
 
     void Start() {
         countdown = HEM_LOFI_PCM_SPEED;
-        for (int i = 0; i < HEM_LOFI_PCM_BUFFER_SIZE; i++) pcm[i] = 127;
+        // this might take too long, which causes crashes. It's not crucial.
+        //for (int i = 0; i < HEM_LOFI_PCM_BUFFER_SIZE; i++) pcm[i] = 127;
         cursor = 1; //for gui
     }
 
@@ -134,6 +135,7 @@ protected:
 private:
     const int length = HEM_LOFI_PCM_BUFFER_SIZE;
 
+    // TODO: consider making a singleton class to manage/share buffers
     uint8_t pcm[HEM_LOFI_PCM_BUFFER_SIZE];
     bool play = 0; //play always on unless gated on Digital 1
     uint16_t head = 0; // Location of read/play head
