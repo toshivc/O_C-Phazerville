@@ -56,15 +56,17 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor > 4) cursor = 0;
-        ResetCursor();
+        if (cursor == 4)
+            mix = !mix;
+        else
+            isEditing = !isEditing;
     }
 
     void OnEncoderMove(int direction) {
-        if (cursor == 4) {
-            mix = (direction > 0);
-        } else
-        {
+        if (!isEditing) {
+            cursor = constrain(cursor + direction, 0, 4);
+            ResetCursor();
+        } else {
             uint8_t ch = cursor / 2;
             if (cursor == 0 || cursor == 2) {
                 // Change offset voltage
@@ -108,6 +110,7 @@ protected:
     
 private:
     int cursor;
+    bool isEditing = false;
     int level[2];
     int offset[2];
     bool mix = false;
@@ -132,10 +135,9 @@ private:
             if (CursorBlink()) {
                 gfxFrame(0, 24, 9, 10);
             }
-        } else{
-            int ch = cursor / 2;
-            if (cursor == 0 or cursor == 2) gfxCursor(13, 23 + (ch * 20), 36);
-            else gfxCursor(13, 33 + (ch * 20), 36);
+        } else {
+            isEditing ? gfxInvert(12, 14 + cursor * 10, 37, 9)
+                      : gfxCursor(12, 23 + cursor * 10, 37);
         }    
     }
 
