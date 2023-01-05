@@ -38,7 +38,6 @@
 
 #define TM2_MIN_LENGTH 2
 #define TM2_MAX_LENGTH 32
-#define TM2_SMOOTHING 4
 
 class DualTM : public HemisphereApplet {
 public:
@@ -141,13 +140,13 @@ public:
         ForEachChannel(ch) {
             switch (outmode[ch]) {
             case -1: // pitch 1+2
-              Output[ch] = quantizer.Lookup(note + note2 + note_trans3 + 64);
+              Output[ch] = slew(Output[ch], quantizer.Lookup(note + note2 + note_trans3 + 64));
               break;
             case 0: // pitch 1
-              Output[ch] = quantizer.Lookup(note + note_trans1 + note_trans3 + 64);
+              Output[ch] = slew(Output[ch], quantizer.Lookup(note + note_trans1 + note_trans3 + 64));
               break;
             case 1: // pitch 2
-              Output[ch] = quantizer.Lookup(note2 + note_trans2 + note_trans3 + 64);
+              Output[ch] = slew(Output[ch], quantizer.Lookup(note2 + note_trans2 + note_trans3 + 64));
               break;
             case 2: // mod A - 8-bit bi-polar proportioned CV
               Output[ch] = slew(Output[ch], Proportion( int(reg & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
@@ -309,8 +308,7 @@ private:
         // more smoothing causes more ticks to be skipped
         if (OC::CORE::ticks % smooth_mod) return old_val;
 
-        int s = smooth_mod * TM2_SMOOTHING;
-        old_val = (old_val * (s - 1) + new_val) / s;
+        old_val = (old_val * (smooth_mod - 1) + new_val) / smooth_mod;
         return old_val; 
     }
 
