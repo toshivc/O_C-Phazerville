@@ -46,6 +46,7 @@ class ClockManager {
     uint32_t last_tock_check[3] = {0,0,0}; // To avoid checking the tock more than once per tick
     bool tock[3] = {0,0,0}; // The current tock value
     int tocks_per_beat[3] = {1, 1, 24}; // Multiplier
+    int clock_ppqn = 4; // external clock multiple
     bool cycle = 0; // Alternates for each tock, for display purposes
     int count[3] = {0,0,0}; // Multiple counter, 0 is a special case when first starting the clock
 
@@ -66,6 +67,11 @@ public:
         tocks_per_beat[ch] = multiply;
     }
 
+    // adjusts the expected clock multiple for external clock pulses
+    void SetClockPPQN(int clkppqn) {
+        clock_ppqn = constrain(clkppqn, 1, 24);
+    }
+
     /* Set ticks per tock, based on one million ticks per minute divided by beats per minute.
      * This is approximate, because the arithmetical value is likely to be fractional, and we
      * need to live with a certain amount of imprecision here. So I'm not even rounding up.
@@ -77,12 +83,14 @@ public:
     }
 
     int GetMultiply(bool ch = 0) {return tocks_per_beat[ch];}
+    int GetClockPPQN() { return clock_ppqn; }
 
     /* Gets the current tempo. This can be used between client processes, like two different
      * hemispheres.
      */
     uint16_t GetTempo() {return tempo;}
 
+    // Resync multipliers, optionally skipping the first tock
     void Reset(bool count_skip = 0) {
         for (int ch = 0; ch < 3; ch++) {
             beat_tick[ch] = OC::CORE::ticks;
@@ -119,15 +127,15 @@ public:
         if (clocked && clock_tick) {
 
             uint32_t clock_diff = now - clock_tick; // 4 PPQN clock input
-            if (CLOCK_PPQN * clock_diff > CLOCK_TICKS_MAX) clock_tick = 0; // too slow, reset clock tracking
+            if (clock_ppqn * clock_diff > CLOCK_TICKS_MAX) clock_tick = 0; // too slow, reset clock tracking
 
             // if there is a previous clock tick, update tempo and sync
             if (clock_tick && clock_diff) {
                 // update the tempo
-                ticks_per_beat = constrain(CLOCK_PPQN * clock_diff, CLOCK_TICKS_MIN, CLOCK_TICKS_MAX); // time since last clock is new tempo
+                ticks_per_beat = constrain(clock_ppqn * clock_diff, CLOCK_TICKS_MIN, CLOCK_TICKS_MAX); // time since last clock is new tempo
                 tempo = 1000000 / ticks_per_beat; // imprecise, for display purposes
 
-                int ticks_per_clock = ticks_per_beat / CLOCK_PPQN; // rounded down
+                int ticks_per_clock = ticks_per_beat / clock_ppqn; // rounded down
                 //int clock_err = ticks_per_beat % CLOCK_PPQN; // rounding error
 
                 // time since last beat
