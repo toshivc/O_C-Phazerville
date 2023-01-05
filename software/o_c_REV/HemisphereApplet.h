@@ -345,6 +345,8 @@ public:
                 clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
         }
 
+        clocked = clocked || clock_m->Beep(hemisphere*2 + ch);
+
         if (clocked) {
             cycle_ticks[ch] = OC::CORE::ticks - last_clock[ch];
             last_clock[ch] = OC::CORE::ticks;

@@ -49,6 +49,8 @@ class ClockManager {
     bool cycle = 0; // Alternates for each tock, for display purposes
     int count[3] = {0,0,0}; // Multiple counter, 0 is a special case when first starting the clock
 
+    bool boop[4]; // Manual triggers
+
     ClockManager() {
         SetTempoBPM(120);
     }
@@ -142,6 +144,7 @@ public:
         }
         // clock has been physically ticked
         if (clocked) clock_tick = now;
+
     }
 
     void Start(bool p = 0) {
@@ -174,6 +177,18 @@ public:
     bool IsPaused() {return paused;}
 
     bool IsForwarded() {return forwarded;}
+
+    // beep boop
+    void Boop(int ch = 0) {
+        boop[ch] = true;
+    }
+    bool Beep(int ch = 0) {
+        if (boop[ch]) {
+            boop[ch] = false;
+            return true;
+        }
+        return false;
+    }
 
     /* Returns true if the clock should fire on this tick, based on the current tempo and multiplier */
     bool Tock(int ch = 0) {

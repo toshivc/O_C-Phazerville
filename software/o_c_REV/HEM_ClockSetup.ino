@@ -51,12 +51,13 @@ public:
     void OnButtonPress() {
         if (cursor == 0) PlayStop();
         else if (cursor == 1) clock_m->ToggleForwarding();
+        else if (cursor > 4) clock_m->Boop(cursor-5);
         else isEditing = !isEditing;
     }
 
     void OnEncoderMove(int direction) {
         if (!isEditing) {
-            cursor = constrain(cursor + direction, 0, 4);
+            cursor = constrain(cursor + direction, 0, 8);
             ResetCursor();
         } else {
             switch (cursor) {
@@ -152,8 +153,14 @@ private:
         gfxPrint(clock_m->GetMultiply(0));
 
         // secondary multiplier when forwarding internal clock
-        gfxPrint(33, 37, "x");
+        gfxPrint(65, 37, "x");
         gfxPrint(clock_m->GetMultiply(1));
+
+        // Manual triggers
+        gfxIcon(4, 49, BURST_ICON);
+        gfxIcon(36, 49, BURST_ICON);
+        gfxIcon(68, 49, BURST_ICON);
+        gfxIcon(100, 49, BURST_ICON);
 
         switch (cursor) {
         case 0: gfxFrame(11, 14, 10, 10); break; // Play/Stop
@@ -165,8 +172,13 @@ private:
 
         case 3: // Multipliers
         case 4:
-            isEditing ? gfxInvert(8 + 32*(cursor-3), 36, 12, 9) : gfxCursor(8 + 32*(cursor-3), 45, 12);
+            isEditing ? gfxInvert(8 + 64*(cursor-3), 36, 12, 9) : gfxCursor(8 + 64*(cursor-3), 45, 12);
             break;
+
+        case 5: gfxFrame(3, 48, 10, 10); break; // Manual Trig 1
+        case 6: gfxFrame(35, 48, 10, 10); break; // Manual Trig 2
+        case 7: gfxFrame(67, 48, 10, 10); break; // Manual Trig 3
+        case 8: gfxFrame(99, 48, 10, 10); break; // Manual Trig 4
         }
     }
 };
