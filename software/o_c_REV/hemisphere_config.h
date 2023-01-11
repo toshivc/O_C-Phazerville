@@ -55,7 +55,7 @@
     DECLARE_APPLET( 26, 0x08, ScaleDuet), \
     DECLARE_APPLET( 40, 0x40, Schmitt), \
     DECLARE_APPLET( 23, 0x80, Scope), \
-    DECLARE_APPLET( 14, 0x02, Sequence5), \
+    DECLARE_APPLET( 14, 0x02, SequenceX), \
     DECLARE_APPLET( 48, 0x45, ShiftGate), \
     DECLARE_APPLET( 58, 0x01, Shredder), \
     DECLARE_APPLET( 36, 0x04, Shuffle), \
