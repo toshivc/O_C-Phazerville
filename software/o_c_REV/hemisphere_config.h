@@ -34,7 +34,7 @@
     DECLARE_APPLET( 57, 0x02, DrumMap), \
     DECLARE_APPLET(  9, 0x08, DualQuant), \
     DECLARE_APPLET( 18, 0x02, DualTM), \
-    DECLARE_APPLET( 15, 0x02, AnnularFusion), \
+    DECLARE_APPLET( 15, 0x02, EuclidX), \
     DECLARE_APPLET( 63, 0x06, EbbAndLfo), \
     DECLARE_APPLET( 45, 0x02, EnigmaJr), \
     DECLARE_APPLET( 42, 0x11, EnvFollow), \

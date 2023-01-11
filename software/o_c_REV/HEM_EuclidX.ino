@@ -1,3 +1,6 @@
+// Copyright (c) 2022, Bryan Head
+// Copyright (c) 2022, Nicholas J. Michalek
+// Copyright (c) 2022, Alessio Degani
 // Copyright (c) 2018, Jason Justian
 //
 // Bjorklund pattern filter, Copyright (c) 2016 Tim Churches
@@ -20,12 +23,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+/* This applet is a replacement for the original Annular Fusion Euclidean Drummer,
+ * redesigned by qiemem and modified by djphazer to add CV modulation.
+ * The CV input logic as well as the name were copied from a separate rewrite by adegani.
+ */
+
 #include "bjorklund.h"
 
 const int NUM_PARAMS = 4;
 const int PARAM_SIZE = 5;
 
-class AnnularFusion : public HemisphereApplet {
+class EuclidX : public HemisphereApplet {
 public:
 
     const char* applet_name() {
@@ -243,41 +251,41 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 //// Hemisphere Applet Functions
 ///
-///  Once you run the find-and-replace to make these refer to AnnularFusion,
+///  Once you run the find-and-replace to make these refer to EuclidX,
 ///  it's usually not necessary to do anything with these functions. You
 ///  should prefer to handle things in the HemisphereApplet child class
 ///  above.
 ////////////////////////////////////////////////////////////////////////////////
-AnnularFusion AnnularFusion_instance[2];
+EuclidX EuclidX_instance[2];
 
-void AnnularFusion_Start(bool hemisphere) {
-    AnnularFusion_instance[hemisphere].BaseStart(hemisphere);
+void EuclidX_Start(bool hemisphere) {
+    EuclidX_instance[hemisphere].BaseStart(hemisphere);
 }
 
-void AnnularFusion_Controller(bool hemisphere, bool forwarding) {
-    AnnularFusion_instance[hemisphere].BaseController(forwarding);
+void EuclidX_Controller(bool hemisphere, bool forwarding) {
+    EuclidX_instance[hemisphere].BaseController(forwarding);
 }
 
-void AnnularFusion_View(bool hemisphere) {
-    AnnularFusion_instance[hemisphere].BaseView();
+void EuclidX_View(bool hemisphere) {
+    EuclidX_instance[hemisphere].BaseView();
 }
 
-void AnnularFusion_OnButtonPress(bool hemisphere) {
-    AnnularFusion_instance[hemisphere].OnButtonPress();
+void EuclidX_OnButtonPress(bool hemisphere) {
+    EuclidX_instance[hemisphere].OnButtonPress();
 }
 
-void AnnularFusion_OnEncoderMove(bool hemisphere, int direction) {
-    AnnularFusion_instance[hemisphere].OnEncoderMove(direction);
+void EuclidX_OnEncoderMove(bool hemisphere, int direction) {
+    EuclidX_instance[hemisphere].OnEncoderMove(direction);
 }
 
-void AnnularFusion_ToggleHelpScreen(bool hemisphere) {
-    AnnularFusion_instance[hemisphere].HelpScreen();
+void EuclidX_ToggleHelpScreen(bool hemisphere) {
+    EuclidX_instance[hemisphere].HelpScreen();
 }
 
-uint64_t AnnularFusion_OnDataRequest(bool hemisphere) {
-    return AnnularFusion_instance[hemisphere].OnDataRequest();
+uint64_t EuclidX_OnDataRequest(bool hemisphere) {
+    return EuclidX_instance[hemisphere].OnDataRequest();
 }
 
-void AnnularFusion_OnDataReceive(bool hemisphere, uint64_t data) {
-    AnnularFusion_instance[hemisphere].OnDataReceive(data);
+void EuclidX_OnDataReceive(bool hemisphere, uint64_t data) {
+    EuclidX_instance[hemisphere].OnDataReceive(data);
 }
