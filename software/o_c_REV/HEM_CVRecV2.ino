@@ -40,7 +40,7 @@ public:
         if (Clock(1)) reset = true;
         if (reset) {
             step = start;
-            if (punch_out) punch_out = end - start;
+            if (punch_out) punch_out = end - start + 1; // inclusive
         }
 
         // check for deferred recording
@@ -98,7 +98,7 @@ public:
 
         isEditing = 1 - isEditing; // toggle editing
         if (cursor == 3 && !isEditing) { // activate recording if selected
-            punch_out = (mode > 0) ? end - start : 0;
+            punch_out = (mode > 0) ? end - start + 1 : 0;
         }
     }
 
