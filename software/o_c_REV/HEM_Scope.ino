@@ -63,7 +63,7 @@ public:
                 sample_num = LoopInt(++sample_num, 63);
 
                 for (int n = 0; n < 2; n++) {
-                  int sample = Proportion(In(n) + HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV + HEMISPHERE_3V_CV, 255);
+                  int sample = Proportion(In(n) + HEMISPHERE_MAX_CV, 2*HEMISPHERE_MAX_CV, 255);
                   sample = constrain(sample, 0, 255);
                   snapshot[n][sample_num] = (uint8_t)sample;
                 }
