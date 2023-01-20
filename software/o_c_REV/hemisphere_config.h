@@ -21,10 +21,10 @@
     DECLARE_APPLET( 47, 0x09, ASR), \
     DECLARE_APPLET( 56, 0x10, AttenuateOffset), \
     DECLARE_APPLET( 41, 0x41, Binary), \
-    DECLARE_APPLET( 51, 0x80, BugCrack), \
-    DECLARE_APPLET( 63, 0x10, Button), \
     DECLARE_APPLET(  4, 0x14, Brancher), \
+    DECLARE_APPLET( 51, 0x80, BugCrack), \
     DECLARE_APPLET( 31, 0x04, Burst), \
+    DECLARE_APPLET( 63, 0x10, Button), \
     DECLARE_APPLET( 12, 0x10, Calculate),\
     DECLARE_APPLET( 32, 0x0a, Carpeggio), \
     DECLARE_APPLET(  6, 0x04, ClockDivider), \
