@@ -18,12 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#define MIDI_CLOCK 0xF8
-#define MIDI_START 0xFA
-#define MIDI_STOP  0xFC
-
 class ClockSetup : public HemisphereApplet {
 public:
+
+    enum ClockSetupCursor {
+        PLAY_STOP,
+        FORWARDING,
+        EXT_PPQN,
+        TEMPO,
+        MULT1,
+        MULT2,
+        TRIG1,
+        TRIG2,
+        TRIG3,
+        TRIG4,
+        LAST_SETTING
+    };
 
     const char* applet_name() {
         return "ClockSet";
@@ -35,13 +45,13 @@ public:
     void Controller() {
         if (start_q){
             start_q = 0;
-            usbMIDI.sendRealTime(MIDI_START);
+            usbMIDI.sendRealTime(usbMIDI.Start);
         }
         if (stop_q){
             stop_q = 0;
-            usbMIDI.sendRealTime(MIDI_STOP);
+            usbMIDI.sendRealTime(usbMIDI.Stop);
         }
-        if (clock_m->IsRunning() && clock_m->MIDITock()) usbMIDI.sendRealTime(MIDI_CLOCK);
+        if (clock_m->IsRunning() && clock_m->MIDITock()) usbMIDI.sendRealTime(usbMIDI.Clock);
     }
 
     void View() {
@@ -49,29 +59,31 @@ public:
     }
 
     void OnButtonPress() {
-        if (cursor == 0) PlayStop();
-        else if (cursor == 1) clock_m->ToggleForwarding();
-        else if (cursor > 5) clock_m->Boop(cursor-6);
+        if (cursor == PLAY_STOP) PlayStop();
+        else if (cursor == FORWARDING) clock_m->ToggleForwarding();
+        else if (cursor >= TRIG1) clock_m->Boop(cursor-TRIG1);
         else isEditing = !isEditing;
     }
 
     void OnEncoderMove(int direction) {
         if (!isEditing) {
-            cursor = constrain(cursor + direction, 0, 9);
+            cursor = (ClockSetupCursor) constrain(cursor + direction, 0, LAST_SETTING-1);
             ResetCursor();
         } else {
             switch (cursor) {
-            case 2: // input PPQN
+            case EXT_PPQN:
                 clock_m->SetClockPPQN(clock_m->GetClockPPQN() + direction);
                 break;
-            case 3: // Set tempo
+            case TEMPO:
                 clock_m->SetTempoBPM(clock_m->GetTempo() + direction);
                 break;
 
-            case 4: // Set multiplier
-            case 5:
-                clock_m->SetMultiply(clock_m->GetMultiply(cursor-4) + direction, cursor-4);
+            case MULT1:
+            case MULT2:
+                clock_m->SetMultiply(clock_m->GetMultiply(cursor - MULT1) + direction, cursor - MULT1);
                 break;
+
+            default: break;
             }
         }
     }
@@ -108,7 +120,7 @@ protected:
     }
 
 private:
-    char cursor; // 0=Play/Stop, 1=Forwarding, 2=External PPQN, 3=Tempo, 4,5=Multiply
+    ClockSetupCursor cursor; // 0=Play/Stop, 1=Forwarding, 2=External PPQN, 3=Tempo, 4,5=Multiply
     bool isEditing = false;
     bool start_q;
     bool stop_q;
@@ -157,41 +169,40 @@ private:
         gfxPrint(" BPM");
 
         // Multiply
-        gfxPrint(1, 37, "x");
-        gfxPrint(clock_m->GetMultiply(0));
-
-        // secondary multiplier when forwarding internal clock
-        gfxPrint(65, 37, "x");
-        gfxPrint(clock_m->GetMultiply(1));
+        ForEachChannel(ch) {
+            int mult = clock_m->GetMultiply(ch);
+            gfxPrint(1 + ch*64, 37, (mult >= 0) ? "x" : "/");
+            gfxPrint( (mult >= 0) ? mult : 1 - mult );
+        }
 
         // Manual triggers
-        gfxIcon(4, 49, BURST_ICON);
-        gfxIcon(36, 49, BURST_ICON);
-        gfxIcon(68, 49, BURST_ICON);
-        gfxIcon(100, 49, BURST_ICON);
+        for (int i=0; i<4; i++) { gfxIcon(4 + i*32, 49, BURST_ICON); }
 
         switch (cursor) {
-        case 0: gfxFrame(11, 14, 10, 10); break; // Play/Stop
-        case 1: gfxFrame(49, 14, 10, 10); break; // Forwarding
+        case PLAY_STOP: gfxFrame(11, 14, 10, 10); break;
+        case FORWARDING: gfxFrame(49, 14, 10, 10); break;
 
-        case 2: // Clock PPQN
+        case EXT_PPQN:
             isEditing ? gfxInvert(100,14, 12,9) : gfxCursor(100,23, 12);
             break;
 
-        case 3: // BPM
+        case TEMPO:
             isEditing ? gfxInvert(22, 25, 18, 9) : gfxCursor(22, 34, 18);
             break;
 
-        case 4: // Multipliers
-        case 5:
-            isEditing ? gfxInvert(8 + 64*(cursor-4), 36, 12, 9) : gfxCursor(8 + 64*(cursor-4), 45, 12);
+        case MULT1:
+        case MULT2:
+            isEditing ? gfxInvert(8 + 64*(cursor-MULT1), 36, 12, 9) : gfxCursor(8 + 64*(cursor-MULT1), 45, 12);
             break;
 
+        case TRIG1:
+        case TRIG2:
+        case TRIG3:
+        case TRIG4:
+            gfxFrame(3 + 32*(cursor-TRIG1), 48, 10, 10);
+            break;
 
-        case 6: gfxFrame(3, 48, 10, 10); break; // Manual Trig 1
-        case 7: gfxFrame(35, 48, 10, 10); break; // Manual Trig 2
-        case 8: gfxFrame(67, 48, 10, 10); break; // Manual Trig 3
-        case 9: gfxFrame(99, 48, 10, 10); break; // Manual Trig 4
+        default: break;
         }
     }
 };
