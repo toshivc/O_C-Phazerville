@@ -155,6 +155,8 @@ public:
         Pack(data, PackLocation {5 * PARAM_SIZE, PARAM_SIZE}, offset[1]);
         Pack(data, PackLocation {6 * PARAM_SIZE, PARAM_SIZE}, cv_dest[0]);
         Pack(data, PackLocation {7 * PARAM_SIZE, PARAM_SIZE}, cv_dest[1]);
+        Pack(data, PackLocation {8 * PARAM_SIZE, PARAM_SIZE}, padding[0]);
+        Pack(data, PackLocation {9 * PARAM_SIZE, PARAM_SIZE}, padding[1]);
         return data;
     }
 
@@ -167,6 +169,8 @@ public:
         actual_offset[1] = offset[1] = Unpack(data, PackLocation {5 * PARAM_SIZE, PARAM_SIZE});
         cv_dest[0] = Unpack(data, PackLocation {6 * PARAM_SIZE, PARAM_SIZE});
         cv_dest[1] = Unpack(data, PackLocation {7 * PARAM_SIZE, PARAM_SIZE});
+        actual_padding[0] = padding[0] = Unpack(data, PackLocation {8 * PARAM_SIZE, PARAM_SIZE});
+        actual_padding[1] = padding[1] = Unpack(data, PackLocation {9 * PARAM_SIZE, PARAM_SIZE});
     }
 
 protected:
