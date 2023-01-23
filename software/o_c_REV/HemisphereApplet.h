@@ -183,8 +183,9 @@ public:
 
     //////////////// Offset graphics methods
     ////////////////////////////////////////////////////////////////////////////////
-    void gfxCursor(int x, int y, int w) {
-        if (CursorBlink()) gfxLine(x, y, x + w - 1, y);
+    void gfxCursor(int x, int y, int w, int h = 9) { // assumes standard text height for highlighting
+        if (isEditing) gfxInvert(x, y - h, w, h);
+        else if (CursorBlink()) gfxLine(x, y, x + w - 1, y);
     }
 
     void gfxPos(int x, int y) {
@@ -384,6 +385,7 @@ public:
 
 protected:
     bool hemisphere; // Which hemisphere (0, 1) this applet uses
+    bool isEditing = false; // modal editing toggle
     const char* help[4];
     virtual void SetHelp();
 

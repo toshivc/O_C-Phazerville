@@ -113,40 +113,42 @@ public:
   }
 
   void OnEncoderMove(int direction) {
-    if (!isEditing) cursor = constrain(cursor + direction, 0, 4);
-    else {
-        switch (cursor) {
-        case 0: {
-          uint32_t old_pi = ComputePhaseIncrement(pitch);
-          pitch += (knob_accel >> 8) * direction;
-          while (ComputePhaseIncrement(pitch) == old_pi) {
-            pitch += direction;
-          }
-          break;
-        }
-        case 1: {
-          // slope += (knob_accel >> 4) * direction;
-          slope = constrain(slope + direction, 0, 127);
-          break;
-        }
-        case 2: {
-          shape += direction;
-          while (shape < 0) shape += 128;
-          while (shape > 127) shape -= 128;
-          break;
-        }
-        case 3: {
-          fold = constrain(fold + direction, 0, 127);
-          break;
-        }
-        case 4: {
-          out += direction;
-          out %= 0b10000;
-        }
-        }
-        if (knob_accel < (1 << 13))
-          knob_accel <<= 1;
+    if (!isEditing) {
+        cursor = constrain(cursor + direction, 0, 4);
+        return;
     }
+
+    switch (cursor) {
+    case 0: {
+      uint32_t old_pi = ComputePhaseIncrement(pitch);
+      pitch += (knob_accel >> 8) * direction;
+      while (ComputePhaseIncrement(pitch) == old_pi) {
+        pitch += direction;
+      }
+      break;
+    }
+    case 1: {
+      // slope += (knob_accel >> 4) * direction;
+      slope = constrain(slope + direction, 0, 127);
+      break;
+    }
+    case 2: {
+      shape += direction;
+      while (shape < 0) shape += 128;
+      while (shape > 127) shape -= 128;
+      break;
+    }
+    case 3: {
+      fold = constrain(fold + direction, 0, 127);
+      break;
+    }
+    case 4: {
+      out += direction;
+      out %= 0b10000;
+    }
+    }
+    if (knob_accel < (1 << 13))
+      knob_accel <<= 1;
   }
 
   uint64_t OnDataRequest() {
@@ -198,7 +200,6 @@ private:
   const char* cv_labels[4] = {"Hz", "Sl", "Sh", "Fo"};
 
   int cursor = 0;
-  bool isEditing = false;
   int16_t pitch = -3 * 12 * 128;
   int slope = 64;
   int slope_mod = 64; // actual value after CV mod

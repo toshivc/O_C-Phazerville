@@ -69,22 +69,23 @@ public:
         if (!isEditing) {
             cursor = (ClockSetupCursor) constrain(cursor + direction, 0, LAST_SETTING-1);
             ResetCursor();
-        } else {
-            switch (cursor) {
-            case EXT_PPQN:
-                clock_m->SetClockPPQN(clock_m->GetClockPPQN() + direction);
-                break;
-            case TEMPO:
-                clock_m->SetTempoBPM(clock_m->GetTempo() + direction);
-                break;
+            return;
+        }
 
-            case MULT1:
-            case MULT2:
-                clock_m->SetMultiply(clock_m->GetMultiply(cursor - MULT1) + direction, cursor - MULT1);
-                break;
+        switch (cursor) {
+        case EXT_PPQN:
+            clock_m->SetClockPPQN(clock_m->GetClockPPQN() + direction);
+            break;
+        case TEMPO:
+            clock_m->SetTempoBPM(clock_m->GetTempo() + direction);
+            break;
 
-            default: break;
-            }
+        case MULT1:
+        case MULT2:
+            clock_m->SetMultiply(clock_m->GetMultiply(cursor - MULT1) + direction, cursor - MULT1);
+            break;
+
+        default: break;
         }
     }
 
@@ -121,7 +122,6 @@ protected:
 
 private:
     ClockSetupCursor cursor; // 0=Play/Stop, 1=Forwarding, 2=External PPQN, 3=Tempo, 4,5=Multiply
-    bool isEditing = false;
     bool start_q;
     bool stop_q;
     ClockManager *clock_m = clock_m->get();
@@ -183,16 +183,16 @@ private:
         case FORWARDING: gfxFrame(49, 14, 10, 10); break;
 
         case EXT_PPQN:
-            isEditing ? gfxInvert(100,14, 12,9) : gfxCursor(100,23, 12);
+            gfxCursor(100,23, 12);
             break;
 
         case TEMPO:
-            isEditing ? gfxInvert(22, 25, 18, 9) : gfxCursor(22, 34, 18);
+            gfxCursor(22, 34, 18);
             break;
 
         case MULT1:
         case MULT2:
-            isEditing ? gfxInvert(8 + 64*(cursor-MULT1), 36, 12, 9) : gfxCursor(8 + 64*(cursor-MULT1), 45, 12);
+            gfxCursor(8 + 64*(cursor-MULT1), 45, 12);
             break;
 
         case TRIG1:

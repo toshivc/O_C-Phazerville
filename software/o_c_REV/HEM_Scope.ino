@@ -148,7 +148,6 @@ private:
     // Scope
     int current_display;
     int current_setting;
-    bool isEditing = false;
     uint8_t snapshot[2][64];
     int sample_ticks; // Ticks between samples
     int sample_countdown; // Last time a sample was taken

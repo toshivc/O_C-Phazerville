@@ -66,17 +66,18 @@ public:
         if (!isEditing) {
             cursor = constrain(cursor + direction, 0, 4);
             ResetCursor();
+            return;
+        }
+
+        uint8_t ch = cursor / 2;
+        if (cursor == 0 || cursor == 2) {
+            // Change offset voltage
+            int min = -HEMISPHERE_MAX_CV / ATTENOFF_INCREMENTS;
+            int max = HEMISPHERE_MAX_CV / ATTENOFF_INCREMENTS;
+            offset[ch] = constrain(offset[ch] + direction, min, max);
         } else {
-            uint8_t ch = cursor / 2;
-            if (cursor == 0 || cursor == 2) {
-                // Change offset voltage
-                int min = -HEMISPHERE_MAX_CV / ATTENOFF_INCREMENTS;
-                int max = HEMISPHERE_MAX_CV / ATTENOFF_INCREMENTS;
-                offset[ch] = constrain(offset[ch] + direction, min, max);
-            } else {
-                // Change level percentage
-                level[ch] = constrain(level[ch] + direction, -63, 63);
-            }
+            // Change level percentage
+            level[ch] = constrain(level[ch] + direction, -63, 63);
         }
     }
         
@@ -110,7 +111,6 @@ protected:
     
 private:
     int cursor;
-    bool isEditing = false;
     int level[2];
     int offset[2];
     bool mix = false;
@@ -136,8 +136,7 @@ private:
                 gfxFrame(0, 24, 9, 10);
             }
         } else {
-            isEditing ? gfxInvert(12, 14 + cursor * 10, 37, 9)
-                      : gfxCursor(12, 23 + cursor * 10, 37);
+            gfxCursor(12, 23 + cursor * 10, 37);
         }    
     }
 

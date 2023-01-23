@@ -119,29 +119,30 @@ public:
         if (!isEditing) {
             cursor = constrain(cursor + direction, 0, NUM_PARAMS*2 - 1);
             ResetCursor();
-        } else {
-            int ch = cursor < NUM_PARAMS ? 0 : 1;
-            int f = cursor - (ch * NUM_PARAMS); // Cursor function
-            switch (f) {
-            case 0:
-                actual_length[ch] = length[ch] = constrain(length[ch] + direction, 2, 32);
-                if (beats[ch] > length[ch]) beats[ch] = length[ch];
-				if (padding[ch] > 32 - length[ch]) padding[ch] = 32 - length[ch];
-                if (offset[ch] >= length[ch] + padding[ch]) offset[ch] = length[ch] + padding[ch] - 1;
-                break;
-            case 1:
-                actual_beats[ch] = beats[ch] = constrain(beats[ch] + direction, 1, length[ch]);
-                break;
-            case 2:
-                actual_offset[ch] = offset[ch] = constrain(offset[ch] + direction, 0, length[ch] + padding[ch] - 1);
-                break;
-			case 3:
-				padding[ch] = constrain(padding[ch] + direction, 0, 32 - length[ch]);
-				break;
-            case 4: // CV destination
-                cv_dest[ch] = constrain(cv_dest[ch] + direction, 0, (NUM_PARAMS-1)*2 - 1);
-				break;
-            }
+            return;
+        }
+
+        int ch = cursor < NUM_PARAMS ? 0 : 1;
+        int f = cursor - (ch * NUM_PARAMS); // Cursor function
+        switch (f) {
+        case 0:
+            actual_length[ch] = length[ch] = constrain(length[ch] + direction, 2, 32);
+            if (beats[ch] > length[ch]) beats[ch] = length[ch];
+            if (padding[ch] > 32 - length[ch]) padding[ch] = 32 - length[ch];
+            if (offset[ch] >= length[ch] + padding[ch]) offset[ch] = length[ch] + padding[ch] - 1;
+            break;
+        case 1:
+            actual_beats[ch] = beats[ch] = constrain(beats[ch] + direction, 1, length[ch]);
+            break;
+        case 2:
+            actual_offset[ch] = offset[ch] = constrain(offset[ch] + direction, 0, length[ch] + padding[ch] - 1);
+            break;
+        case 3:
+            padding[ch] = constrain(padding[ch] + direction, 0, 32 - length[ch]);
+            break;
+        case 4: // CV destination
+            cv_dest[ch] = constrain(cv_dest[ch] + direction, 0, (NUM_PARAMS-1)*2 - 1);
+            break;
         }
     }
 
@@ -186,7 +187,6 @@ protected:
 private:
     int step;
     int cursor = 0; // Ch1: 0=Length, 1=Hits; Ch2: 2=Length 3=Hits
-    bool isEditing = false;
     uint32_t pattern[2];
 
     // Settings
@@ -245,12 +245,11 @@ private:
             case 1:
             case 2:
             case 3:
-                gfxCursor(3 + f * spacing, y + 7, 13);
-                if (isEditing) gfxInvert(3+f*spacing, y-1, 13, 9);
+                gfxCursor(3 + f * spacing, y + 8, 13);
                 break;
             case 4: // CV dest selection
-                gfxBitmap(0, 13+ch*3, 8, CV_ICON);
-                if (isEditing) gfxInvert(0, 13+ch*3, 8, 6);
+                gfxBitmap(0, 13+ch*5, 8, CV_ICON);
+                if (isEditing) gfxInvert(0, 13+ch*5, 8, 6);
                 break;
             }
 

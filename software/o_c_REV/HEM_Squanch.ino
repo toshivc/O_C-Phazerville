@@ -117,8 +117,7 @@ private:
     int16_t shift[2];
 
     void DrawInterface() {
-        const uint8_t notes[2][8] = {{0xc0, 0xe0, 0xe0, 0xe0, 0x7f, 0x02, 0x14, 0x08},
-                                     {0xc0, 0xa0, 0xa0, 0xa0, 0x7f, 0x00, 0x00, 0x00}};
+        const uint8_t * notes[2] = {NOTE_ICON, NOTE2_ICON};
 
         // Display icon if clocked
         if (!continuous) gfxIcon(56, 25, CLOCK_ICON);

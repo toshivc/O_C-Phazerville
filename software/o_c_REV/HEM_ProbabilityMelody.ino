@@ -27,6 +27,12 @@
 class ProbabilityMelody : public HemisphereApplet {
 public:
 
+    enum ProbMeloCursor {
+        LOWER, UPPER,
+        FIRST_NOTE = 2,
+        LAST_NOTE = 13
+    };
+
     const char* applet_name() {
         return "ProbMeloD";
     }
@@ -110,23 +116,23 @@ public:
 
     void OnEncoderMove(int direction) {
         if (!isEditing) {
-            cursor += direction;
-            if (cursor < 0) cursor = 13;
-            if (cursor > 13) cursor = 0;
+            cursor = (ProbMeloCursor) constrain(cursor + direction, 0, LAST_NOTE);
             ResetCursor();
+            return;
+        }
+
+        if (cursor >= FIRST_NOTE) {
+            // editing note probability
+            int i = cursor - FIRST_NOTE;
+            weights[i] = constrain(weights[i] + direction, 0, HEM_PROB_MEL_MAX_WEIGHT);
+            value_animation = HEMISPHERE_CURSOR_TICKS;
         } else {
-            if (cursor < 12) {
-                // editing note probability
-                weights[cursor] = constrain(weights[cursor] + direction, 0, HEM_PROB_MEL_MAX_WEIGHT);
-                value_animation = HEMISPHERE_CURSOR_TICKS;
-            } else {
-                // editing scaling
-                if (cursor == 12) down = constrain(down + direction, 1, up);
-                if (cursor == 13) up = constrain(up + direction, down, 60);
-            }
-            if (isLooping) {
-                GenerateLoop(); // regenerate loop on any param changes
-            }
+            // editing scaling
+            if (cursor == LOWER) down = constrain(down + direction, 1, up);
+            if (cursor == UPPER) up = constrain(up + direction, down, 60);
+        }
+        if (isLooping) {
+            GenerateLoop(); // regenerate loop on any param changes
         }
     }
         
@@ -177,8 +183,7 @@ protected:
     }
     
 private:
-    int cursor;
-    bool isEditing = false;
+    ProbMeloCursor cursor;
     int weights[12] = {10,0,0,2,0,0,0,2,0,0,4,0};
     int up;
     int down;
@@ -255,7 +260,7 @@ private:
             if (pulse_animation > 0 && note == i) {
                 gfxRect(xOffset - 1, yOffset, 3, 10);
             } else {
-                if (isEditing && i == cursor) {
+                if (isEditing && i == (cursor - FIRST_NOTE)) {
                     // blink line when editing
                     if (CursorBlink()) {
                         gfxLine(xOffset, yOffset, xOffset, yOffset + 10);
@@ -271,12 +276,11 @@ private:
 
         // cursor for keys
         if (!isEditing) {
-            if (cursor < 12) {
-                gfxCursor(x[cursor] - 1, p[cursor] ? 24 : 60, p[cursor] ? 5 : 6);
-                gfxCursor(x[cursor] - 1, p[cursor] ? 25 : 61, p[cursor] ? 5 : 6);
+            if (cursor >= FIRST_NOTE) {
+                int i = cursor - FIRST_NOTE;
+                gfxCursor(x[i] - 1, p[i] ? 24 : 60, p[i] ? 5 : 6);
+                gfxCursor(x[i] - 1, p[i] ? 25 : 61, p[i] ? 5 : 6);
             }
-            if (cursor == 12) gfxCursor(7, 23, 22);
-            if (cursor == 13) gfxCursor(37, 23, 22);
         }
 
         // scaling params
@@ -291,10 +295,8 @@ private:
         gfxPrint(43, 15, ".");
         gfxPrint(47, 15, ((up - 1) % 12) + 1);
 
-        if (isEditing) {
-            if (cursor == 12) gfxInvert(9, 14, 21, 9);
-            if (cursor == 13) gfxInvert(38, 14, 21, 9);
-        }
+        if (cursor == LOWER) gfxCursor(9, 23, 21);
+        if (cursor == UPPER) gfxCursor(39, 23, 21);
 
         if (pulse_animation > 0) {
         //     int note = pitch % 12;
@@ -304,15 +306,17 @@ private:
             gfxRect(58, 54 - (octave * 6), 3, 3);
         }
 
-        if (value_animation > 0 && cursor < 12) {
+        if (value_animation > 0 && cursor >= FIRST_NOTE) {
+          int i = cursor - FIRST_NOTE;
+
           gfxRect(1, 15, 60, 10);
           gfxInvert(1, 15, 60, 10);
 
-          gfxPrint(18, 16, n[cursor]);
-          if (p[cursor]) {
+          gfxPrint(18, 16, n[i]);
+          if (p[i]) {
             gfxPrint(24, 16, "#");
           }
-          gfxPrint(34, 16, weights[cursor]);
+          gfxPrint(34, 16, weights[i]);
           gfxInvert(1, 15, 60, 10);
         }
     }

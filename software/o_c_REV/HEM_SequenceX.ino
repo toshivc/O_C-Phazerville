@@ -116,7 +116,6 @@ private:
     int note[SEQX_STEPS]; // Sequence value (0 - 30)
     int step = 0; // Current sequencer step
     bool reset = true;
-    bool isEditing = false;
 
     void Advance(int starting_point) {
         if (++step == SEQX_STEPS) step = 0;

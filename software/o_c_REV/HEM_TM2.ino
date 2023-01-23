@@ -195,39 +195,40 @@ public:
         if (!isEditing) {
             cursor = constrain(cursor + direction, 0, 8);
             ResetCursor();  // Reset blink so it's immediately visible when moved
-        } else {
-            switch (cursor) {
-            case 0:
-                length = constrain(length + direction, TM2_MIN_LENGTH, TM2_MAX_LENGTH);
-                break;
-            case 1:
-                p = constrain(p + direction, 0, 100);
-                break;
-            case 2:
-                scale += direction;
-                if (scale >= TM2_MAX_SCALE) scale = 0;
-                if (scale < 0) scale = TM2_MAX_SCALE - 1;
-                quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
-                break;
-            case 3:
-                quant_range = constrain(quant_range + direction, 1, 32);
-                break;
-            case 4:
-                outmode[0] = constrain(outmode[0] + direction, -1, 8);
-                break;
-            case 5:
-                outmode[1] = constrain(outmode[1] + direction, -1, 8);
-                break;
-            case 6:
-                cvmode[0] = constrain(cvmode[0] + direction, -1, 5);
-                break;
-            case 7:
-                cvmode[1] = constrain(cvmode[1] + direction, -1, 5);
-                break;
-            case 8:
-                smoothing = constrain(smoothing + direction, 1, 128);
-                break;
-            }
+            return;
+        }
+
+        switch (cursor) {
+        case 0:
+            length = constrain(length + direction, TM2_MIN_LENGTH, TM2_MAX_LENGTH);
+            break;
+        case 1:
+            p = constrain(p + direction, 0, 100);
+            break;
+        case 2:
+            scale += direction;
+            if (scale >= TM2_MAX_SCALE) scale = 0;
+            if (scale < 0) scale = TM2_MAX_SCALE - 1;
+            quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
+            break;
+        case 3:
+            quant_range = constrain(quant_range + direction, 1, 32);
+            break;
+        case 4:
+            outmode[0] = constrain(outmode[0] + direction, -1, 8);
+            break;
+        case 5:
+            outmode[1] = constrain(outmode[1] + direction, -1, 8);
+            break;
+        case 6:
+            cvmode[0] = constrain(cvmode[0] + direction, -1, 5);
+            break;
+        case 7:
+            cvmode[1] = constrain(cvmode[1] + direction, -1, 5);
+            break;
+        case 8:
+            smoothing = constrain(smoothing + direction, 1, 128);
+            break;
         }
     }
         
@@ -277,7 +278,6 @@ private:
     int length; // Sequence length
     int len_mod; // actual length after CV mod
     int cursor;  // 0 = length, 1 = p, 2 = scale, 3=range, 4=OutA, 5=OutB, 6=CV1, 7=CV2
-    bool isEditing = false;
     braids::Quantizer quantizer;
 
     // Settings
@@ -392,7 +392,6 @@ private:
             gfxPrint(smooth_mod);
 
             gfxCursor(31, 43, 18);
-            if (isEditing) gfxInvert(31, 34, 18, 9);
         }
 
         switch (cursor) {
@@ -404,18 +403,6 @@ private:
             case 4: gfxCursor(14, 43, 10); break; // Out A / CV 1
             case 7:
             case 5: gfxCursor(46, 43, 10); break; // Out B / CV 2
-        }
-        if (isEditing) {
-            switch (cursor) {
-                case 0: gfxInvert(13, 14, 12, 9); break;
-                case 1: gfxInvert(45, 14, 18, 9); break;
-                case 2: gfxInvert(12, 24, 25, 9); break;
-                case 3: gfxInvert(49, 24, 14, 9); break;
-                case 6:
-                case 4: gfxInvert(14, 34, 14, 9); break;
-                case 7:
-                case 5: gfxInvert(46, 34, 14, 9); break;
-            }
         }
     }
 
