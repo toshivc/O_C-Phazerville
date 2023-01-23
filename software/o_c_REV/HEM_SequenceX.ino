@@ -25,6 +25,7 @@
 
 // DON'T GO PAST 8!
 #define SEQX_STEPS 8
+#define SEQX_MAX_VALUE 31
 
 class SequenceX : public HemisphereApplet {
 public:
@@ -34,7 +35,7 @@ public:
     }
 
     void Start() {
-        for (int s = 0; s < SEQX_STEPS; s++) note[s] = random(0, 30);
+        for (int s = 0; s < SEQX_STEPS; s++) note[s] = random(0, SEQX_MAX_VALUE);
     }
 
     void Controller() {
@@ -64,16 +65,20 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor == SEQX_STEPS) cursor = 0;
+        isEditing = !isEditing;
     }
 
     void OnEncoderMove(int direction) {
-        if (note[cursor] + direction < 0 && cursor > 0) {
-            // If turning past zero, set the mute bit for this step
-            muted |= (0x01 << cursor);
+        if (!isEditing) {
+            cursor = constrain(cursor + direction, 0, SEQX_STEPS-1);
         } else {
-            note[cursor] = constrain(note[cursor] + direction, 0, 30);
-            muted &= ~(0x01 << cursor);
+            if (note[cursor] + direction < 0 && cursor > 0) {
+                // If turning past zero, set the mute bit for this step
+                muted |= (0x01 << cursor);
+            } else {
+                note[cursor] = constrain(note[cursor] + direction, 0, SEQX_MAX_VALUE);
+                muted &= ~(0x01 << cursor);
+            }
         }
     }
 
@@ -83,7 +88,7 @@ public:
         {
             Pack(data, PackLocation {uint8_t(s * 5),5}, note[s]);
         }
-        Pack(data, PackLocation{25,5}, muted);
+        Pack(data, PackLocation{SEQX_STEPS * 5, SEQX_STEPS}, muted);
         return data;
     }
 
@@ -92,7 +97,7 @@ public:
         {
             note[s] = Unpack(data, PackLocation {uint8_t(s * 5),5});
         }
-        muted = Unpack(data, PackLocation {25,5});
+        muted = Unpack(data, PackLocation {SEQX_STEPS * 5, SEQX_STEPS});
     }
 
 protected:
@@ -111,6 +116,7 @@ private:
     int note[SEQX_STEPS]; // Sequence value (0 - 30)
     int step = 0; // Current sequencer step
     bool reset = true;
+    bool isEditing = false;
 
     void Advance(int starting_point) {
         if (++step == SEQX_STEPS) step = 0;
@@ -126,36 +132,24 @@ private:
             int x = 6 + (7 * s); // APD:  narrower to fit more
             
             if (!step_is_muted(s)) {
-                gfxLine(x, 25, x, 63);
+                gfxLine(x, 25, x, 63, (s != cursor) ); // dotted line for unselected steps
 
-                // When cursor, there's a heavier bar and a solid slider
+                // When cursor, there's a solid slider
                 if (s == cursor) {
-                    gfxLine(x + 1, 25, x + 1, 63);
-                    //gfxRect(x - 4, BottomAlign(note[s]), 9, 3);
                     gfxRect(x - 2, BottomAlign(note[s]), 5, 3);  // APD
-                } else 
-                {
-                  //gfxFrame(x - 4, BottomAlign(note[s]), 9, 3);
-                  gfxFrame(x - 2, BottomAlign(note[s]), 5, 3);  // APD
+                } else {
+                    gfxFrame(x - 2, BottomAlign(note[s]), 5, 3);  // APD
                 }
                 
                 // When on this step, there's an indicator circle
-                if (s == step) 
-                {
-                  gfxCircle(x, 20, 3);  //Original
-
-                  // APD
-                  //int play_note = note[step];// + 60 + transpose;
-
-                  //gfxPrint(10, 15, "Scale ");
-                  //gfxPrint(cursor < 12 ? 1 : 2);
-                  //gfxPrint(x, 20, play_note);
-                  
+                if (s == step) {
+                    gfxCircle(x, 20, 3);
                 }
             } else if (s == cursor) {
                 gfxLine(x, 25, x, 63);
-                gfxLine(x + 1, 25, x + 1, 63);
-             }
+            }
+
+            if (s == cursor && isEditing) gfxInvert(x - 2, 25, 5, 39);
         }
     }
 
