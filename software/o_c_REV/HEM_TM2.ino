@@ -52,7 +52,7 @@ public:
         CVMODE1,
         CVMODE2,
         SLEW,
-        LAST_SETTING
+        LAST_SETTING = SLEW
     };
 
     enum OutputMode {
@@ -223,17 +223,16 @@ public:
     }
 
     void OnButtonPress() {
-        isEditing = !isEditing;
+        CursorAction(cursor, LAST_SETTING);
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) {
-            cursor = (TM2Cursor) constrain(cursor + direction, 0, LAST_SETTING-1);
-            ResetCursor();  // Reset blink so it's immediately visible when moved
+        if (!EditMode()) {
+            MoveCursor(cursor, direction, LAST_SETTING);
             return;
         }
 
-        switch (cursor) {
+        switch ((TM2Cursor)cursor) {
         case LENGTH:
             length = constrain(length + direction, TM2_MIN_LENGTH, TM2_MAX_LENGTH);
             break;
@@ -314,7 +313,7 @@ protected:
 private:
     int length = 16; // Sequence length
     int len_mod; // actual length after CV mod
-    TM2Cursor cursor;
+    int cursor; // TM2Cursor
     braids::Quantizer quantizer;
 
     // Settings
@@ -420,7 +419,7 @@ private:
         gfxBitmap(41, 25, 8, UP_DOWN_ICON);
         gfxPrint(49, 25, range_mod); // APD
 
-        switch (cursor) {
+        switch ((TM2Cursor)cursor) {
         default:
             ForEachChannel(ch) DrawOutputMode(ch);
 
@@ -438,7 +437,7 @@ private:
             break;
         }
 
-        switch (cursor) {
+        switch ((TM2Cursor)cursor) {
             case LENGTH: gfxCursor(13, 23, 12); break;
             case PROB: gfxCursor(45, 23, 18); break;
             case SCALE: gfxCursor(12, 33, 25); break;

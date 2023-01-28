@@ -224,12 +224,12 @@ public:
     }
 
     void OnButtonPress() {
-        isEditing = !isEditing;
+        CursorAction(cursor, 9);
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) {
-            cursor = constrain(cursor + direction, 0, 9);
+        if (!EditMode()) {
+            MoveCursor(cursor, direction, 9);
             return;
         }
 
@@ -397,7 +397,7 @@ private:
                 gfxPrint(41, 55, CV_MODE_NAMES_SN[cv_mode_snare]);
                 break;
         }
-        if (isEditing) gfxInvert(1 + (cursor<5?0:31), 54, 31, 9);
+        if (EditMode()) gfxInvert(1 + (cursor<5?0:31), 54, 31, 9);
 
         // Level indicators
         ForEachChannel(ch)

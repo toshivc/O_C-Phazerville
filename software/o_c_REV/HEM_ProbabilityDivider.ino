@@ -29,7 +29,7 @@ public:
     enum ProbDivCursor {
         WEIGHT1, WEIGHT2, WEIGHT4, WEIGHT8,
         LOOP_LENGTH,
-        LAST_SETTING
+        LAST_SETTING = LOOP_LENGTH
     };
 
     const char* applet_name() {
@@ -137,17 +137,16 @@ public:
     }
 
     void OnButtonPress() {
-        isEditing = !isEditing;
+        CursorAction(cursor, LAST_SETTING);
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) {
-            cursor = (ProbDivCursor) constrain(cursor + direction, 0, LAST_SETTING-1);
-            ResetCursor();
+        if (!EditMode()) {
+            MoveCursor(cursor, direction, LAST_SETTING);
             return;
         }
 
-        switch (cursor) {
+        switch ((ProbDivCursor)cursor) {
         case WEIGHT1: weight_1 = constrain(weight_1 + direction, 0, HEM_PROB_DIV_MAX_WEIGHT); break;
         case WEIGHT2: weight_2 = constrain(weight_2 + direction, 0, HEM_PROB_DIV_MAX_WEIGHT); break;
         case WEIGHT4: weight_4 = constrain(weight_4 + direction, 0, HEM_PROB_DIV_MAX_WEIGHT); break;
@@ -204,7 +203,7 @@ protected:
     }
     
 private:
-    ProbDivCursor cursor;
+    int cursor; // ProbDivCursor 
     int weight_1;
     int weight_2;
     int weight_4;
@@ -263,7 +262,7 @@ private:
         byte w = Proportion(value, HEM_PROB_DIV_MAX_WEIGHT, len-1);
         gfxDottedLine(x, y + 3, x + len, y + 3, p);
         gfxRect(x + w, y, 2, 7);
-        if (isEditing && is_cursor) gfxInvert(x-1, y, len+3, 7);
+        if (EditMode() && is_cursor) gfxInvert(x-1, y, len+3, 7);
     }
 
     int GetNextWeightedDiv() {

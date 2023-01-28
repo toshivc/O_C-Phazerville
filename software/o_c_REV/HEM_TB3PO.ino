@@ -263,17 +263,17 @@ class TB_3PO : public HemisphereApplet
     }
 
     void OnButtonPress() {
-      isEditing = !isEditing;
+      CursorAction(cursor, 8);
     }
 
     void OnEncoderMove(int direction) 
     {
-      if (!isEditing) { // move cursor
-        cursor = constrain(cursor + direction, 0, 8);
+      if (!EditMode()) { // move cursor
+        MoveCursor(cursor, direction, 8);
+
         if (!lock_seed && cursor == 1) cursor = 5; // skip from 1 to 5 if not locked
         if (!lock_seed && cursor == 4) cursor = 0; // skip from 4 to 0 if not locked
 
-        ResetCursor();  // Reset blink so it's immediately visible when moved
         return;
       }
 

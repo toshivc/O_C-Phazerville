@@ -74,6 +74,10 @@ typedef struct PackLocation {
 
 class HemisphereApplet {
 public:
+    static uint8_t modal_edit_mode;
+    static void CycleEditMode() {
+        ++modal_edit_mode %= 3;
+    }
 
     virtual const char* applet_name(); // Maximum of 9 characters
     virtual void Start();
@@ -179,6 +183,29 @@ public:
             graphics.setPrintPos(20, y);
             graphics.print(help[section]);
         }
+    }
+
+    // handle modal edit mode toggle or cursor advance
+    void CursorAction(int &cursor, int max) {
+        if (modal_edit_mode) {
+            isEditing = !isEditing;
+        } else {
+            cursor++;
+            cursor %= max + 1;
+        }
+    }
+    void MoveCursor(int &cursor, int direction, int max) {
+        cursor += direction;
+        if (modal_edit_mode == 2) { // wrap cursor
+            if (cursor < 0) cursor = max;
+            else cursor %= max + 1;
+        } else {
+            cursor = constrain(cursor, 0, max);
+        }
+        ResetCursor();
+    }
+    bool EditMode() {
+        return (isEditing || !modal_edit_mode);
     }
 
     //////////////// Offset graphics methods
@@ -481,3 +508,5 @@ private:
     bool changed_cv[2]; // Has the input changed by more than 1/8 semitone since the last read?
     int last_cv[2]; // For change detection
 };
+
+uint8_t HemisphereApplet::modal_edit_mode = 1; // 0=old behavior, 1=modal editing, 2=modal with wraparound

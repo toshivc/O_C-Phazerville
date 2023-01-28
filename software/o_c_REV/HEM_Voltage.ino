@@ -56,13 +56,12 @@ public:
     }
 
     void OnButtonPress() {
-        isEditing = !isEditing;
+        CursorAction(cursor, 3);
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) {
-            cursor = constrain(cursor + direction, 0, 3);
-            ResetCursor();
+        if (!EditMode()) {
+            MoveCursor(cursor, direction, 3);
             return;
         }
 

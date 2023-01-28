@@ -56,16 +56,19 @@ public:
     }
 
     void OnButtonPress() {
-        if (cursor == 4)
+        if (cursor == 4 && !EditMode()) // special case when modal editing
             mix = !mix;
         else
-            isEditing = !isEditing;
+            CursorAction(cursor, 4);
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) {
-            cursor = constrain(cursor + direction, 0, 4);
-            ResetCursor();
+        if (!EditMode()) {
+            MoveCursor(cursor, direction, 4);
+            return;
+        }
+        if (cursor == 4) { // non-modal editing special case toggle
+            mix = !mix;
             return;
         }
 

@@ -90,22 +90,22 @@ public:
     }
 
     void OnButtonPress() {
-        if (cursor == 2) { // special case to toggle smoothing
+        if (cursor == 2 && !EditMode()) { // special case to toggle smoothing
             smooth = 1 - smooth;
             ResetCursor();
             return;
         }
 
-        isEditing = !isEditing; // toggle editing
-        if (cursor == 3 && !isEditing) { // activate recording if selected
+        if (cursor == 3 && EditMode()) { // activate recording if selected
             punch_out = (mode > 0) ? end - start + 1 : 0;
         }
+
+        CursorAction(cursor, 3);
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) { //not editing, move cursor
-            cursor = constrain(cursor + direction, 0, 3);
-            ResetCursor();
+        if (!EditMode()) { //not editing, move cursor
+            MoveCursor(cursor, direction, 3);
             return;
         }
         
@@ -122,6 +122,10 @@ public:
             if (fe != end && punch_out) punch_out += direction;
             break;
         }
+        case 2:
+            smooth = 1 - smooth;
+            ResetCursor();
+            break;
         case 3:
             mode = constrain(mode + direction, 0, 3);
             break;

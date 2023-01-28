@@ -41,6 +41,7 @@ public:
         LENGTH2, BEATS2, OFFSET2, PADDING2,
         CV_DEST1,
         CV_DEST2,
+        LAST_SETTING = CV_DEST2
     };
 
     const char* applet_name() {
@@ -119,13 +120,12 @@ public:
     }
 
     void OnButtonPress() {
-        isEditing = !isEditing;
+        CursorAction(cursor, LAST_SETTING);
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) {
-            cursor = (EuclidXParam) constrain(cursor + direction, LENGTH1, CV_DEST2);
-            ResetCursor();
+        if (!EditMode()) {
+            MoveCursor(cursor, direction, LAST_SETTING);
             return;
         }
 
@@ -197,7 +197,7 @@ protected:
 
 private:
     int step;
-    EuclidXParam cursor = LENGTH1;
+    int cursor = LENGTH1; // EuclidXParam 
     uint32_t pattern[2];
 
     // Settings

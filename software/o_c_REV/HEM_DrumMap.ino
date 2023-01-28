@@ -128,14 +128,15 @@ public:
     }
 
     void OnButtonPress() {
-        isEditing = !isEditing;
+        CursorAction(cursor, 7);
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) {
-            cursor += direction;
-            if (mode[1] > 2 && cursor == 3) cursor += direction;
-            cursor = constrain(cursor, 0, 7);
+        if (!EditMode()) {
+            do {
+                MoveCursor(cursor, direction, 7);
+            } while (mode[1] > 2 && cursor == 3);
+
             ResetCursor();
             return;
         }
@@ -349,7 +350,7 @@ private:
         byte p = is_cursor ? 1 : 3;
         gfxDottedLine(x, y + 4, x + len, y + 4, p);
         gfxRect(x + w, y, 2, 8);
-        if (is_cursor && isEditing) gfxInvert(x, y, len+1, 8);
+        if (is_cursor && EditMode()) gfxInvert(x, y, len+1, 8);
     }
 
     void Reset() {

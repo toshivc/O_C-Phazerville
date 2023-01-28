@@ -65,20 +65,21 @@ public:
     }
 
     void OnButtonPress() {
-        isEditing = !isEditing;
+        CursorAction(cursor, SEQX_STEPS-1);
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) {
-            cursor = constrain(cursor + direction, 0, SEQX_STEPS-1);
+        if (!EditMode()) {
+            MoveCursor(cursor, direction, SEQX_STEPS-1);
+            return;
+        }
+
+        if (note[cursor] + direction < 0 && cursor > 0) {
+            // If turning past zero, set the mute bit for this step
+            muted |= (0x01 << cursor);
         } else {
-            if (note[cursor] + direction < 0 && cursor > 0) {
-                // If turning past zero, set the mute bit for this step
-                muted |= (0x01 << cursor);
-            } else {
-                note[cursor] = constrain(note[cursor] + direction, 0, SEQX_MAX_VALUE);
-                muted &= ~(0x01 << cursor);
-            }
+            note[cursor] = constrain(note[cursor] + direction, 0, SEQX_MAX_VALUE);
+            muted &= ~(0x01 << cursor);
         }
     }
 
@@ -148,7 +149,7 @@ private:
                 gfxLine(x, 25, x, 63);
             }
 
-            if (s == cursor && isEditing) gfxInvert(x - 2, 25, 5, 39);
+            if (s == cursor && EditMode()) gfxInvert(x - 2, 25, 5, 39);
         }
     }
 

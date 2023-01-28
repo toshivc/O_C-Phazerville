@@ -46,20 +46,6 @@ public:
     void Controller() {
         loop_linker->RegisterMelo(hemisphere);
 
-        // looping enabled from ProbDiv
-        if (loop_linker->IsLooping() && !isLooping) {
-            isLooping = true;
-            GenerateLoop();
-        }
-
-        // reseed from ProbDiv
-        if (loop_linker->ShouldReseed()) {
-            GenerateLoop();
-        }
-        
-        isLooping = loop_linker->IsLooping();
-
-
         int downCv = DetentedIn(0);
         int oldDown = down;
         if (downCv < 0) down = 1;        
@@ -74,8 +60,17 @@ public:
             up = constrain(ProportionCV(upCv, HEM_PROB_MEL_MAX_RANGE + 1), down, HEM_PROB_MEL_MAX_RANGE);
         }
 
+        // regen when looping was enabled from ProbDiv
+        bool regen = loop_linker->IsLooping() && !isLooping;
+        isLooping = loop_linker->IsLooping();
+
+        // reseed from ProbDiv
+        regen = regen || loop_linker->ShouldReseed();
+        
         // reseed loop if range has changed due to CV
-        if (isLooping && (oldDown != down || oldUp != up)) {
+        regen = regen || (isLooping && (oldDown != down || oldUp != up));
+
+        if (regen) {
             GenerateLoop();
         }
 
@@ -110,14 +105,12 @@ public:
     }
 
     void OnButtonPress() {
-        isEditing = !isEditing;
-        ResetCursor();
+        CursorAction(cursor, LAST_NOTE);
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) {
-            cursor = (ProbMeloCursor) constrain(cursor + direction, 0, LAST_NOTE);
-            ResetCursor();
+        if (!EditMode()) {
+            MoveCursor(cursor, direction, LAST_NOTE);
             return;
         }
 
@@ -183,7 +176,7 @@ protected:
     }
     
 private:
-    ProbMeloCursor cursor;
+    int cursor; // ProbMeloCursor 
     int weights[12] = {10,0,0,2,0,0,0,2,0,0,4,0};
     int up;
     int down;
@@ -260,7 +253,7 @@ private:
             if (pulse_animation > 0 && note == i) {
                 gfxRect(xOffset - 1, yOffset, 3, 10);
             } else {
-                if (isEditing && i == (cursor - FIRST_NOTE)) {
+                if (EditMode() && i == (cursor - FIRST_NOTE)) {
                     // blink line when editing
                     if (CursorBlink()) {
                         gfxLine(xOffset, yOffset, xOffset, yOffset + 10);
@@ -275,7 +268,7 @@ private:
         }
 
         // cursor for keys
-        if (!isEditing) {
+        if (!EditMode()) {
             if (cursor >= FIRST_NOTE) {
                 int i = cursor - FIRST_NOTE;
                 gfxCursor(x[i] - 1, p[i] ? 24 : 60, p[i] ? 5 : 6);

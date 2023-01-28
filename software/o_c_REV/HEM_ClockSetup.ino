@@ -32,7 +32,7 @@ public:
         TRIG2,
         TRIG3,
         TRIG4,
-        LAST_SETTING
+        LAST_SETTING = TRIG4
     };
 
     const char* applet_name() {
@@ -59,20 +59,37 @@ public:
     }
 
     void OnButtonPress() {
-        if (cursor == PLAY_STOP) PlayStop();
-        else if (cursor == FORWARDING) clock_m->ToggleForwarding();
-        else if (cursor >= TRIG1) clock_m->Boop(cursor-TRIG1);
-        else isEditing = !isEditing;
+        if (!EditMode()) { // special cases for toggle buttons
+            if (cursor == PLAY_STOP) PlayStop();
+            else if (cursor == FORWARDING) clock_m->ToggleForwarding();
+            else if (cursor >= TRIG1) clock_m->Boop(cursor-TRIG1);
+            else CursorAction(cursor, LAST_SETTING);
+        }
+        else CursorAction(cursor, LAST_SETTING);
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) {
-            cursor = (ClockSetupCursor) constrain(cursor + direction, 0, LAST_SETTING-1);
-            ResetCursor();
+        if (!EditMode()) {
+            MoveCursor(cursor, direction, LAST_SETTING);
             return;
         }
 
-        switch (cursor) {
+        switch ((ClockSetupCursor)cursor) {
+        case PLAY_STOP:
+            PlayStop();
+            break;
+
+        case FORWARDING:
+            clock_m->ToggleForwarding();
+            break;
+
+        case TRIG1:
+        case TRIG2:
+        case TRIG3:
+        case TRIG4:
+            clock_m->Boop(cursor-TRIG1);
+            break;
+
         case EXT_PPQN:
             clock_m->SetClockPPQN(clock_m->GetClockPPQN() + direction);
             break;
@@ -124,7 +141,7 @@ protected:
     }
 
 private:
-    ClockSetupCursor cursor; // 0=Play/Stop, 1=Forwarding, 2=External PPQN, 3=Tempo, 4,5=Multiply
+    int cursor; // ClockSetupCursor
     bool start_q;
     bool stop_q;
     ClockManager *clock_m = clock_m->get();
@@ -181,7 +198,7 @@ private:
         // Manual triggers
         for (int i=0; i<4; i++) { gfxIcon(4 + i*32, 49, BURST_ICON); }
 
-        switch (cursor) {
+        switch ((ClockSetupCursor)cursor) {
         case PLAY_STOP: gfxFrame(11, 14, 10, 10); break;
         case FORWARDING: gfxFrame(49, 14, 10, 10); break;
 

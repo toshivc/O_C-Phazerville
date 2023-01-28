@@ -141,16 +141,16 @@ public:
       }
       break;
     }
-    if (isEditing) gfxInvert(0, 55, 64, 9);
+    if (EditMode()) gfxInvert(0, 55, 64, 9);
   }
 
   void OnButtonPress() {
-    isEditing = !isEditing;
+    CursorAction(cursor, 5);
   }
 
   void OnEncoderMove(int direction) {
-    if (!isEditing) {
-        cursor = constrain(cursor + direction, 0, 4);
+    if (!EditMode()) {
+        MoveCursor(cursor, direction, 5);
         return;
     }
 

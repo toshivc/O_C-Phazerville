@@ -91,17 +91,17 @@ public:
     }
 
     void OnButtonPress() {
-        if (current_setting == 2) // FREEZE button
+        if (current_setting == 2 && !EditMode()) // FREEZE button
             freeze = !freeze;
         else if (OC::CORE::ticks - last_encoder_move < SCOPE_CURRENT_SETTING_TIMEOUT) // params visible? toggle edit
-            isEditing = !isEditing;
+            CursorAction(current_setting, 2);
         else // show params
             last_encoder_move = OC::CORE::ticks;
     }
 
     void OnEncoderMove(int direction) {
-        if (!isEditing) { // switch setting
-            current_setting = constrain(current_setting + direction, 0, 2);
+        if (!EditMode()) { // switch setting
+            MoveCursor(current_setting, direction, 2);
         } else { // edit
             if(current_setting == 0) {
                 if (sample_ticks < 32) sample_ticks += direction;
@@ -186,7 +186,7 @@ private:
                 gfxPrint(freeze ? "ON" : "OFF");
             }
 
-            if (isEditing) gfxInvert(1, 25, 31, 9);
+            if (EditMode()) gfxInvert(1, 25, 31, 9);
         }
     }
 
