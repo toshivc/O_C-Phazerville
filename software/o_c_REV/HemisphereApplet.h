@@ -192,6 +192,7 @@ public:
         } else {
             cursor++;
             cursor %= max + 1;
+            ResetCursor();
         }
     }
     void MoveCursor(int &cursor, int direction, int max) {
