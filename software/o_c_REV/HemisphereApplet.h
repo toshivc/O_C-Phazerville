@@ -358,14 +358,17 @@ public:
 
         if (ch == 0) { // clock triggers
             if (hemisphere == LEFT_HEMISPHERE) {
-                if (!physical && clock_m->IsRunning()) clocked = clock_m->Tock(hemisphere);
-                else clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
+                if (!physical && clock_m->IsRunning() && clock_m->GetMultiply(hemisphere) != 0)
+                    clocked = clock_m->Tock(hemisphere);
+                else
+                    clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
             } else { // right side is special
-                if (master_clock_bus) { // forwarding from left
-                    if (!physical && clock_m->IsRunning()) clocked = clock_m->Tock(hemisphere);
-                    else clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
-                } 
-                else clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_3>();
+                if (!physical && clock_m->IsRunning() && clock_m->GetMultiply(hemisphere) != 0)
+                    clocked = clock_m->Tock(hemisphere);
+                else if (master_clock_bus) // forwarding from left
+                    clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
+                else
+                    clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_3>();
             }
         } else if (ch == 1) { // simple physical trig check
             if (hemisphere == LEFT_HEMISPHERE)
