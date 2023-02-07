@@ -78,7 +78,7 @@ public:
 
     // adjusts the expected clock multiple for external clock pulses
     void SetClockPPQN(int clkppqn) {
-        clock_ppqn = constrain(clkppqn, 1, 24);
+        clock_ppqn = constrain(clkppqn, 0, 24);
     }
 
     /* Set ticks per tock, based on one million ticks per minute divided by beats per minute.
@@ -154,7 +154,7 @@ public:
         if (reset) Reset(1); // skip the one we're already on
 
         // handle syncing to physical clocks
-        if (clocked && clock_tick) {
+        if (clocked && clock_tick && clock_ppqn) {
 
             uint32_t clock_diff = now - clock_tick;
             if (clock_ppqn * clock_diff > CLOCK_TICKS_MAX) clock_tick = 0; // too slow, reset clock tracking
