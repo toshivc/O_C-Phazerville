@@ -28,7 +28,7 @@
 /* files to prevent them from taking up space. Only Enigma is enabled by default.                      */
 #define ENABLE_APP_ENIGMA
 #define ENABLE_APP_MIDI
-//#define ENABLE_APP_NEURAL_NETWORK
+#define ENABLE_APP_NEURAL_NETWORK
 #define ENABLE_APP_PONG
 #define ENABLE_APP_DARKEST_TIMELINE
 

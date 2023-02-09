@@ -35,6 +35,7 @@
 #include "OC_calibration.h"
 #include "OC_digital_inputs.h"
 #include "OC_menus.h"
+#include "OC_strings.h"
 #include "OC_ui.h"
 #include "OC_version.h"
 #include "OC_options.h"
