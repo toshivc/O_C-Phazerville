@@ -72,7 +72,7 @@ enum HEMISPHERE_SETTINGS {
 };
 
 Applet available_applets[] = HEMISPHERE_APPLETS;
-const int HEMISPHERE_AVAILABLE_APPLETS = ARRAY_SIZE(available_applets);
+static constexpr int HEMISPHERE_AVAILABLE_APPLETS = ARRAY_SIZE(available_applets);
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Hemisphere Manager
