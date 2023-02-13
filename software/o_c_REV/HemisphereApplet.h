@@ -37,6 +37,7 @@
 #define HEMISPHERE_MAX_CV 7680
 #define HEMISPHERE_CENTER_CV 0
 #endif
+#define HEMISPHERE_CENTER_DETENT 80
 #define HEMISPHERE_3V_CV 4608
 #define HEMISPHERE_CLOCK_TICKS 100
 #define HEMISPHERE_CURSOR_TICKS 12000
@@ -337,7 +338,8 @@ public:
 
     // Apply small center detent to input, so it reads zero before a threshold
     int DetentedIn(int ch) {
-        return (In(ch) > (HEMISPHERE_CENTER_CV + 64) || In(ch) < (HEMISPHERE_CENTER_CV - 64)) ? In(ch) : HEMISPHERE_CENTER_CV;
+        return (In(ch) > (HEMISPHERE_CENTER_CV + HEMISPHERE_CENTER_DETENT) || In(ch) < (HEMISPHERE_CENTER_CV - HEMISPHERE_CENTER_DETENT))
+            ? In(ch) : HEMISPHERE_CENTER_CV;
     }
 
     void Out(int ch, int value, int octave = 0) {
