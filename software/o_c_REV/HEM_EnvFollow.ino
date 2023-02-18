@@ -61,8 +61,14 @@ public:
         {
             int v = abs(In(ch));
             if (v > max[ch]) max[ch] = v;
-            if (target[ch] > signal[ch]) signal[ch] += speed;
-            else if (target[ch] < signal[ch]) signal[ch] -= speed;
+            if (target[ch] > signal[ch]) {
+                signal[ch] += speed;
+                if (signal[ch] > target[ch]) signal[ch] = target[ch];
+            }
+            else if (target[ch] < signal[ch]) {
+                signal[ch] -= speed;
+                if (signal[ch] < target[ch]) signal[ch] = target[ch];
+            }
             Out(ch, signal[ch]);
         }
     }
