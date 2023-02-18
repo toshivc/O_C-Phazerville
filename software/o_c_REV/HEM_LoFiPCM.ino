@@ -56,7 +56,7 @@ public:
                     //ClockOut(1);
                 }
 
-                int cv = In(0);
+                int cv = SmoothedIn(0);
                 int cv2 = DetentedIn(1);
 
                 // bitcrush the input
@@ -70,12 +70,13 @@ public:
                 int fbmix = PCM_TO_CV(lofi_pcm_buffer[head]) * fdbk_g / 100 + cv;
                 lofi_pcm_buffer[head_w] = CV_TO_PCM(fbmix);
                 
-                Out(0, PCM_TO_CV(lofi_pcm_buffer[head]));
-                Out(1, PCM_TO_CV(lofi_pcm_buffer[length-1 - head])); // reverse buffer!
-
                 rate_mod = constrain( rate + Proportion(cv2, HEMISPHERE_MAX_CV, 32), 1, 64);
+
                 countdown = rate_mod;
             }
+
+            SmoothedOut(0, PCM_TO_CV(lofi_pcm_buffer[head]), rate_mod);
+            SmoothedOut(1, PCM_TO_CV(lofi_pcm_buffer[length-1 - head]), rate_mod); // reverse buffer!
         }
     }
 
