@@ -176,11 +176,15 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor > 3) cursor = 0;
-        ResetCursor();
+        CursorAction(cursor, 3);
     }
 
     void OnEncoderMove(int direction) {
+        if (!EditMode()) {
+            MoveCursor(cursor, direction, 3);
+            return;
+        }
+
         if (cursor == 3) return;
         if (cursor == 0) channel = constrain(channel + direction, 0, 15);
         else {

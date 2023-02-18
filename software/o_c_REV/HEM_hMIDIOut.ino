@@ -135,11 +135,20 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor > 4) cursor = 0;
-        ResetCursor();
+        if (cursor == 3 && !EditMode()) { // special case to toggle legato
+            legato = 1 - legato;
+            ResetCursor();
+            return;
+        }
+
+        CursorAction(cursor, 4);
     }
 
     void OnEncoderMove(int direction) {
+        if (!EditMode()) {
+            MoveCursor(cursor, direction, 4);
+            return;
+        }
         if (cursor == 0) channel = constrain(channel + direction, 0, 15);
         if (cursor == 1) transpose = constrain(transpose + direction, -24, 24);
         if (cursor == 2) function = constrain(function + direction, 0, 3);
