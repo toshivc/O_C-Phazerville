@@ -96,6 +96,7 @@ public:
             clock_countdown[ch]  = 0;
             inputs[ch] = 0;
             outputs[ch] = 0;
+            outputs_smooth[ch] = 0;
             adc_lag_countdown[ch] = 0;
         }
         help_active = 0;
@@ -342,10 +343,22 @@ public:
             ? In(ch) : HEMISPHERE_CENTER_CV;
     }
 
+    int SmoothedIn(int ch) {
+        ADC_CHANNEL channel = (ADC_CHANNEL)(ch + io_offset);
+        return OC::ADC::value(channel);
+    }
+
     void Out(int ch, int value, int octave = 0) {
         DAC_CHANNEL channel = (DAC_CHANNEL)(ch + io_offset);
         OC::DAC::set_pitch(channel, value, octave);
         outputs[ch] = value + (octave * (12 << 7));
+    }
+
+    void SmoothedOut(int ch, int value, int kSmoothing) {
+        DAC_CHANNEL channel = (DAC_CHANNEL)(ch + io_offset);
+        value = (outputs_smooth[channel] * (kSmoothing - 1) + value) / kSmoothing;
+        OC::DAC::set_pitch(channel, value, 0);
+        outputs[ch] = outputs_smooth[channel] = value;
     }
 
     /*
@@ -502,6 +515,7 @@ private:
     int io_offset; // Input/Output offset, based on the side
     int inputs[2];
     int outputs[2];
+    int outputs_smooth[2];
     uint32_t last_clock[2]; // Tick number of the last clock observed by the child class
     uint32_t cycle_ticks[2]; // Number of ticks between last two clocks
     int clock_countdown[2];
