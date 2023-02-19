@@ -77,11 +77,15 @@ public:
     }
 
     void OnButtonPress() {
-        selected = 1 - selected;
-        ResetCursor();
+        CursorAction(selected, 1);
     }
 
     void OnEncoderMove(int direction) {
+        if (!EditMode()) {
+            MoveCursor(selected, direction, 1);
+            return;
+        }
+
         operation[selected] += direction;
         if (operation[selected] == HEMISPHERE_NUMBER_OF_LOGIC) operation[selected] = 0;
         if (operation[selected] < 0) operation[selected] = HEMISPHERE_NUMBER_OF_LOGIC - 1;
