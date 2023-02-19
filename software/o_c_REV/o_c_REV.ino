@@ -26,7 +26,6 @@
 #include <EEPROM.h>
 
 #include "OC_apps.h"
-#include "OC_strings.h"
 #include "OC_core.h"
 #include "OC_DAC.h"
 #include "OC_debug.h"
@@ -187,8 +186,7 @@ void FASTRUN loop() {
           #endif
 
         } else {
-          //Blank the screen instead of drawing the screensaver (chysn 9/2/2018)
-          //OC::apps::current_app->DrawScreensaver();
+          OC::apps::current_app->DrawScreensaver();
         }
         MENU_REDRAW = 0;
         LAST_REDRAW_TIME = millis();
