@@ -6,6 +6,6 @@
 #endif
 
 #define OC_VERSION_TITLE "Phazerville Suite"
-#define OC_VERSION "v1.4.99" OC_VERSION_EXTRA
+#define OC_VERSION "v1.5" OC_VERSION_EXTRA
 #define OC_VERSION_URL "github.com/djphazer"
 #endif
