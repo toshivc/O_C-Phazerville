@@ -129,6 +129,7 @@ public:
 
     void OnButtonPress() {
         CursorAction(cursor, 7);
+        if (mode[1] > 2 && cursor == 3) ++cursor;
     }
 
     void OnEncoderMove(int direction) {
