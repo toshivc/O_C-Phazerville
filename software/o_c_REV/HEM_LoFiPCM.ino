@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#define HEM_LOFI_PCM_BUFFER_SIZE 2048
+#define HEM_LOFI_PCM_BUFFER_SIZE 4096
 #define HEM_LOFI_PCM_SPEED 4
 
 // #define CLIPLIMIT 32512
@@ -75,8 +75,8 @@ public:
                 countdown = rate_mod;
             }
 
-            SmoothedOut(0, PCM_TO_CV(lofi_pcm_buffer[head]), rate_mod);
-            SmoothedOut(1, PCM_TO_CV(lofi_pcm_buffer[length-1 - head]), rate_mod); // reverse buffer!
+            SmoothedOut(0, PCM_TO_CV(lofi_pcm_buffer[head]), (rate_mod+1)/2);
+            SmoothedOut(1, PCM_TO_CV(lofi_pcm_buffer[length-1 - head]), (rate_mod+1)/2); // reverse buffer!
         }
     }
 
