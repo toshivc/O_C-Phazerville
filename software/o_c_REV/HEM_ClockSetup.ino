@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#define FLASH_TICKS 5000
+
 class ClockSetup : public HemisphereApplet {
 public:
 
@@ -52,6 +54,8 @@ public:
             usbMIDI.sendRealTime(usbMIDI.Stop);
         }
         if (clock_m->IsRunning() && clock_m->MIDITock()) usbMIDI.sendRealTime(usbMIDI.Clock);
+
+        if (flash_ticker) --flash_ticker;
     }
 
     void View() {
@@ -62,7 +66,10 @@ public:
         if (!EditMode()) { // special cases for toggle buttons
             if (cursor == PLAY_STOP) PlayStop();
             else if (cursor == FORWARDING) clock_m->ToggleForwarding();
-            else if (cursor >= TRIG1) clock_m->Boop(cursor-TRIG1);
+            else if (cursor >= TRIG1) {
+                clock_m->Boop(cursor-TRIG1);
+                flash_ticker = FLASH_TICKS;
+            }
             else CursorAction(cursor, LAST_SETTING);
         }
         else CursorAction(cursor, LAST_SETTING);
@@ -88,6 +95,7 @@ public:
         case TRIG3:
         case TRIG4:
             clock_m->Boop(cursor-TRIG1);
+            flash_ticker = FLASH_TICKS;
             break;
 
         case EXT_PPQN:
@@ -144,6 +152,7 @@ private:
     int cursor; // ClockSetupCursor
     bool start_q;
     bool stop_q;
+    int flash_ticker;
     ClockManager *clock_m = clock_m->get();
 
     void PlayStop() {
@@ -196,7 +205,10 @@ private:
         }
 
         // Manual triggers
-        for (int i=0; i<4; i++) { gfxIcon(4 + i*32, 49, BURST_ICON); }
+        for (int i=0; i<4; i++) {
+            gfxIcon(4 + i*32, 49, (flash_ticker && i == cursor-TRIG1)?BTN_ON_ICON:BTN_OFF_ICON);
+            gfxIcon(4 + i*32, 56, DOWN_BTN_ICON);
+        }
 
         switch ((ClockSetupCursor)cursor) {
         case PLAY_STOP: gfxFrame(11, 14, 10, 10); break;
@@ -219,7 +231,8 @@ private:
         case TRIG2:
         case TRIG3:
         case TRIG4:
-            gfxFrame(3 + 32*(cursor-TRIG1), 48, 10, 10);
+            if (0 == flash_ticker)
+                gfxFrame(3 + 32*(cursor-TRIG1), 48, 9, 10);
             break;
 
         default: break;
