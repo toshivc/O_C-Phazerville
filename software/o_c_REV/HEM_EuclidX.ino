@@ -252,27 +252,28 @@ private:
 
     void DrawEditor() {
         const int spacing = 16;
+        const int pad_left = 5;
 
         if (cursor < CV_DEST1) {
-            gfxBitmap(8 + 0 * spacing, 15, 8, LOOP_ICON);
+            gfxBitmap(pad_left + 0 * spacing, 15, 8, LOOP_ICON);
         }
-        gfxBitmap(8 + 1 * spacing, 15, 8, X_NOTE_ICON);
-        gfxBitmap(8 + 2 * spacing, 15, 8, LEFT_RIGHT_ICON);
-        gfxPrint(8 + 3 * spacing, 15, "+");
+        gfxBitmap(pad_left + 1 * spacing, 15, 8, X_NOTE_ICON);
+        gfxBitmap(pad_left + 2 * spacing, 15, 8, LEFT_RIGHT_ICON);
+        gfxPrint(pad_left + 3 * spacing, 15, "+");
 
         int y = 15;
         ForEachChannel (ch) {
             y += 10;
-            gfxPrint(3 + 0 * spacing + pad(10, actual_length[ch]), y, actual_length[ch]);
-            gfxPrint(3 + 1 * spacing + pad(10, actual_beats[ch]), y, actual_beats[ch]);
-            gfxPrint(3 + 2 * spacing + pad(10, actual_offset[ch]), y, actual_offset[ch]);
-            gfxPrint(3 + 3 * spacing + pad(10, actual_padding[ch]), y, actual_padding[ch]);
+            gfxPrint(0 * spacing + pad(10, actual_length[ch]), y, actual_length[ch]);
+            gfxPrint(1 * spacing + pad(10, actual_beats[ch]), y, actual_beats[ch]);
+            gfxPrint(2 * spacing + pad(10, actual_offset[ch]), y, actual_offset[ch]);
+            gfxPrint(3 * spacing + pad(10, actual_padding[ch]), y, actual_padding[ch]);
 
             // CV assignment indicators
             ForEachChannel(ch_dest) {
                 int ff = cv_dest[ch_dest] - LENGTH2*ch;
                 if (ff >= 0 && ff < LENGTH2)
-                    gfxBitmap(ff * spacing, y, 3, ch_dest?SUB_TWO:SUP_ONE);
+                    gfxBitmap(13 + ff * spacing, y, 3, ch_dest?SUB_TWO:SUP_ONE);
             }
         }
 
@@ -289,7 +290,7 @@ private:
         case BEATS1:
         case OFFSET1:
         case PADDING1:
-            gfxCursor(3 + f * spacing, y, 13);
+            gfxCursor(f * spacing, y, 13);
             break;
 
         case CV_DEST1:
