@@ -22,7 +22,7 @@
 
 #include "grids_resources.h"
 
-#define HEM_DRUMMAP_PULSE_ANIMATION_TICKS 500
+#define HEM_DRUMMAP_PULSE_ANIMATION_TICKS 1000
 #define HEM_DRUMMAP_VALUE_ANIMATION_TICKS 16000
 #define HEM_DRUMMAP_AUTO_RESET_TICKS 30000
 
@@ -227,6 +227,7 @@ protected:
     
 private:
     const uint8_t *MODE_ICONS[3] = {BD_ICON,SN_ICON,HH_ICON};
+    const uint8_t *MODE_PULSE_ICON[3] = {BD_HIT_ICON,SN_HIT_ICON,HH_HIT_ICON};
     const char *CV_MODE_NAMES[3] = {"FILL A/B", "X/Y", "FA/CHAOS"};
     const int *VALUE_MAP[5] = {&fill[0], &fill[1], &x, &y, &chaos};
     int cursor = 0;
@@ -271,7 +272,8 @@ private:
     void DrawInterface() {
         // output selection
         gfxPrint(1,15,"A:");
-        gfxIcon(15,15,MODE_ICONS[mode[0]]);
+        gfxIcon(15,15, (pulse_animation[0] > 0)? MODE_PULSE_ICON[mode[0]] : MODE_ICONS[mode[0]] );
+
         gfxPrint(32,15,"B:");
         if (mode[1] == 3) {
             // accent
@@ -279,14 +281,16 @@ private:
             gfxPrint(53,15,">");
         } else {
             // standard
-            gfxIcon(46,15,MODE_ICONS[mode[1]]);
+            gfxIcon(46,15,(pulse_animation[1] > 0)? MODE_PULSE_ICON[mode[1]] : MODE_ICONS[mode[1]]);
         }
+        /*
         // pulse animation per channel
          ForEachChannel(ch){
              if (pulse_animation[ch] > 0) {
                  gfxInvert(1+ch*32,15,8,8);
              }
          }
+        */
 
         // fill
         gfxPrint(1,25,"F");

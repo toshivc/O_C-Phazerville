@@ -232,7 +232,7 @@ private:
         case TRIG3:
         case TRIG4:
             if (0 == flash_ticker)
-                gfxFrame(3 + 32*(cursor-TRIG1), 48, 9, 10);
+                gfxIcon(12 + 32*(cursor-TRIG1), 50, LEFT_ICON);
             break;
 
         default: break;
