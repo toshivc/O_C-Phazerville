@@ -130,8 +130,7 @@ private:
         }
 
         if (mix_final) {
-            gfxLine(3, 24, 3, 31); 
-            gfxIcon(0, 25, DOWN_BTN_ICON);  
+            gfxIcon(1, 25, DOWN_ICON);
         }
 
         if (cursor == 4) {
