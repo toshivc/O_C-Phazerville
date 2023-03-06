@@ -169,9 +169,11 @@ public:
                     if (clock_m->IsRunning() || clock_m->IsPaused()) {
                         // Metronome icon
                         graphics.drawBitmap8(56, 1, 8, clock_m->Cycle() ? METRO_L_ICON : METRO_R_ICON);
-                    } else if (clock_m->IsForwarded()) {
+                    }
+
+                    if (clock_m->IsForwarded()) {
                         // CV Forwarding Icon
-                        graphics.drawBitmap8(56, 1, 8, CLOCK_ICON);
+                        graphics.drawBitmap8(120, 1, 8, CLOCK_ICON);
                     }
                 }
             }
@@ -237,9 +239,8 @@ public:
     }
 
     void ToggleClockRun() {
-        if (clock_m->IsRunning()) clock_m->Pause();
-        else if (clock_m->IsPaused()) clock_m->Start();
-        else clock_m->ToggleForwarding();
+        if (clock_m->IsRunning()) clock_m->Stop();
+        else clock_m->Start();
     }
 
     void ToggleClockSetup() {
