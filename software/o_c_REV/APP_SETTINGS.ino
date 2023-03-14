@@ -76,10 +76,6 @@ public:
         gfxPrint(0, 35, OC_VERSION_URL);
         gfxPrint(0, 55, "[CALIBRATE]   [RESET]");
 
-#ifdef BUCHLA_4U
-        gfxPrint(60, 25, "Buchla");
-#endif
-
         //DrawQRAt(103, 15);
     }
 
