@@ -53,6 +53,10 @@ OC::App available_apps[] = {
   DECLARE_APP('M','!', "Meta-Q", DQ),
   #endif
 
+  #ifdef ENABLE_APP_PIQUED
+  DECLARE_APP('E','G', "Piqued", ENVGEN),
+  #endif
+
   #ifdef ENABLE_APP_CHORDS
   DECLARE_APP('A','C', "Acid Curds", CHORDS),
   #endif
