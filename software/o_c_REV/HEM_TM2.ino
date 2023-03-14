@@ -85,8 +85,8 @@ public:
     }
 
     void Start() {
-        reg = random(0, 65535);
-        reg2 = ~reg;
+        reg[0] = random(0, 65535);
+        reg[1] = ~reg[0];
 
         quantizer.Init();
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff); // Semi-tone
@@ -104,9 +104,7 @@ public:
         len_mod = length;
         range_mod = range;
         smooth_mod = smoothing;
-        int note_trans1 = 0;
-        int note_trans2 = 0;
-        int note_trans3 = 0;
+        int trans_mod[3] = {0, 0, 0}; // default transpose
 
         // process CV inputs
         ForEachChannel(ch) {
@@ -128,13 +126,10 @@ public:
 
             // bi-polar transpose before quantize
             case TRANSPOSE1:
-                note_trans1 = Proportion(cv_data[ch], HEMISPHERE_MAX_CV, range_mod);
-                break;
             case TRANSPOSE2:
-                note_trans2 = Proportion(cv_data[ch], HEMISPHERE_MAX_CV, range_mod);
-                break;
             case TRANSPOSE_BOTH:
-                note_trans3 = Proportion(cv_data[ch], HEMISPHERE_MAX_CV, range_mod);
+                if (clk) // S&H style transpose
+                    trans_mod[cvmode[ch] - TRANSPOSE1] = MIDIQuantizer::NoteNumber(cv_data[ch], 0) - 60; // constrain to range_mod?
                 break;
 
             default: break;
@@ -143,70 +138,66 @@ public:
 
         // Advance the register on clock, flipping bits as necessary
         if (clk) {
+            // Update transpose values
+            for (int i = 0; i < 3; ++i) { note_trans[i] = trans_mod[i]; }
+
             // If the cursor is not on the p value, and Digital 2 is not gated, the sequence remains the same
             int prob = (cursor == PROB || Gate(1)) ? p_mod : 0;
 
-            // Grab the bit that's about to be shifted away
-            int last = (reg >> (len_mod - 1)) & 0x01;
-            int last2 = (reg2 >> (len_mod - 1)) & 0x01;
+            for (int i = 0; i < 2; ++i) {
+                // Grab the bit that's about to be shifted away
+                int last = (reg[i] >> (len_mod - 1)) & 0x01;
 
-            // Does it change?
-            if (random(0, 99) < prob) last = 1 - last;
-            if (random(0, 99) < prob) last2 = 1 - last2;
+                // Does it change?
+                if (random(0, 99) < prob) last = 1 - last;
 
-            // Shift left, then potentially add the bit from the other side
-            reg = (reg << 1) + last;
-            reg2 = (reg2 << 1) + last2;
+                // Shift left, then potentially add the bit from the other side
+                reg[i] = (reg[i] << 1) + last;
+            }
         }
  
         // Send 8-bit scaled and quantized CV
-        // scaled = note * range / 0x1f
-        int32_t note = Proportion(reg & 0xff, 0xff, range_mod);
-        int32_t note2 = Proportion(reg2 & 0xff, 0xff, range_mod);
-
-        /*
-        note *= range;
-        simfloat x = int2simfloat(note) / (int32_t)0x1f;
-        note = simfloat2int(x);
-        */
+        int32_t note = Proportion(reg[0] & 0xff, 0xff, range_mod);
+        int32_t note2 = Proportion(reg[1] & 0xff, 0xff, range_mod);
 
         ForEachChannel(ch) {
             switch (outmode[ch]) {
             case PITCH_SUM:
-              Output[ch] = slew(Output[ch], quantizer.Lookup(note + note2 + note_trans3 + 64));
+              Output[ch] = slew(Output[ch], quantizer.Lookup(note + note2 + note_trans[2] + 64));
               break;
             case PITCH1:
-              Output[ch] = slew(Output[ch], quantizer.Lookup(note + note_trans1 + note_trans3 + 64));
+              Output[ch] = slew(Output[ch], quantizer.Lookup(note + note_trans[0] + note_trans[2] + 64));
               break;
             case PITCH2:
-              Output[ch] = slew(Output[ch], quantizer.Lookup(note2 + note_trans2 + note_trans3 + 64));
+              Output[ch] = slew(Output[ch], quantizer.Lookup(note2 + note_trans[1] + note_trans[2] + 64));
               break;
             case MOD1: // 8-bit bi-polar proportioned CV
-              Output[ch] = slew(Output[ch], Proportion( int(reg & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
+              Output[ch] = slew(Output[ch], Proportion( int(reg[0] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
               break;
             case MOD2:
-              Output[ch] = slew(Output[ch], Proportion( int(reg2 & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
+              Output[ch] = slew(Output[ch], Proportion( int(reg[1] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
               break;
             case TRIG1:
-              if (clk && (reg & 0x01) == 1) // trigger if 1st bit is high
-                Output[ch] = HEMISPHERE_MAX_CV; //ClockOut(ch);
-              else // decay
-                Output[ch] = slew(Output[ch]);
-              break;
             case TRIG2:
-              if (clk && (reg2 & 0x01) == 1)
-                Output[ch] = HEMISPHERE_MAX_CV;
-              else
-                Output[ch] = slew(Output[ch]);
+              if (clk && (reg[outmode[ch]-TRIG1] & 0x01) == 1) // trigger if 1st bit is high
+              {
+                Output[ch] = HEMISPHERE_MAX_CV; //ClockOut(ch);
+                trigpulse[ch] = HEMISPHERE_CLOCK_TICKS;
+              }
+              else // decay
+              {
+                // hold until it's time to pull it down
+                if (--trigpulse[ch] < 0)
+                  Output[ch] = slew(Output[ch]);
+              }
               break;
             case GATE1:
-              Output[ch] = slew(Output[ch], (reg & 0x01)*HEMISPHERE_MAX_CV );
-              break;
             case GATE2:
-              Output[ch] = slew(Output[ch], (reg2 & 0x01)*HEMISPHERE_MAX_CV );
+              Output[ch] = slew(Output[ch], (reg[outmode[ch] - GATE1] & 0x01)*HEMISPHERE_MAX_CV );
               break;
+
             case GATE_SUM:
-              Output[ch] = slew(Output[ch], ((reg & 0x01)+(reg2 & 0x01))*HEMISPHERE_3V_CV );
+              Output[ch] = slew(Output[ch], ((reg[0] & 0x01)+(reg[1] & 0x01))*HEMISPHERE_3V_CV );
               break;
 
             default: break;
@@ -296,8 +287,8 @@ public:
         cvmode[0] = (InputMode) Unpack(data, PackLocation {33,4});
         cvmode[1] = (InputMode) Unpack(data, PackLocation {37,4});
 
-        reg = Unpack(data, PackLocation {32,32});
-        reg2 = Unpack(data, PackLocation {0, 32}); // lol it could be fun
+        reg[0] = Unpack(data, PackLocation {32,32});
+        reg[1] = Unpack(data, PackLocation {0, 32}); // lol it could be fun
     }
 
 protected:
@@ -311,25 +302,29 @@ protected:
     }
     
 private:
-    int length = 16; // Sequence length
-    int len_mod; // actual length after CV mod
     int cursor; // TM2Cursor
-    braids::Quantizer quantizer;
 
-    // Settings
-    uint32_t reg; // 32-bit sequence register
-    uint32_t reg2; // DJP
+    braids::Quantizer quantizer;
+    int scale = OC::Scales::SCALE_SEMI; // Scale used for quantized output
+    int root_note; // TODO
+
+    // TODO: consider using the TuringMachine class or whatev
+    uint32_t reg[2]; // 32-bit sequence registers
 
     // most recent output values
     int Output[2] = {0, 0};
+    int trigpulse[2] = {0, 0}; // tick timer for Trig output modes
 
+    // Settings and modulated copies
+    int length = 16; // Sequence length
+    int len_mod; // actual length after CV mod
     int p = 0; // Probability of bit flipping on each cycle
     int p_mod;
-    int scale = OC::Scales::SCALE_SEMI; // Scale used for quantized output
     int range = 24;
     int range_mod;
     int smoothing = 4;
     int smooth_mod;
+    int note_trans[3] = {0, 0, 0}; // transpose from CV input
 
     OutputMode outmode[2] = {PITCH1, TRIG2};
     InputMode cvmode[2] = {LENGTH_MOD, RANGE_MOD};
@@ -458,8 +453,8 @@ private:
         gfxLine(0, 62, 63, 62);
         for (int b = 0; b < 16; b++)
         {
-            int v = (reg >> b) & 0x01;
-            int v2 = (reg2 >> b) & 0x01;
+            int v = (reg[0] >> b) & 0x01;
+            int v2 = (reg[1] >> b) & 0x01;
             if (v) gfxRect(60 - (4 * b), 47, 3, 7);
             if (v2) gfxRect(60 - (4 * b), 54, 3, 7);
         }
