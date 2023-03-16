@@ -7,6 +7,7 @@
 */
 
 #include "OC_calibration.h"
+namespace menu = OC::menu;
 
 using OC::DAC;
 

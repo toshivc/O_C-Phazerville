@@ -23,7 +23,9 @@
 #include "OC_apps.h"
 #include "OC_digital_inputs.h"
 #include "OC_autotune.h"
+#include "OC_patterns.h"
 #include "enigma/TuringMachine.h"
+#include "src/drivers/FreqMeasure/OC_FreqMeasure.h"
 
 #define DECLARE_APP(a, b, name, prefix) \
 { TWOCC<a,b>::value, name, \
