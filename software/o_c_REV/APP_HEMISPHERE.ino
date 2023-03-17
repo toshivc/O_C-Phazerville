@@ -90,8 +90,8 @@ public:
         help_hemisphere = -1;
         clock_setup = 0;
 
-        SetApplet(0, get_applet_index_by_id(57)); // ADSR
-        SetApplet(1, get_applet_index_by_id(58)); // Scale Duet
+        SetApplet(0, get_applet_index_by_id(18)); // DualTM
+        SetApplet(1, get_applet_index_by_id(15)); // EuclidX
     }
 
     void Resume() {
