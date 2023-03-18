@@ -89,6 +89,21 @@ int32_t Quantizer::Process(int32_t pitch, int32_t root, int32_t transpose) {
       q = num_notes_ - 1;
     }
 
+    // set boundaries for hysteresis
+    codeword_ = notes_[q] + octave * span_;
+    previous_boundary_ = q == 0
+      ? notes_[num_notes_ - 1] + (octave - 1) * span_
+      : notes_[q - 1] + octave * span_;
+    previous_boundary_ =
+        (NEIGHBOR_WEIGHT * previous_boundary_ + CUR_WEIGHT * codeword_) >> 4;
+
+    next_boundary_ = q == num_notes_ - 1
+      ? notes_[0] + (octave + 1) * span_
+      : notes_[q + 1] + octave * span_;
+    next_boundary_ =
+        (NEIGHBOR_WEIGHT * next_boundary_ + CUR_WEIGHT * codeword_) >> 4;
+
+    // apply transpose after setting boundaries
     q += transpose;
     octave += q / num_notes_;
     q %= num_notes_;
@@ -97,19 +112,9 @@ int32_t Quantizer::Process(int32_t pitch, int32_t root, int32_t transpose) {
       octave--;
     }
 
+    // set final values
     note_number_ = octave * num_notes_ + q;
     codeword_ = notes_[q] + octave * span_;
-    previous_boundary_ = q == 0
-      ? notes_[num_notes_ - 1] + (octave - 1) * span_
-      : notes_[q - 1] + octave * span_;
-
-    previous_boundary_ =
-        (NEIGHBOR_WEIGHT * previous_boundary_ + CUR_WEIGHT * codeword_) >> 4;
-    next_boundary_ = q == num_notes_ - 1
-      ? notes_[0] + (octave + 1) * span_
-      : notes_[q + 1] + octave * span_;
-    next_boundary_ =
-        (NEIGHBOR_WEIGHT * next_boundary_ + CUR_WEIGHT * codeword_) >> 4;
 
     transpose_ = transpose;
     pitch = codeword_;
