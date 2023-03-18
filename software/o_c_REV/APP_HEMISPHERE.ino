@@ -191,11 +191,17 @@ public:
             select_mode = -1; // Pushing a button for the selected side turns off select mode
         } else {
             int index = my_applet[h];
-            if (event.type == UI::EVENT_BUTTON_PRESS) {
+            if (event.type == UI::EVENT_BUTTON_DOWN) {
                 available_applets[index].OnButtonPress(h);
             }
         }
     }
+
+    /*
+    void DelegateButtonRelease(const UI::Event &event) {
+        // TODO:
+    }
+    */
 
     void DelegateSelectButtonPush(int hemisphere) {
         if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME) {
@@ -220,10 +226,8 @@ public:
             }
             click_tick = OC::CORE::ticks;
             first_click = hemisphere;
-        }
-
-        if (click_tick)
             clock_setup = 0; // Turn off clock setup with any single button press
+        }
     }
 
     void DelegateEncoderMovement(const UI::Event &event) {
@@ -430,18 +434,26 @@ void HEMISPHERE_menu() {
 void HEMISPHERE_screensaver() {} // Deprecated in favor of screen blanking
 
 void HEMISPHERE_handleButtonEvent(const UI::Event &event) {
-    if (event.type == UI::EVENT_BUTTON_PRESS) {
+    switch (event.type) {
+    case UI::EVENT_BUTTON_DOWN:
         if (event.control == OC::CONTROL_BUTTON_UP || event.control == OC::CONTROL_BUTTON_DOWN) {
             int hemisphere = (event.control == OC::CONTROL_BUTTON_UP) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
             manager.DelegateSelectButtonPush(hemisphere);
         } else {
             manager.DelegateEncoderPush(event);
         }
-    }
+        break;
+    case UI::EVENT_BUTTON_PRESS:
+        // TODO:
+        //manager.DelegateButtonRelease(event);
+        break;
 
-    if (event.type == UI::EVENT_BUTTON_LONG_PRESS) {
+    case UI::EVENT_BUTTON_LONG_PRESS:
         if (event.control == OC::CONTROL_BUTTON_DOWN) HemisphereApplet::CycleEditMode();
         if (event.control == OC::CONTROL_BUTTON_L) manager.ToggleClockRun();
+        break;
+
+    default: break;
     }
 }
 

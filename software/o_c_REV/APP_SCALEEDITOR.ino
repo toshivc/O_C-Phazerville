@@ -374,15 +374,15 @@ void SCALEEDITOR_screensaver() {}
 void SCALEEDITOR_handleButtonEvent(const UI::Event &event) {
     // For left encoder, handle press and long press
     if (event.control == OC::CONTROL_BUTTON_L) {
+        if (event.type == UI::EVENT_BUTTON_PRESS) scale_editor_instance.OnLeftButtonPress();
         if (event.type == UI::EVENT_BUTTON_LONG_PRESS) scale_editor_instance.OnLeftButtonLongPress();
-        else scale_editor_instance.OnLeftButtonPress();
     }
 
     // For right encoder, only handle press (long press is reserved)
     if (event.control == OC::CONTROL_BUTTON_R && event.type == UI::EVENT_BUTTON_PRESS) scale_editor_instance.OnRightButtonPress();
 
     // For up button, handle only press (long press is reserved)
-    if (event.control == OC::CONTROL_BUTTON_UP) scale_editor_instance.OnUpButtonPress();
+    if (event.control == OC::CONTROL_BUTTON_UP && event.type == UI::EVENT_BUTTON_PRESS) scale_editor_instance.OnUpButtonPress();
 
     // For down button, handle press and long press
     if (event.control == OC::CONTROL_BUTTON_DOWN) {

@@ -392,18 +392,28 @@ void Ui::AppSettings() {
       if (IgnoreEvent(event))
         continue;
 
-      if (UI::EVENT_ENCODER == event.type && CONTROL_ENCODER_R == event.control) {
-        cursor.Scroll(event.value);
-      } else if (CONTROL_BUTTON_R == event.control) {
+      switch (event.control) {
+      case CONTROL_ENCODER_R:
+        if (UI::EVENT_ENCODER == event.type)
+          cursor.Scroll(event.value);
+        break;
+
+      case CONTROL_BUTTON_R:
         save = event.type == UI::EVENT_BUTTON_LONG_PRESS;
-        change_app = true;
-      } else if (CONTROL_BUTTON_L == event.control) {
+        change_app = event.type != UI::EVENT_BUTTON_DOWN; // true on button release
+        break;
+      case CONTROL_BUTTON_L:
         ui.DebugStats();
-      } else if (CONTROL_BUTTON_UP == event.control) {
+        break;
+      case CONTROL_BUTTON_UP: {
         bool enabled = !global_settings.encoders_enable_acceleration;
         SERIAL_PRINTLN("Encoder acceleration: %s", enabled ? "enabled" : "disabled");
         ui.encoders_enable_acceleration(enabled);
         global_settings.encoders_enable_acceleration = enabled;
+        break;
+        }
+
+        default: break;
       }
     }
 

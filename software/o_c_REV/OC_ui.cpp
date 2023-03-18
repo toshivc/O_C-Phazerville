@@ -88,6 +88,7 @@ void FASTRUN Ui::Poll() {
     auto &button = buttons_[i];
     if (button.just_pressed()) {
       button_press_time_[i] = now;
+      PushEvent(UI::EVENT_BUTTON_DOWN, control_mask(i), 0, button_state);
     } else if (button.released()) {
       if (now - button_press_time_[i] < kLongPressTicks)
         PushEvent(UI::EVENT_BUTTON_PRESS, control_mask(i), 0, button_state);
@@ -122,31 +123,32 @@ UiMode Ui::DispatchEvents(App *app) {
 
     switch (event.type) {
       case UI::EVENT_BUTTON_PRESS:
-        #ifdef VOR
-          #ifdef VOR_NO_RANGE_BUTTON
+#ifdef VOR
+    #ifdef VOR_NO_RANGE_BUTTON
         if (OC::CONTROL_BUTTON_UP == event.control) {
             VBiasManager *vbias_m = vbias_m->get();
             if (vbias_m->IsEditing()) vbias_m->AdvanceBias();
             else app->HandleButtonEvent(event);
         } else app->HandleButtonEvent(event);
-          #else
+    #else
         if (OC::CONTROL_BUTTON_M == event.control) {
             VBiasManager *vbias_m = vbias_m->get();
             vbias_m->AdvanceBias();
         } else app->HandleButtonEvent(event);
-        #endif
-        #else
+    #endif
+#else
+      case UI::EVENT_BUTTON_DOWN:
         app->HandleButtonEvent(event);
-        #endif
+#endif
         break;
       case UI::EVENT_BUTTON_LONG_PRESS:
         if (OC::CONTROL_BUTTON_UP == event.control) {
-        #ifdef VOR_NO_RANGE_BUTTON
+#ifdef VOR_NO_RANGE_BUTTON
             VBiasManager *vbias_m = vbias_m->get();
             vbias_m->AdvanceBias();
-        #else
+#else
             if (!preempt_screensaver_) screensaver_ = true;
-        #endif
+#endif
         }
         else if (OC::CONTROL_BUTTON_R == event.control)
           return UI_MODE_APP_SETTINGS;

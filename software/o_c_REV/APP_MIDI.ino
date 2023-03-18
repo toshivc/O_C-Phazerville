@@ -884,10 +884,11 @@ void MIDI_handleButtonEvent(const UI::Event &event) {
         captain_midi_instance.ToggleCursor();
     if (event.control == OC::CONTROL_BUTTON_L) {
         if (event.type == UI::EVENT_BUTTON_LONG_PRESS) captain_midi_instance.Panic();
-        else captain_midi_instance.ToggleDisplay();
+        if (event.type == UI::EVENT_BUTTON_PRESS) captain_midi_instance.ToggleDisplay();
     }
 
-    if (event.control == OC::CONTROL_BUTTON_UP) captain_midi_instance.SwitchSetup(1);
+    if (event.control == OC::CONTROL_BUTTON_UP && event.type == UI::EVENT_BUTTON_PRESS)
+        captain_midi_instance.SwitchSetup(1);
     if (event.control == OC::CONTROL_BUTTON_DOWN) {
         if (event.type == UI::EVENT_BUTTON_PRESS) captain_midi_instance.SwitchSetup(-1);
         if (event.type == UI::EVENT_BUTTON_LONG_PRESS) captain_midi_instance.ToggleCopyMode();
