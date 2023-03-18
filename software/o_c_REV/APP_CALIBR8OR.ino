@@ -223,6 +223,7 @@ public:
     void OnLeftEncoderMove(int direction) {
         if (scale_edit) {
             root_note[sel_chan] = constrain(root_note[sel_chan] + direction, 0, 11);
+            quantizer[sel_chan].Requantize();
             return;
         }
 
@@ -244,6 +245,7 @@ public:
             if (scale[sel_chan] >= OC::Scales::NUM_SCALES) scale[sel_chan] = 0;
             if (scale[sel_chan] < 0) scale[sel_chan] = OC::Scales::NUM_SCALES - 1;
             quantizer[sel_chan].Configure(OC::Scales::GetScale(scale[sel_chan]), 0xffff);
+            quantizer[sel_chan].Requantize();
             return;
         }
 
