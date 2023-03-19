@@ -39,8 +39,10 @@ class ClockManager {
     static ClockManager *instance;
 
     enum ClockOutput {
-        LEFT_CLOCK,
-        RIGHT_CLOCK,
+        LEFT_CLOCK1,
+        LEFT_CLOCK2,
+        RIGHT_CLOCK1,
+        RIGHT_CLOCK2,
         MIDI_CLOCK,
         NR_OF_CLOCKS
     };
@@ -53,11 +55,12 @@ class ClockManager {
 
     uint32_t clock_tick = 0; // tick when a physical clock was received on DIGITAL 1
     uint32_t beat_tick = 0; // The tick to count from
-    bool tock[NR_OF_CLOCKS] = {0,0,0}; // The current tock value
-    int tocks_per_beat[NR_OF_CLOCKS] = {1, 1, MIDI_OUT_PPQN}; // Multiplier
+    bool tock[NR_OF_CLOCKS] = {0,0,0,0,0}; // The current tock value
+    int16_t tocks_per_beat[NR_OF_CLOCKS] = {4,0, 8,0, MIDI_OUT_PPQN}; // Multiplier
+    int count[NR_OF_CLOCKS] = {0,0,0,0,0}; // Multiple counter, 0 is a special case when first starting the clock
+
     int clock_ppqn = 4; // external clock multiple
     bool cycle = 0; // Alternates for each tock, for display purposes
-    int count[NR_OF_CLOCKS] = {0,0,0}; // Multiple counter, 0 is a special case when first starting the clock
 
     bool boop[4]; // Manual triggers
 
@@ -71,7 +74,7 @@ public:
         return instance;
     }
 
-    void SetMultiply(int multiply, bool ch = 0) {
+    void SetMultiply(int multiply, int ch = 0) {
         multiply = constrain(multiply, CLOCK_MIN_MULTIPLE, CLOCK_MAX_MULTIPLE);
         tocks_per_beat[ch] = multiply;
     }
@@ -91,7 +94,7 @@ public:
         tempo = bpm;
     }
 
-    int GetMultiply(bool ch = 0) {return tocks_per_beat[ch];}
+    int GetMultiply(int ch = 0) {return tocks_per_beat[ch];}
     int GetClockPPQN() { return clock_ppqn; }
 
     /* Gets the current tempo. This can be used between client processes, like two different
@@ -231,9 +234,9 @@ public:
         return Tock(MIDI_CLOCK);
     }
 
-    bool EndOfBeat(bool ch = 0) {return count[ch] == 1;}
+    bool EndOfBeat(int ch = 0) {return count[ch] == 1;}
 
-    bool Cycle(bool ch = 0) {return cycle;}
+    bool Cycle(int ch = 0) {return cycle;}
 };
 
 ClockManager *ClockManager::instance = 0;

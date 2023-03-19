@@ -380,26 +380,35 @@ public:
     bool Clock(int ch, bool physical = 0) {
         bool clocked = 0;
         ClockManager *clock_m = clock_m->get();
+        bool useTock = (!physical && clock_m->IsRunning());
 
         if (ch == 0) { // clock triggers
             if (hemisphere == LEFT_HEMISPHERE) {
-                if (!physical && clock_m->IsRunning() && clock_m->GetMultiply(hemisphere) != 0)
-                    clocked = clock_m->Tock(hemisphere);
+                if (useTock && clock_m->GetMultiply(0) != 0)
+                    clocked = clock_m->Tock(0);
                 else
                     clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
             } else { // right side is special
-                if (!physical && clock_m->IsRunning() && clock_m->GetMultiply(hemisphere) != 0)
-                    clocked = clock_m->Tock(hemisphere);
+                if (useTock && clock_m->GetMultiply(2) != 0)
+                    clocked = clock_m->Tock(2);
                 else if (master_clock_bus) // forwarding from left
                     clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
                 else
                     clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_3>();
             }
-        } else if (ch == 1) { // simple physical trig check
-            if (hemisphere == LEFT_HEMISPHERE)
-                clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_2>();
-            else
-                clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
+        } else if (ch == 1) { // TR2 and TR4
+            if (hemisphere == LEFT_HEMISPHERE) {
+                if (useTock && clock_m->GetMultiply(1) != 0)
+                    clocked = clock_m->Tock(1);
+                else
+                    clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_2>();
+            }
+            else {
+                if (useTock && clock_m->GetMultiply(3) != 0)
+                    clocked = clock_m->Tock(3);
+                else
+                    clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
+            }
         }
 
         clocked = clocked || clock_m->Beep(io_offset + ch);

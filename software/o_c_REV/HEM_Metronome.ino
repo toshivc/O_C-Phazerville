@@ -34,7 +34,7 @@ public:
 
         // Outputs
         if (clock_m->IsRunning()) {
-            if (clock_m->Tock(hemisphere)) {
+            if (clock_m->Tock(hemisphere*2)) {
                 ClockOut(0);
                 if (clock_m->EndOfBeat(hemisphere)) ClockOut(1);
             }

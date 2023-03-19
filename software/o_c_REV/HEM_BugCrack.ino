@@ -121,7 +121,7 @@ public:
         } else {
             _decay_punch = decay_punch;
         }
-        if (Clock(CH_KICK, 1)) {
+        if (Clock(CH_KICK, 0)) {
             SetEnvDecayKick(_decay_kick);
             SetEnvDecayPunch(_decay_punch);
             env_kick.Start();
@@ -170,7 +170,7 @@ public:
         } else {
             _blend_snare = blend_snare;
         }
-        if (Clock(CH_SNARE, 1)) {
+        if (Clock(CH_SNARE, 0)) {
             SetEnvDecaySnare(_decay_snare);
             SetEnvDecaySnap(_decay_snare);
             env_snare.Start();

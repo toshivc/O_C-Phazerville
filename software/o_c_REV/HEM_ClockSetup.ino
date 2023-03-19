@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#define FLASH_TICKS 5000
+#define FLASH_TICKS 1000
 
 class ClockSetup : public HemisphereApplet {
 public:
@@ -30,6 +30,8 @@ public:
         TEMPO,
         MULT1,
         MULT2,
+        MULT3,
+        MULT4,
         TRIG1,
         TRIG2,
         TRIG3,
@@ -107,6 +109,8 @@ public:
 
         case MULT1:
         case MULT2:
+        case MULT3:
+        case MULT4:
             clock_m->SetMultiply(clock_m->GetMultiply(cursor - MULT1) + direction, cursor - MULT1);
             break;
 
@@ -120,7 +124,7 @@ public:
         Pack(data, PackLocation { 1, 1 }, clock_m->IsForwarded());
         Pack(data, PackLocation { 2, 9 }, clock_m->GetTempo());
         Pack(data, PackLocation { 11, 6 }, clock_m->GetMultiply(0)+32);
-        Pack(data, PackLocation { 17, 6 }, clock_m->GetMultiply(1)+32);
+        Pack(data, PackLocation { 17, 6 }, clock_m->GetMultiply(2)+32);
         Pack(data, PackLocation { 23, 5 }, clock_m->GetClockPPQN());
         return data;
     }
@@ -134,7 +138,7 @@ public:
         clock_m->SetForwarding(Unpack(data, PackLocation { 1, 1 }));
         clock_m->SetTempoBPM(Unpack(data, PackLocation { 2, 9 }));
         clock_m->SetMultiply(Unpack(data, PackLocation { 11, 6 })-32,0);
-        clock_m->SetMultiply(Unpack(data, PackLocation { 17, 6 })-32,1);
+        clock_m->SetMultiply(Unpack(data, PackLocation { 17, 6 })-32,2);
         clock_m->SetClockPPQN(Unpack(data, PackLocation { 23, 5 }));
     }
 
@@ -198,9 +202,9 @@ private:
         gfxPrint(" BPM");
 
         // Multiply
-        ForEachChannel(ch) {
+        for (int ch=0; ch<4; ++ch) {
             int mult = clock_m->GetMultiply(ch);
-            gfxPrint(1 + ch*64, 37, (mult >= 0) ? "x" : "/");
+            gfxPrint(1 + ch*32, 37, (mult >= 0) ? "x" : "/");
             gfxPrint( (mult >= 0) ? mult : 1 - mult );
         }
 
@@ -224,7 +228,9 @@ private:
 
         case MULT1:
         case MULT2:
-            gfxCursor(8 + 64*(cursor-MULT1), 45, 12);
+        case MULT3:
+        case MULT4:
+            gfxCursor(8 + 32*(cursor-MULT1), 45, 12);
             break;
 
         case TRIG1:
