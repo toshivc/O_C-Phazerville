@@ -91,8 +91,10 @@ void FASTRUN Ui::Poll() {
     } else if (button.released()) {
       if (now - button_press_time_[i] < kLongPressTicks)
         PushEvent(UI::EVENT_BUTTON_PRESS, control_mask(i), 0, button_state);
-      else
-        PushEvent(UI::EVENT_BUTTON_LONG_PRESS, control_mask(i), 0, button_state);
+      button_press_time_[i] = 0;
+    } else if (button.pressed() && (now - button_press_time_[i] == kLongPressTicks)) {
+      button_state &= ~control_mask(i);
+      PushEvent(UI::EVENT_BUTTON_LONG_PRESS, control_mask(i), 0, button_state);
     }
   }
 
