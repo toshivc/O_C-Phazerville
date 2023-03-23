@@ -25,8 +25,12 @@
 //// Hemisphere Applet Base Class
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifndef HEMISPHEREAPPLET_H_
+#define HEMISPHEREAPPLET_H_
+
 #include "HSicons.h"
 #include "HSClockManager.h"
+#include "src/drivers/FreqMeasure/OC_FreqMeasure.h"
 
 #define LEFT_HEMISPHERE 0
 #define RIGHT_HEMISPHERE 1
@@ -68,6 +72,38 @@ typedef int32_t simfloat;
 #define ForEachChannel(ch) for(int_fast8_t ch = 0; ch < 2; ch++)
 #define gfx_offset (hemisphere * 64) // Graphics offset, based on the side
 #define io_offset (hemisphere * 2) // Input/Output offset, based on the side
+
+#define HEMISPHERE_DOUBLE_CLICK_TIME 8000
+#define HEMISPHERE_PULSE_ANIMATION_TIME 500
+#define HEMISPHERE_PULSE_ANIMATION_TIME_LONG 1200
+
+#define DECLARE_APPLET(id, categories, class_name) \
+{ id, categories, class_name ## _Start, class_name ## _Controller, class_name ## _View, \
+  class_name ## _OnButtonPress, class_name ## _OnEncoderMove, class_name ## _ToggleHelpScreen, \
+  class_name ## _OnDataRequest, class_name ## _OnDataReceive \
+}
+
+#include "hemisphere_config.h"
+
+namespace HS {
+
+typedef struct Applet {
+  int id;
+  uint8_t categories;
+  void (*Start)(bool); // Initialize when selected
+  void (*Controller)(bool, bool);  // Interrupt Service Routine
+  void (*View)(bool);  // Draw main view
+  void (*OnButtonPress)(bool); // Encoder button has been pressed
+  void (*OnEncoderMove)(bool, int); // Encoder has been rotated
+  void (*ToggleHelpScreen)(bool); // Help Screen has been requested
+  uint64_t (*OnDataRequest)(bool); // Get a data int from the applet
+  void (*OnDataReceive)(bool, uint64_t); // Send a data int to the applet
+} Applet;
+
+Applet available_applets[] = HEMISPHERE_APPLETS;
+Applet clock_setup_applet = DECLARE_APPLET(9999, 0x01, ClockSetup);
+
+}
 
 // Specifies where data goes in flash storage for each selcted applet, and how big it is
 typedef struct PackLocation {
@@ -546,3 +582,5 @@ uint32_t HemisphereApplet::cycle_ticks[4];
 bool HemisphereApplet::changed_cv[4];
 int HemisphereApplet::last_cv[4];
 int HemisphereApplet::cursor_countdown[2];
+
+#endif // HEMISPHEREAPPLET_H_

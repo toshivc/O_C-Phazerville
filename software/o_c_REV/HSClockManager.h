@@ -102,7 +102,7 @@ public:
      */
     uint16_t GetTempo() {return tempo;}
 
-    // Resync multipliers, optionally skipping the first tock
+    // Reset - Resync multipliers, optionally skipping the first tock
     void Reset(bool count_skip = 0) {
         beat_tick = OC::CORE::ticks;
         for (int ch = 0; ch < NR_OF_CLOCKS; ch++) {
@@ -111,15 +111,19 @@ public:
         cycle = 1 - cycle;
     }
 
-    // used to align the internal clock with incoming clock pulses
+    // Nudge - Used to align the internal clock with incoming clock pulses
+    // The rationale is that it's better to be short by 1 than to overshoot by 1
     void Nudge(int diff) {
         if (diff > 0) diff--;
         if (diff < 0) diff++;
         beat_tick += diff;
     }
 
-    // called on every tick when clock is running, before all Controllers
-    void SyncTrig(bool clocked) {
+    // call this on every tick when clock is running, before all Controllers
+    void SyncTrig(bool clocked, bool hard_reset = false) {
+        //if (!IsRunning()) return;
+        if (hard_reset) Reset();
+
         uint32_t now = OC::CORE::ticks;
 
         // Reset only when all multipliers have been met

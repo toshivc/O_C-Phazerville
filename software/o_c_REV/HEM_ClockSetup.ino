@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#define FLASH_TICKS 1000
-
 class ClockSetup : public HemisphereApplet {
 public:
 
@@ -70,7 +68,7 @@ public:
             else if (cursor == FORWARDING) clock_m->ToggleForwarding();
             else if (cursor >= TRIG1) {
                 clock_m->Boop(cursor-TRIG1);
-                flash_ticker = FLASH_TICKS;
+                flash_ticker = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
             }
             else CursorAction(cursor, LAST_SETTING);
         }
@@ -97,7 +95,7 @@ public:
         case TRIG3:
         case TRIG4:
             clock_m->Boop(cursor-TRIG1);
-            flash_ticker = FLASH_TICKS;
+            flash_ticker = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
             break;
 
         case EXT_PPQN:
