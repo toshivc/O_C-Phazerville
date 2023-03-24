@@ -271,6 +271,11 @@ public:
          gfxLine(0, 12, 127, 12);
     }
 
+    int ProportionCV(int cv_value, int max_pixels) {
+        int prop = constrain(Proportion(cv_value, HSAPPLICATION_5V, max_pixels), -max_pixels, max_pixels);
+        return prop;
+    }
+
 protected:
     // Check cursor blink cycle
     bool CursorBlink() {

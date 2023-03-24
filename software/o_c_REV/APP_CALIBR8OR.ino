@@ -214,6 +214,7 @@ public:
         // ClockSetup applet handles MIDI Clock Out
         HS::clock_setup_applet.Controller(0, 0);
 
+        // -- core processing --
         for (int ch = 0; ch < NR_OF_CHANNELS; ++ch) {
             bool clocked = Clock(ch);
             Cal8ChannelConfig &c = channel[ch];
@@ -235,6 +236,10 @@ public:
             output_cv += c.offset;
 
             Out(ch, output_cv);
+
+            // for UI flashers
+            if (clocked) trigger_flash[ch] = HEMISPHERE_PULSE_ANIMATION_TIME;
+            else if (trigger_flash[ch]) --trigger_flash[ch];
         }
     }
 
@@ -245,18 +250,16 @@ public:
         }
 
         gfxHeader("Calibr8or");
-        /* TODO
+
+        // Metronome icon
         if (clock_m->IsRunning() || clock_m->IsPaused()) {
-            // Metronome icon
             graphics.drawBitmap8(56, 1, 8, clock_m->Cycle() ? METRO_L_ICON : METRO_R_ICON);
         }
-        */
 
         if (preset_select) {
-            gfxPrint(64, 1, "- Presets");
+            gfxPrint(70, 1, "- Presets");
             DrawPresetSelector();
-        }
-        else {
+        } else {
             gfxPos(110, 1);
             if (preset_modified) gfxPrint("*");
             if (cal8_presets[index].is_valid()) gfxPrint(cal8_preset_id[index]);
@@ -265,6 +268,27 @@ public:
         }
     }
 
+    void Screensaver() {
+        gfxDottedLine(0, 32, 127, 32); // horizontal baseline
+        for (int ch = 0; ch < 4; ++ch)
+        {
+            gfxPrint(8 + 32*ch, 55, midi_note_numbers[MIDIQuantizer::NoteNumber(channel[ch].last_note)] );
+            if (trigger_flash[ch] > 0) gfxIcon(11 + 32*ch, 0, CLOCK_ICON);
+
+            // input
+            int height = ProportionCV(ViewIn(ch), 32);
+            int y = constrain(32 - height, 0, 32);
+            gfxFrame(3 + (32 * ch), y, 6, abs(height));
+
+            // output
+            height = ProportionCV(ViewOut(ch), 32);
+            y = constrain(32 - height, 0, 32);
+            gfxInvert(11 + (32 * ch), y, 12, abs(height));
+
+            gfxLine(32 * ch, 0, 32*ch, 63); // vertical divider, left side
+        }
+        gfxLine(127, 0, 127, 63); // vertical line, right side
+    }
 
     /////////////////////////////////////////////////////////////////
     // Control handlers
@@ -418,6 +442,8 @@ private:
     uint32_t click_tick = 0;
     bool first_click = 0;
     bool clock_setup = 0;
+
+    int trigger_flash[NR_OF_CHANNELS];
 
     SegmentDisplay segment;
     braids::Quantizer quantizer[NR_OF_CHANNELS];
@@ -584,9 +610,7 @@ void Calibr8or_loop() {} // Deprecated
 void Calibr8or_menu() { Calibr8or_instance.BaseView(); }
 
 void Calibr8or_screensaver() {
-    // XXX: Consider a view like Quantermain
-    // other ideas: Actual note being played, current transpose setting
-    // ...for all 4 channels at once.
+    Calibr8or_instance.Screensaver();
 }
 
 void Calibr8or_handleButtonEvent(const UI::Event &event) {
