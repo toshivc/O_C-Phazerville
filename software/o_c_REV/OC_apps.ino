@@ -38,36 +38,47 @@
 }
 
 OC::App available_apps[] = {
+
   #ifdef ENABLE_APP_CALIBR8OR
   DECLARE_APP('C','8', "Calibr8or", Calibr8or),
   #endif
-
   DECLARE_APP('H','S', "Hemisphere", HEMISPHERE),
+  #ifdef ENABLE_APP_ASR
+  DECLARE_APP('A','S', "CopierMaschine", ASR),
+  #endif
+  #ifdef ENABLE_APP_H1200
+  DECLARE_APP('H','A', "Harrington 1200", H1200),
+  #endif
+  #ifdef ENABLE_APP_AUTOMATONNETZ
+  DECLARE_APP('A','T', "Automatonnetz", Automatonnetz),
+  #endif
   #ifdef ENABLE_APP_QUANTERMAIN
   DECLARE_APP('Q','Q', "Quantermain", QQ),
   #endif
   #ifdef ENABLE_APP_METAQ
   DECLARE_APP('M','!', "Meta-Q", DQ),
   #endif
-
+  #ifdef ENABLE_APP_POLYLFO
+  DECLARE_APP('P','L', "Quadraturia", POLYLFO),
+  #endif
+  #ifdef ENABLE_APP_LORENZ
+  DECLARE_APP('L','R', "Low-rents", LORENZ),
+  #endif
   #ifdef ENABLE_APP_PIQUED
   DECLARE_APP('E','G', "Piqued", ENVGEN),
-  #endif
-
-  #ifdef ENABLE_APP_CHORDS
-  DECLARE_APP('A','C', "Acid Curds", CHORDS),
   #endif
   #ifdef ENABLE_APP_SEQUINS
   DECLARE_APP('S','Q', "Sequins", SEQ),
   #endif
-
-  #ifdef ENABLE_APP_POLYLFO
-  DECLARE_APP('P','L', "Quadraturia", POLYLFO),
+  #ifdef ENABLE_APP_BBGEN
+  DECLARE_APP('B','B', "Dialectic Pong", BBGEN),
   #endif
-  #ifdef ENABLE_APP_H1200
-  DECLARE_APP('H','A', "Harrington 1200", H1200),
+  #ifdef ENABLE_APP_BYTEBEATGEN
+  DECLARE_APP('B','Y', "Viznutcracker", BYTEBEATGEN),
   #endif
-
+  #ifdef ENABLE_APP_CHORDS
+  DECLARE_APP('A','C', "Acid Curds", CHORDS),
+  #endif
   #ifdef ENABLE_APP_MIDI
   DECLARE_APP('M','I', "Captain MIDI", MIDI),
   #endif
@@ -103,7 +114,7 @@ struct GlobalSettings {
   bool reserved1;
   uint32_t DAC_scaling;
   uint16_t current_app_id;
-  
+
   OC::Scale user_scales[OC::Scales::SCALE_USER_LAST];
   OC::Pattern user_patterns[OC::Patterns::PATTERN_USER_ALL];
   HS::TuringMachine user_turing_machines[HS::TURING_MACHINE_COUNT];
@@ -151,7 +162,7 @@ void save_global_settings() {
   memcpy(global_settings.auto_calibration_data, OC::auto_calibration_data, sizeof(OC::auto_calibration_data));
   // scaling settings:
   global_settings.DAC_scaling = OC::DAC::store_scaling();
-  
+
   global_settings_storage.Save(global_settings);
   SERIAL_PRINTLN("Saved global settings: page_index %d", global_settings_storage.page_index());
 }
@@ -270,7 +281,7 @@ void Init(bool reset_settings) {
   global_settings.encoders_enable_acceleration = OC_ENCODERS_ENABLE_ACCELERATION_DEFAULT;
   global_settings.reserved0 = false;
   global_settings.reserved1 = false;
-  global_settings.DAC_scaling = VOLTAGE_SCALING_1V_PER_OCT; 
+  global_settings.DAC_scaling = VOLTAGE_SCALING_1V_PER_OCT;
 
   if (reset_settings) {
     if (ui.ConfirmReset()) {
@@ -354,8 +365,9 @@ void draw_app_menu(const menu::ScreenCursor<5> &cursor) {
     item.SetPrintPos();
     graphics.movePrintPos(weegfx::Graphics::kFixedFontW, 0);
     graphics.print(available_apps[current].name);
-//    if (global_settings.current_app_id == available_apps[current].id)
-//       graphics.drawBitmap8(item.x + 2, item.y + 1, 4, bitmap_indicator_4x8);
+
+  //  if (global_settings.current_app_id == available_apps[current].id)
+  //     graphics.drawBitmap8(item.x + 2, item.y + 1, 4, bitmap_indicator_4x8);
     graphics.drawBitmap8(0, item.y + 1, 8,
         global_settings.current_app_id == available_apps[current].id ? CHECK_ON_ICON : CHECK_OFF_ICON);
     item.DrawCustom();
