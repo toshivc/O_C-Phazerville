@@ -45,14 +45,35 @@ public:
 
     // The ClockSetup controller handles MIDI Clock and Transport Start/Stop
     void Controller() {
-        if (start_q){
-            start_q = 0;
-            usbMIDI.sendRealTime(usbMIDI.Start);
+        bool clock_sync = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
+        bool reset = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
+
+        // MIDI Clock is filtered to 2 PPQN
+        if (frame.MIDIState.clock_q) {
+            frame.MIDIState.clock_q = 0;
+            clock_sync = 1;
         }
-        if (stop_q){
-            stop_q = 0;
-            usbMIDI.sendRealTime(usbMIDI.Stop);
+        if (frame.MIDIState.start_q) {
+            frame.MIDIState.start_q = 0;
+            clock_m->DisableMIDIOut();
+            clock_m->Start();
         }
+        if (frame.MIDIState.stop_q) {
+            frame.MIDIState.stop_q = 0;
+            clock_m->Stop();
+            clock_m->EnableMIDIOut();
+        }
+
+        // Paused means wait for clock-sync to start
+        if (clock_m->IsPaused() && clock_sync)
+            clock_m->Start();
+        // TODO: automatically stop...
+
+        // Advance internal clock, sync to external clock / reset
+        if (clock_m->IsRunning())
+            clock_m->SyncTrig( clock_sync, reset );
+
+        // ------------ //
         if (clock_m->IsRunning() && clock_m->MIDITock()) usbMIDI.sendRealTime(usbMIDI.Clock);
 
         // 4 internal clock flashers
@@ -154,8 +175,8 @@ public:
         }
 
         // other config settings are kept here as well, it's convenient
-        Pack(data, PackLocation { 50, 2 }, HemisphereApplet::modal_edit_mode);
-        Pack(data, PackLocation { 52, 7 }, HemisphereApplet::trig_length);
+        Pack(data, PackLocation { 50, 2 }, HS::modal_edit_mode);
+        Pack(data, PackLocation { 52, 7 }, HS::trig_length);
 
         return data;
     }
@@ -175,8 +196,8 @@ public:
             clock_m->SetMultiply(Unpack(data, PackLocation { 16+i*6, 6 })-32, i);
         }
 
-        HemisphereApplet::modal_edit_mode = Unpack(data, PackLocation { 50, 2 });
-        HemisphereApplet::trig_length = constrain( Unpack(data, PackLocation { 52, 7 }), 1, 127);
+        HS::modal_edit_mode = Unpack(data, PackLocation { 50, 2 });
+        HS::trig_length = constrain( Unpack(data, PackLocation { 52, 7 }), 1, 127);
     }
 
 protected:
@@ -191,8 +212,6 @@ protected:
 
 private:
     int cursor; // ClockSetupCursor
-    bool start_q;
-    bool stop_q;
     int flash_ticker[4];
     int button_ticker;
     ClockManager *clock_m = clock_m->get();
@@ -205,11 +224,10 @@ private:
 
     void PlayStop() {
         if (clock_m->IsRunning()) {
-            stop_q = 1;
             clock_m->Stop();
         } else {
-            start_q = clock_m->IsPaused();
-            clock_m->Start( !start_q ); // stop->pause->start
+            bool p = clock_m->IsPaused();
+            clock_m->Start( !p ); // stop->pause->start
         }
     }
 

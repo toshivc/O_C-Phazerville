@@ -167,7 +167,6 @@ class HemisphereManager : public HSApplication {
 public:
     void Start() {
         select_mode = -1; // Not selecting
-        midi_in_hemisphere = -1; // No MIDI In
 
         help_hemisphere = -1;
         clock_setup = 0;
@@ -225,8 +224,6 @@ public:
     // does not modify the preset, only the manager
     void SetApplet(int hemisphere, int index) {
         my_applet[hemisphere] = index;
-        if (midi_in_hemisphere == hemisphere) midi_in_hemisphere = -1;
-        if (HS::available_applets[index].id & 0x80) midi_in_hemisphere = hemisphere;
         HS::available_applets[index].Start(hemisphere);
     }
 
@@ -239,40 +236,73 @@ public:
         return select_mode > -1;
     }
 
-    void Controller() {
-        // TODO: eliminate the need for this with top-level MIDI handling
-        if (midi_in_hemisphere == -1) {
-            // Only one ISR can look for MIDI messages at a time, so we need to check
-            // for another MIDI In applet before looking for sysex. Note that applets
-            // that use MIDI In should check for sysex themselves; see Midi In for an
-            // example.
-            if (usbMIDI.read() && usbMIDI.getType() == usbMIDI.SystemExclusive) {
-                if (hem_active_preset)
-                    hem_active_preset->OnReceiveSysEx();
+    void ProcessMIDI() {
+        HS::IOFrame &f = HS::frame;
+
+        while (usbMIDI.read()) {
+            const int message = usbMIDI.getType();
+            const int data1 = usbMIDI.getData1();
+            const int data2 = usbMIDI.getData2();
+
+            if (message == usbMIDI.SystemExclusive) {
+                ReceiveManagerSysEx();
+                continue;
             }
+
+            f.MIDIState.ProcessMIDIMsg(usbMIDI.getChannel(), message, data1, data2);
+        }
+    }
+
+    void Controller() {
+        // top-level MIDI-to-CV handling - alters frame outputs
+        ProcessMIDI();
+
+        // Load the IO frame from CV inputs
+        HS::frame.Load();
+
+        // XXX: kind of a crutch, should be replaced with general Trigger input mapping
+        if (clock_m->IsForwarded()) {
+            HS::frame.clocked[2] = HS::frame.clocked[0];
         }
 
-        bool clock_sync = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
-        bool reset = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
+        // Clock Setup applet handles internal clock duties
+        HS::clock_setup_applet.Controller(LEFT_HEMISPHERE, 0);
 
-        // Paused means wait for clock-sync to start
-        if (clock_m->IsPaused() && clock_sync) {
-            clock_m->Start();
-            usbMIDI.sendRealTime(usbMIDI.Start);
-        }
-        // TODO: automatically stop...
-
-        // Advance internal clock, sync to external clock / reset
-        if (clock_m->IsRunning()) clock_m->SyncTrig( clock_sync, reset );
-
-        // NJM: always execute ClockSetup controller - it handles MIDI clock out
-        HS::clock_setup_applet.Controller(LEFT_HEMISPHERE, clock_m->IsForwarded());
-
+        // execute Applets
         for (int h = 0; h < 2; h++)
         {
             int index = my_applet[h];
-            HS::available_applets[index].Controller(h, clock_m->IsForwarded());
+            if (HS::available_applets[index].id != 150) // not MIDI In
+            {
+                ForEachChannel(ch) {
+                    int chan = h*2 + ch;
+                    // override CV inputs with applicable MIDI signals
+                    switch (HS::frame.MIDIState.function[chan]) {
+                    case HEM_MIDI_CC_OUT:
+                    case HEM_MIDI_NOTE_OUT:
+                    case HEM_MIDI_VEL_OUT:
+                    case HEM_MIDI_AT_OUT:
+                    case HEM_MIDI_PB_OUT:
+                        HS::frame.inputs[chan] = HS::frame.MIDIState.outputs[chan];
+                        break;
+                    case HEM_MIDI_GATE_OUT:
+                        // XXX: how do we want this one to behave? override digital? or CV? both?
+                        HS::frame.gate_high[chan] = (HS::frame.MIDIState.outputs[chan] > (12 << 7));
+                        break;
+                    case HEM_MIDI_TRIG_OUT:
+                    case HEM_MIDI_CLOCK_OUT:
+                    case HEM_MIDI_START_OUT:
+                        HS::frame.clocked[chan] = HS::frame.MIDIState.trigout_q[chan];
+                        HS::frame.MIDIState.trigout_q[chan] = 0;
+                        break;
+                    }
+                }
+            }
+            HS::available_applets[index].Controller(h, 0);
         }
+
+        // set outputs from IO frame
+        HS::frame.Send();
     }
 
     void View() {
@@ -426,11 +456,9 @@ public:
     void ToggleClockRun() {
         if (clock_m->IsRunning()) {
             clock_m->Stop();
-            usbMIDI.sendRealTime(usbMIDI.Stop);
         } else {
             bool p = clock_m->IsPaused();
             clock_m->Start( !p );
-            if (p) usbMIDI.sendRealTime(usbMIDI.Start);
         }
     }
 
@@ -468,7 +496,6 @@ private:
     int config_cursor = 0;
 
     int help_hemisphere; // Which of the hemispheres (if any) is in help mode, or -1 if none
-    int midi_in_hemisphere; // Which of the hemispheres (if any) is using MIDI In
     uint32_t click_tick; // Measure time between clicks for double-click
     int first_click; // The first button pushed of a double-click set, to see if the same one is pressed
     ClockManager *clock_m = clock_m->get();
@@ -490,7 +517,7 @@ private:
         }
 
         if (config_cursor == TRIG_LENGTH) {
-            HemisphereApplet::trig_length = (uint32_t) constrain( int(HemisphereApplet::trig_length + dir), 1, 127);
+            HS::trig_length = (uint32_t) constrain( int(HS::trig_length + dir), 1, 127);
         }
         else if (config_cursor == SAVE_PRESET || config_cursor == LOAD_PRESET) {
             preset_cursor = constrain(preset_cursor + dir, 1, HEM_NR_OF_PRESETS);
@@ -521,7 +548,7 @@ private:
             break;
 
         case CURSOR_MODE:
-            HemisphereApplet::CycleEditMode();
+            HS::CycleEditMode();
             break;
         }
     }
@@ -539,11 +566,11 @@ private:
         gfxPrint(48, 15, "Load / Save");
 
         gfxPrint(1, 35, "Trig Length: ");
-        gfxPrint(HemisphereApplet::trig_length);
+        gfxPrint(HS::trig_length);
 
         const char * cursor_mode_name[3] = { "legacy", "modal", "modal+wrap" };
         gfxPrint(1, 45, "Cursor:  ");
-        gfxPrint(cursor_mode_name[HemisphereApplet::modal_edit_mode]);
+        gfxPrint(cursor_mode_name[HS::modal_edit_mode]);
         
         switch (config_cursor) {
         case LOAD_PRESET:
@@ -590,14 +617,6 @@ private:
         index += dir;
         if (index >= HEMISPHERE_AVAILABLE_APPLETS) index = 0;
         if (index < 0) index = HEMISPHERE_AVAILABLE_APPLETS - 1;
-
-        // If an applet uses MIDI In, it can only be selected in one
-        // hemisphere, and is designated by bit 7 set in its id.
-        if (HS::available_applets[index].id & 0x80) {
-            if (midi_in_hemisphere == (1 - select_mode)) {
-                return get_next_applet_index(index, dir);
-            }
-        }
 
         return index;
     }

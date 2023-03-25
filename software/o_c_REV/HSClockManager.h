@@ -52,6 +52,7 @@ class ClockManager {
     bool running = 0; // Specifies whether the clock is running for interprocess communication
     bool paused = 0; // Specifies whethr the clock is paused
     bool forwarded = 0; // Master clock forwarding is enabled when true
+    bool midi_out_enabled = 1;
 
     uint32_t clock_tick = 0; // tick when a physical clock was received on DIGITAL 1
     uint32_t beat_tick = 0; // The tick to count from
@@ -73,6 +74,9 @@ public:
         if (!instance) instance = new ClockManager;
         return instance;
     }
+
+    void EnableMIDIOut() { midi_out_enabled = 1; }
+    void DisableMIDIOut() { midi_out_enabled = 0; }
 
     void SetMultiply(int multiply, int ch = 0) {
         multiply = constrain(multiply, CLOCK_MIN_MULTIPLE, CLOCK_MAX_MULTIPLE);
@@ -207,11 +211,13 @@ public:
         Reset();
         running = 1;
         paused = p;
+        if (!p && midi_out_enabled) usbMIDI.sendRealTime(usbMIDI.Start);
     }
 
     void Stop() {
         running = 0;
         paused = 0;
+        if (midi_out_enabled) usbMIDI.sendRealTime(usbMIDI.Stop);
     }
 
     void Pause() {paused = 1;}
@@ -247,7 +253,7 @@ public:
 
     // Returns true if MIDI Clock should be sent on this tick
     bool MIDITock() {
-        return Tock(MIDI_CLOCK);
+        return midi_out_enabled && Tock(MIDI_CLOCK);
     }
 
     bool EndOfBeat(int ch = 0) {return count[ch] == 1;}

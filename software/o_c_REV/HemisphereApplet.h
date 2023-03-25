@@ -25,12 +25,12 @@
 //// Hemisphere Applet Base Class
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HEMISPHEREAPPLET_H_
-#define HEMISPHEREAPPLET_H_
+#pragma once
 
 #include "HSicons.h"
 #include "HSClockManager.h"
 #include "src/drivers/FreqMeasure/OC_FreqMeasure.h"
+#include "util/util_math.h"
 
 #define LEFT_HEMISPHERE 0
 #define RIGHT_HEMISPHERE 1
@@ -76,7 +76,8 @@ typedef int32_t simfloat;
 
 // Hemisphere-specific macros
 #define BottomAlign(h) (62 - h)
-#define ForEachChannel(ch) for(int_fast8_t ch = 0; ch < 2; ch++)
+#define ForEachChannel(ch) for(int_fast8_t ch = 0; ch < 2; ++ch)
+#define ForAllChannels(ch) for(int_fast8_t ch = 0; ch < 4; ++ch)
 #define gfx_offset (hemisphere * 64) // Graphics offset, based on the side
 #define io_offset (hemisphere * 2) // Input/Output offset, based on the side
 
@@ -93,6 +94,59 @@ typedef int32_t simfloat;
 
 #include "hemisphere_config.h"
 #include "braids_quantizer.h"
+
+//////////////// Calculation methods
+////////////////////////////////////////////////////////////////////////////////
+
+/* Proportion method using simfloat, useful for calculating scaled values given
+ * a fractional value.
+ *
+ * Solves this:  numerator        ???
+ *              ----------- = -----------
+ *              denominator       max
+ *
+ * For example, to convert a parameter with a range of 1 to 100 into value scaled
+ * to HEMISPHERE_MAX_CV, to be sent to the DAC:
+ *
+ * Out(ch, Proportion(value, 100, HEMISPHERE_MAX_CV));
+ *
+ */
+int Proportion(int numerator, int denominator, int max_value) {
+    simfloat proportion = int2simfloat((int32_t)numerator) / (int32_t)denominator;
+    int scaled = simfloat2int(proportion * max_value);
+    return scaled;
+}
+
+/* Proportion CV values into pixels for display purposes.
+ *
+ * Solves this:     cv_value           ???
+ *              ----------------- = ----------
+ *              HEMISPHERE_MAX_CV   max_pixels
+ */
+int ProportionCV(int cv_value, int max_pixels) {
+    int prop = constrain(Proportion(cv_value, HEMISPHERE_MAX_INPUT_CV, max_pixels), 0, max_pixels);
+    return prop;
+}
+
+// Specifies where data goes in flash storage for each selcted applet, and how big it is
+typedef struct PackLocation {
+    size_t location;
+    size_t size;
+} PackLocation;
+
+/* Add value to a 64-bit storage unit at the specified location */
+void Pack(uint64_t &data, PackLocation p, uint64_t value) {
+    data |= (value << p.location);
+}
+
+/* Retrieve value from a 64-bit storage unit at the specified location and of the specified bit size */
+int Unpack(uint64_t data, PackLocation p) {
+    uint64_t mask = 1;
+    for (size_t i = 1; i < p.size; i++) mask |= (0x01 << i);
+    return (data >> p.location) & mask;
+}
+
+#include "HSIOFrame.h"
 
 namespace HS {
 
@@ -112,37 +166,21 @@ typedef struct Applet {
 Applet available_applets[] = HEMISPHERE_APPLETS;
 Applet clock_setup_applet = DECLARE_APPLET(9999, 0x01, ClockSetup);
 
+static IOFrame frame;
+
 int octave_max = 5;
 
-braids::Quantizer quantizer[4];
+uint8_t modal_edit_mode = 2; // 0=old behavior, 1=modal editing, 2=modal with wraparound
+static void CycleEditMode() { ++modal_edit_mode %= 3; }
+
 }
 
-// Specifies where data goes in flash storage for each selcted applet, and how big it is
-typedef struct PackLocation {
-    size_t location;
-    size_t size;
-} PackLocation;
+using namespace HS;
 
 class HemisphereApplet {
 public:
-    static int inputs[4];
-    static int outputs[4];
-    static int outputs_smooth[4];
-    static int clock_countdown[4];
-    static int adc_lag_countdown[4]; // Time between a clock event and an ADC read event
-    static uint32_t last_clock[4]; // Tick number of the last clock observed by the child class
-    static uint32_t cycle_ticks[4]; // Number of ticks between last two clocks
-    static bool changed_cv[4]; // Has the input changed by more than 1/8 semitone since the last read?
-    static int last_cv[4]; // For change detection
+    //static HSIOFrame frame;
     static int cursor_countdown[2];
-
-    static uint8_t trig_length;
-    static uint8_t modal_edit_mode;
-
-    static void CycleEditMode() {
-        ++modal_edit_mode %= 3;
-    }
-
 
     virtual const char* applet_name(); // Maximum of 9 characters
     virtual void Start();
@@ -155,11 +193,11 @@ public:
         // Initialize some things for startup
         ForEachChannel(ch)
         {
-            clock_countdown[io_offset + ch]  = 0;
-            inputs[io_offset + ch] = 0;
-            outputs[io_offset + ch] = 0;
-            outputs_smooth[io_offset + ch] = 0;
-            adc_lag_countdown[io_offset + ch] = 0;
+            frame.clock_countdown[io_offset + ch]  = 0;
+            frame.inputs[io_offset + ch] = 0;
+            frame.outputs[io_offset + ch] = 0;
+            frame.outputs_smooth[io_offset + ch] = 0;
+            frame.adc_lag_countdown[io_offset + ch] = 0;
         }
         help_active = 0;
         cursor_countdown[hemisphere] = HEMISPHERE_CURSOR_TICKS;
@@ -182,23 +220,10 @@ public:
         }
     }
 
-    void BaseController(bool master_clock_on) {
-        master_clock_bus = (master_clock_on && hemisphere == RIGHT_HEMISPHERE);
-        ForEachChannel(ch)
-        {
-            // Set CV inputs
-            ADC_CHANNEL channel = (ADC_CHANNEL)(ch + io_offset);
-            inputs[channel] = OC::ADC::raw_pitch_value(channel);
-            if (abs(inputs[channel] - last_cv[channel]) > HEMISPHERE_CHANGE_THRESHOLD) {
-                changed_cv[channel] = 1;
-                last_cv[channel] = inputs[channel];
-            } else changed_cv[channel] = 0;
-
-            // Handle clock timing
-            if (clock_countdown[channel] > 0) {
-                if (--clock_countdown[channel] == 0) Out(ch, 0);
-            }
-        }
+    void BaseController(bool master_clock_on = false) {
+        // I moved the IO-related stuff to the parent HemisphereManager app.
+        // The IOFrame gets loaded before calling Controllers, and outputs are handled after.
+        // -NJM
 
         // Cursor countdowns. See CursorBlink(), ResetCursor(), gfxCursor()
         if (--cursor_countdown[hemisphere] < -HEMISPHERE_CURSOR_TICKS) cursor_countdown[hemisphere] = HEMISPHERE_CURSOR_TICKS;
@@ -393,7 +418,7 @@ public:
     //////////////// Offset I/O methods
     ////////////////////////////////////////////////////////////////////////////////
     int In(int ch) {
-        return inputs[io_offset + ch];
+        return frame.inputs[io_offset + ch];
     }
 
     // Apply small center detent to input, so it reads zero before a threshold
@@ -419,16 +444,13 @@ public:
     }
 
     void Out(int ch, int value, int octave = 0) {
-        DAC_CHANNEL channel = (DAC_CHANNEL)(ch + io_offset);
-        OC::DAC::set_pitch(channel, value, octave);
-        outputs[channel] = value + (octave * (12 << 7));
+        frame.Out( (DAC_CHANNEL)(ch + io_offset), value + (octave * (12 << 7)));
     }
 
     void SmoothedOut(int ch, int value, int kSmoothing) {
         DAC_CHANNEL channel = (DAC_CHANNEL)(ch + io_offset);
-        value = (outputs_smooth[channel] * (kSmoothing - 1) + value) / kSmoothing;
-        OC::DAC::set_pitch(channel, value, 0);
-        outputs[channel] = outputs_smooth[channel] = value;
+        value = (frame.outputs_smooth[channel] * (kSmoothing - 1) + value) / kSmoothing;
+        frame.outputs[channel] = frame.outputs_smooth[channel] = value;
     }
 
     /*
@@ -442,60 +464,28 @@ public:
         ClockManager *clock_m = clock_m->get();
         bool useTock = (!physical && clock_m->IsRunning());
 
-        if (ch == 0) { // clock triggers
-            if (hemisphere == LEFT_HEMISPHERE) {
-                if (useTock && clock_m->GetMultiply(0) != 0)
-                    clocked = clock_m->Tock(0);
-                else
-                    clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
-            } else { // right side is special
-                if (useTock && clock_m->GetMultiply(2) != 0)
-                    clocked = clock_m->Tock(2);
-                else if (master_clock_bus) // forwarding from left
-                    clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
-                else
-                    clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_3>();
-            }
-        } else if (ch == 1) { // TR2 and TR4
-            if (hemisphere == LEFT_HEMISPHERE) {
-                if (useTock && clock_m->GetMultiply(1) != 0)
-                    clocked = clock_m->Tock(1);
-                else
-                    clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_2>();
-            }
-            else {
-                if (useTock && clock_m->GetMultiply(3) != 0)
-                    clocked = clock_m->Tock(3);
-                else
-                    clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
-            }
-        }
+        // clock triggers
+        if (useTock && clock_m->GetMultiply(ch + io_offset) != 0)
+            clocked = clock_m->Tock(ch + io_offset);
+        else
+            clocked = frame.clocked[ch + io_offset];
 
+        // Try to eat a boop
         clocked = clocked || clock_m->Beep(io_offset + ch);
 
         if (clocked) {
-            cycle_ticks[io_offset + ch] = OC::CORE::ticks - last_clock[io_offset + ch];
-            last_clock[io_offset + ch] = OC::CORE::ticks;
+            frame.cycle_ticks[io_offset + ch] = OC::CORE::ticks - frame.last_clock[io_offset + ch];
+            frame.last_clock[io_offset + ch] = OC::CORE::ticks;
         }
         return clocked;
     }
 
-    void ClockOut(int ch, int ticks = HEMISPHERE_CLOCK_TICKS) {
-        clock_countdown[io_offset + ch] = ticks * trig_length;
-        Out(ch, 0, PULSE_VOLTAGE);
+    void ClockOut(const int ch, const int ticks = HEMISPHERE_CLOCK_TICKS) {
+        frame.ClockOut( (DAC_CHANNEL)(io_offset + ch), ticks * trig_length);
     }
 
     bool Gate(int ch) {
-        bool high = 0;
-        if (hemisphere == 0) {
-            if (ch == 0) high = OC::DigitalInputs::read_immediate<OC::DIGITAL_INPUT_1>();
-            if (ch == 1) high = OC::DigitalInputs::read_immediate<OC::DIGITAL_INPUT_2>();
-        }
-        if (hemisphere == 1) {
-            if (ch == 0) high = OC::DigitalInputs::read_immediate<OC::DIGITAL_INPUT_3>();
-            if (ch == 1) high = OC::DigitalInputs::read_immediate<OC::DIGITAL_INPUT_4>();
-        }
-        return high;
+        return frame.gate_high[ch + io_offset];
     }
 
     void GateOut(int ch, bool high) {
@@ -503,10 +493,10 @@ public:
     }
 
     // Buffered I/O functions
-    int ViewIn(int ch) {return inputs[io_offset + ch];}
-    int ViewOut(int ch) {return outputs[io_offset + ch];}
-    int ClockCycleTicks(int ch) {return cycle_ticks[io_offset + ch];}
-    bool Changed(int ch) {return changed_cv[io_offset + ch];}
+    int ViewIn(int ch) {return frame.inputs[io_offset + ch];}
+    int ViewOut(int ch) {return frame.outputs[io_offset + ch];}
+    int ClockCycleTicks(int ch) {return frame.cycle_ticks[io_offset + ch];}
+    bool Changed(int ch) {return frame.changed_cv[io_offset + ch];}
 
 protected:
     bool hemisphere; // Which hemisphere (0, 1) this applet uses
@@ -521,50 +511,6 @@ protected:
         applet_started = 0;
     }
 
-    //////////////// Calculation methods
-    ////////////////////////////////////////////////////////////////////////////////
-
-    /* Proportion method using simfloat, useful for calculating scaled values given
-     * a fractional value.
-     *
-     * Solves this:  numerator        ???
-     *              ----------- = -----------
-     *              denominator       max
-     *
-     * For example, to convert a parameter with a range of 1 to 100 into value scaled
-     * to HEMISPHERE_MAX_CV, to be sent to the DAC:
-     *
-     * Out(ch, Proportion(value, 100, HEMISPHERE_MAX_CV));
-     *
-     */
-    int Proportion(int numerator, int denominator, int max_value) {
-        simfloat proportion = int2simfloat((int32_t)numerator) / (int32_t)denominator;
-        int scaled = simfloat2int(proportion * max_value);
-        return scaled;
-    }
-
-    /* Proportion CV values into pixels for display purposes.
-     *
-     * Solves this:     cv_value           ???
-     *              ----------------- = ----------
-     *              HEMISPHERE_MAX_CV   max_pixels
-     */
-    int ProportionCV(int cv_value, int max_pixels) {
-        int prop = constrain(Proportion(cv_value, HEMISPHERE_MAX_INPUT_CV, max_pixels), 0, max_pixels);
-        return prop;
-    }
-
-    /* Add value to a 64-bit storage unit at the specified location */
-    void Pack(uint64_t &data, PackLocation p, uint64_t value) {
-        data |= (value << p.location);
-    }
-
-    /* Retrieve value from a 64-bit storage unit at the specified location and of the specified bit size */
-    int Unpack(uint64_t data, PackLocation p) {
-        uint64_t mask = 1;
-        for (size_t i = 1; i < p.size; i++) mask |= (0x01 << i);
-        return (data >> p.location) & mask;
-    }
 
     /* ADC Lag: There is a small delay between when a digital input can be read and when an ADC can be
      * read. The ADC value lags behind a bit in time. So StartADCLag() and EndADCLag() are used to
@@ -578,34 +524,18 @@ protected:
      * }
      */
     void StartADCLag(bool ch = 0) {
-        adc_lag_countdown[io_offset + ch] = HEMISPHERE_ADC_LAG;
+        frame.adc_lag_countdown[io_offset + ch] = HEMISPHERE_ADC_LAG;
     }
 
     bool EndOfADCLag(bool ch = 0) {
-        if (adc_lag_countdown[io_offset + ch] < 0) return false;
-        return (--adc_lag_countdown[io_offset + ch] == 0);
+        if (frame.adc_lag_countdown[io_offset + ch] < 0) return false;
+        return (--frame.adc_lag_countdown[io_offset + ch] == 0);
     }
 
-    /* Master Clock Forwarding is activated. This is updated with each ISR cycle by the Hemisphere Manager */
-    bool MasterClockForwarded() {return master_clock_bus;}
-
 private:
-    bool master_clock_bus; // Clock forwarding was on during the last ISR cycle
     bool applet_started; // Allow the app to maintain state during switching
     bool help_active;
 };
 
-uint8_t HemisphereApplet::modal_edit_mode = 2; // 0=old behavior, 1=modal editing, 2=modal with wraparound
-uint8_t HemisphereApplet::trig_length = 2; // multiplier for HEMISPHERE_CLOCK_TICKS
-int HemisphereApplet::inputs[4];
-int HemisphereApplet::outputs[4];
-int HemisphereApplet::outputs_smooth[4];
-int HemisphereApplet::clock_countdown[4];
-int HemisphereApplet::adc_lag_countdown[4];
-uint32_t HemisphereApplet::last_clock[4];
-uint32_t HemisphereApplet::cycle_ticks[4];
-bool HemisphereApplet::changed_cv[4];
-int HemisphereApplet::last_cv[4];
 int HemisphereApplet::cursor_countdown[2];
 
-#endif // HEMISPHEREAPPLET_H_

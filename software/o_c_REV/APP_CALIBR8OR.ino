@@ -199,38 +199,26 @@ public:
 	void Resume() {
 	}
 
-    void Controller() {
-        bool clock_sync = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
-        bool reset = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
-        bool midi_sync = 0;
-
-        // flush MIDI input and catch incoming Clock
+    void ProcessMIDI() {
+        HS::IOFrame &f = HS::frame;
         while (usbMIDI.read()) {
-            switch (usbMIDI.getType()) {
-            case usbMIDI.Clock:
-                clock_sync = 1;
-                midi_sync = 1;
-                break;
-            case usbMIDI.Start:
-                clock_m->Start();
-                break;
-            case usbMIDI.Stop:
-                clock_m->Stop();
-                break;
+            const int message = usbMIDI.getType();
+            const int data1 = usbMIDI.getData1();
+            const int data2 = usbMIDI.getData2();
+
+            if (message == usbMIDI.SystemExclusive) {
+                // TODO: consider implementing SysEx import/export for Calibr8or
+                continue;
             }
-            // TODO: do we need to handle any other MIDI input?
-            // We will have to in Hemisphere... for the MIDI In applet.
-            // Might need to delegate other messages or something
+
+            f.MIDIState.ProcessMIDIMsg(usbMIDI.getChannel(), message, data1, data2);
         }
-        if (midi_sync) clock_m->SetClockPPQN(24); // rudely snap to MIDI clock sync speed
+    }
 
-        // Paused means wait for clock-sync to start
-        if (clock_m->IsPaused() && clock_sync) clock_m->Start();
+    void Controller() {
+        ProcessMIDI();
 
-        // Advance internal clock, sync to external clock / reset
-        if (clock_m->IsRunning()) clock_m->SyncTrig( clock_sync, reset );
-
-        // ClockSetup applet handles MIDI Clock Out
+        // ClockSetup applet handles internal clock duties
         HS::clock_setup_applet.Controller(0, 0);
 
         // -- core processing --
