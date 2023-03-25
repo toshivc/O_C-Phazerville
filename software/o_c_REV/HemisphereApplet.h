@@ -125,9 +125,11 @@ public:
     static int cursor_countdown[2];
 
     static uint8_t modal_edit_mode;
+    /* we might need this again...
     static void CycleEditMode() {
         ++modal_edit_mode %= 3;
     }
+    */
 
     virtual const char* applet_name(); // Maximum of 9 characters
     virtual void Start();
@@ -571,7 +573,7 @@ private:
     bool help_active;
 };
 
-uint8_t HemisphereApplet::modal_edit_mode = 1; // 0=old behavior, 1=modal editing, 2=modal with wraparound
+uint8_t HemisphereApplet::modal_edit_mode = 2; // 0=old behavior, 1=modal editing, 2=modal with wraparound
 int HemisphereApplet::inputs[4];
 int HemisphereApplet::outputs[4];
 int HemisphereApplet::outputs_smooth[4];

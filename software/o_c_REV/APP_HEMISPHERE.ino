@@ -434,7 +434,7 @@ void HEMISPHERE_handleButtonEvent(const UI::Event &event) {
         break;
 
     case UI::EVENT_BUTTON_LONG_PRESS:
-        if (event.control == OC::CONTROL_BUTTON_DOWN) HemisphereApplet::CycleEditMode();
+        if (event.control == OC::CONTROL_BUTTON_DOWN) manager.ToggleClockSetup();
         if (event.control == OC::CONTROL_BUTTON_L) manager.ToggleClockRun();
         break;
 
