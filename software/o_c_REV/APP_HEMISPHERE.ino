@@ -233,8 +233,13 @@ public:
     }
 
     void ToggleClockRun() {
-        if (clock_m->IsRunning()) clock_m->Stop();
-        else clock_m->Start();
+        if (clock_m->IsRunning()) {
+            clock_m->Stop();
+            usbMIDI.sendRealTime(usbMIDI.Stop);
+        } else {
+            clock_m->Start();
+            usbMIDI.sendRealTime(usbMIDI.Start);
+        }
     }
 
     void ToggleClockSetup() {
