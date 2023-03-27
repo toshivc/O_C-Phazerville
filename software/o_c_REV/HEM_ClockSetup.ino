@@ -55,7 +55,15 @@ public:
         }
         if (clock_m->IsRunning() && clock_m->MIDITock()) usbMIDI.sendRealTime(usbMIDI.Clock);
 
-        if (flash_ticker) --flash_ticker;
+        // 4 internal clock flashers
+        for (int i = 0; i < 4; ++i) {
+            if (clock_m->Tock(i))
+                flash_ticker[i] = HEMISPHERE_PULSE_ANIMATION_TIME;
+            else if (flash_ticker[i])
+                --flash_ticker[i];
+        }
+
+        if (button_ticker) --button_ticker;
     }
 
     void View() {
@@ -68,7 +76,7 @@ public:
             else if (cursor == FORWARDING) clock_m->ToggleForwarding();
             else if (cursor >= TRIG1) {
                 clock_m->Boop(cursor-TRIG1);
-                flash_ticker = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
+                button_ticker = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
             }
             else CursorAction(cursor, LAST_SETTING);
         }
@@ -95,7 +103,7 @@ public:
         case TRIG3:
         case TRIG4:
             clock_m->Boop(cursor-TRIG1);
-            flash_ticker = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
+            button_ticker = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
             break;
 
         case EXT_PPQN:
@@ -154,7 +162,8 @@ private:
     int cursor; // ClockSetupCursor
     bool start_q;
     bool stop_q;
-    int flash_ticker;
+    int flash_ticker[4];
+    int button_ticker;
     ClockManager *clock_m = clock_m->get();
 
     void PlayStop() {
@@ -199,17 +208,18 @@ private:
         gfxPrint(pad(100, clock_m->GetTempo()), clock_m->GetTempo());
         gfxPrint(" BPM");
 
-        // Multiply
         for (int ch=0; ch<4; ++ch) {
             int mult = clock_m->GetMultiply(ch);
-            gfxPrint(1 + ch*32, 37, (mult >= 0) ? "x" : "/");
-            gfxPrint( (mult >= 0) ? mult : 1 - mult );
-        }
+            int x = ch * 32;
 
-        // Manual triggers
-        for (int i=0; i<4; i++) {
-            gfxIcon(4 + i*32, 49, (flash_ticker && i == cursor-TRIG1)?BTN_ON_ICON:BTN_OFF_ICON);
-            gfxIcon(4 + i*32, 56, DOWN_BTN_ICON);
+            // Multipliers
+            gfxPrint(1 + x, 37, (mult >= 0) ? "x" : "/");
+            gfxPrint( (mult >= 0) ? mult : 1 - mult );
+
+            // Manual triggers
+            gfxIcon(4 + x, 47, (button_ticker && ch == cursor-TRIG1)?BTN_ON_ICON:BTN_OFF_ICON);
+            gfxIcon(4 + x, 54, DOWN_BTN_ICON);
+            if (flash_ticker[ch]) gfxInvert(3 + x, 56, 9, 8);
         }
 
         switch ((ClockSetupCursor)cursor) {
@@ -235,7 +245,7 @@ private:
         case TRIG2:
         case TRIG3:
         case TRIG4:
-            if (0 == flash_ticker)
+            if (0 == button_ticker)
                 gfxIcon(12 + 32*(cursor-TRIG1), 50, LEFT_ICON);
             break;
 
