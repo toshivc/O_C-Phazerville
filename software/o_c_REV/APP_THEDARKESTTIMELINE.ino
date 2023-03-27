@@ -81,9 +81,9 @@ public:
             int data2 = usbMIDI.getData2();
 
             // Handle system exclusive dump for Setup data
-            if (message == MIDI_MSG_SYSEX) OnReceiveSysEx();
+            if (message == HEM_MIDI_SYSEX) OnReceiveSysEx();
 
-            if (message == MIDI_MSG_NOTE_ON && channel == midi_channel_in()) {
+            if (message == HEM_MIDI_NOTE_ON && channel == midi_channel_in()) {
                 note_on = 1;
                 in_note_number = data1;
                 in_velocity = data2;

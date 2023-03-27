@@ -108,7 +108,7 @@ public:
             // for another MIDI In applet before looking for sysex. Note that applets
             // that use MIDI In should check for sysex themselves; see Midi In for an
             // example.
-            if (usbMIDI.read() && usbMIDI.getType() == 7) {
+            if (usbMIDI.read() && usbMIDI.getType() == usbMIDI.SystemExclusive) {
                 OnReceiveSysEx();
             }
         }

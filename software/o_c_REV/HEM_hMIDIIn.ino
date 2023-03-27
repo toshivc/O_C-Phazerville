@@ -22,24 +22,6 @@
 
 #define HEM_MIDI_CLOCK_DIVISOR 12
 
-#define HEM_MIDI_NOTE_ON 1
-#define HEM_MIDI_NOTE_OFF 0
-#define HEM_MIDI_CC 3
-#define HEM_MIDI_AFTERTOUCH 5
-#define HEM_MIDI_PITCHBEND 6
-#define HEM_MIDI_SYSEX 7
-#define HEM_MIDI_REALTIME 8
-
-// The functions available for each output
-#define HEM_MIDI_NOTE_OUT 0
-#define HEM_MIDI_TRIG_OUT 1
-#define HEM_MIDI_GATE_OUT 2
-#define HEM_MIDI_VEL_OUT 3
-#define HEM_MIDI_CC_OUT 4
-#define HEM_MIDI_AT_OUT 5
-#define HEM_MIDI_PB_OUT 6
-#define HEM_MIDI_REALTIME_OUT 7
-
 struct MIDILogEntry {
     int message;
     int data1;
@@ -48,6 +30,23 @@ struct MIDILogEntry {
 
 class hMIDIIn : public HemisphereApplet {
 public:
+
+// The functions available for each output
+// TODO: make this an enum
+    enum hMIDIFunctions {
+        HEM_MIDI_NOTE_OUT,
+        HEM_MIDI_TRIG_OUT,
+        HEM_MIDI_GATE_OUT,
+        HEM_MIDI_VEL_OUT,
+        HEM_MIDI_CC_OUT,
+        HEM_MIDI_AT_OUT,
+        HEM_MIDI_PB_OUT,
+        HEM_MIDI_CLOCK_OUT,
+        HEM_MIDI_START_OUT,
+
+        HEM_MIDI_MAX_FUNCTION = HEM_MIDI_START_OUT
+    };
+    const char* fn_name[HEM_MIDI_MAX_FUNCTION + 1] = {"Note#", "Trig", "Gate", "Veloc", "Mod", "Aft", "Bend", "Clock", "Start"};
 
     const char* applet_name() {
         return "MIDIIn";
@@ -68,32 +67,51 @@ public:
     }
 
     void Controller() {
-        if (usbMIDI.read()) {
+        while (usbMIDI.read()) {
             int message = usbMIDI.getType();
             int data1 = usbMIDI.getData1();
             int data2 = usbMIDI.getData2();
 
-            if (message == HEM_MIDI_SYSEX) ReceiveManagerSysEx();
+            if (message == HEM_MIDI_SYSEX) {
+                ReceiveManagerSysEx();
+                continue;
+            }
 
             // Listen for incoming clock
-            if (message == HEM_MIDI_REALTIME && data1 == 0) {
+            if (HEM_MIDI_CLOCK == message) {
                 if (++clock_count == 1) {
                     ForEachChannel(ch) 
                     {
-                        if (function[ch] == HEM_MIDI_REALTIME_OUT) {
+                        if (function[ch] == HEM_MIDI_CLOCK_OUT) {
                             ClockOut(ch);
                         }
                     }
                 }
                 if (clock_count == HEM_MIDI_CLOCK_DIVISOR) clock_count = 0;
+                continue;
             }
 
-            if (usbMIDI.getChannel() == (channel + 1)) {
+            if (HEM_MIDI_START == message) {
+                ForEachChannel(ch) 
+                {
+                    if (function[ch] == HEM_MIDI_START_OUT) {
+                        ClockOut(ch);
+                    }
+                }
+
+                UpdateLog(message, data1, data2);
+                continue;
+            }
+
+            // all other messages are filtered by MIDI channel
+            if (usbMIDI.getChannel() == (channel + 1))
+            {
                 last_tick = OC::CORE::ticks;
                 bool log_this = false;
 
                 if (message == HEM_MIDI_NOTE_ON) { // Note on
-                    if (first_note == -1) first_note = data1;
+                    // only track the most recent note
+                    first_note = data1;
 
                     // Should this message go out on any channel?
                     ForEachChannel(ch)
@@ -114,8 +132,10 @@ public:
                     log_this = 1; // Log all MIDI notes. Other stuff is conditional.
                 }
 
-                if (message == HEM_MIDI_NOTE_OFF) { // Note off
-                    if (data1 == first_note) first_note = -1;
+                // Note off - only for most recent note
+                if (message == HEM_MIDI_NOTE_OFF && data1 == first_note)
+                {
+                    first_note = -1;
 
                     // Should this message go out on any channel?
                     ForEachChannel(ch)
@@ -131,8 +151,7 @@ public:
                     ForEachChannel(ch)
                     {
                         if (function[ch] == HEM_MIDI_CC_OUT && data1 == 1) {
-                            int data = data2 << 8;
-                            Out(ch, Proportion(data, 0x7fff, HEMISPHERE_MAX_CV));
+                            Out(ch, Proportion(data2, 127, HEMISPHERE_MAX_CV));
                             log_this = 1;
                         }
                     }
@@ -143,13 +162,10 @@ public:
                     ForEachChannel(ch)
                     {
                         if (function[ch] == HEM_MIDI_AT_OUT) {
-                            int data = data2 << 8;
-                            Out(ch, Proportion(data, 0x7fff, HEMISPHERE_MAX_CV));
+                            Out(ch, Proportion(data1, 127, HEMISPHERE_MAX_CV));
                             log_this = 1;
                         }
                     }
-
-                    UpdateLog(message, data1, data2);
                 }
 
                 if (message == HEM_MIDI_PITCHBEND) { // Pitch Bend
@@ -165,7 +181,7 @@ public:
 
                 if (log_this) UpdateLog(message, data1, data2);
             }
-        }
+        } // while
     }
 
     void View() {
@@ -189,7 +205,7 @@ public:
         if (cursor == 0) channel = constrain(channel + direction, 0, 15);
         else {
             int ch = cursor - 1;
-            function[ch] = constrain(function[ch] + direction, 0, 7);
+            function[ch] = constrain(function[ch] + direction, 0, HEM_MIDI_MAX_FUNCTION);
             clock_count = 0;
         }
         ResetCursor();
@@ -228,7 +244,6 @@ private:
     int cursor; // 0=MIDI channel, 1=A/C function, 2=B/D function
     int last_tick; // Tick of last received message
     int first_note; // First note received, for awaiting Note Off
-    const char* fn_name[8] = {"Note#", "Trig", "Gate", "Veloc", "Mod", "Aft", "Bend", "Clock"};
     uint8_t clock_count; // MIDI clock counter (24ppqn)
     
     // Logging
@@ -287,31 +302,41 @@ private:
     }
 
     void log_entry(int y, int index) {
-        if (log[index].message == HEM_MIDI_NOTE_ON) {
+        switch ( log[index].message ) {
+        case HEM_MIDI_NOTE_ON:
             gfxBitmap(1, y, 8, NOTE_ICON);
             gfxPrint(10, y, midi_note_numbers[log[index].data1]);
             gfxPrint(40, y, log[index].data2);
-        }
+            break;
 
-        if (log[index].message == HEM_MIDI_NOTE_OFF) {
+        case HEM_MIDI_NOTE_OFF:
             gfxPrint(1, y, "-");
             gfxPrint(10, y, midi_note_numbers[log[index].data1]);
-        }
+            break;
 
-        if (log[index].message == HEM_MIDI_CC) {
+        case HEM_MIDI_CC:
             gfxBitmap(1, y, 8, MOD_ICON);
             gfxPrint(10, y, log[index].data2);
-        }
+            break;
 
-        if (log[index].message == HEM_MIDI_AFTERTOUCH) {
+        case HEM_MIDI_AFTERTOUCH:
             gfxBitmap(1, y, 8, AFTERTOUCH_ICON);
-            gfxPrint(10, y, log[index].data2);
-        }
+            gfxPrint(10, y, log[index].data1);
+            break;
 
-        if (log[index].message == HEM_MIDI_PITCHBEND) {
+        case HEM_MIDI_PITCHBEND: {
             int data = (log[index].data2 << 7) + log[index].data1 - 8192;
             gfxBitmap(1, y, 8, BEND_ICON);
             gfxPrint(10, y, data);
+            break;
+            }
+
+        default:
+            gfxPrint(1, y, "?");
+            gfxPrint(10, y, log[index].data1);
+            gfxPrint(" ");
+            gfxPrint(log[index].data2);
+            break;
         }
     }
 };
