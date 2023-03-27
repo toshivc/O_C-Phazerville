@@ -111,9 +111,6 @@ public:
     const int32_t octave = pitch / (12 << 7);
     const int32_t fractional = pitch - octave * (12 << 7);
 
-#ifdef FLIP_180
-    channel = DAC_CHANNEL(DAC_CHANNEL_LAST - channel - 1);
-#endif
     int32_t sample = calibration_data_->calibrated_octaves[channel][octave];
     if (fractional) {
       int32_t span = calibration_data_->calibrated_octaves[channel][octave + 1] - sample;
@@ -171,9 +168,6 @@ public:
     const int32_t octave = pitch / (12 << 7);
     const int32_t fractional = pitch - octave * (12 << 7);
 
-#ifdef FLIP_180
-    channel = DAC_CHANNEL(DAC_CHANNEL_LAST - channel - 1);
-#endif
     int32_t sample = calibration_data_->calibrated_octaves[channel][octave];
     if (fractional) {
       int32_t span = calibration_data_->calibrated_octaves[channel][octave + 1] - sample;
@@ -202,12 +196,7 @@ public:
 
   // Set integer voltage value, where 0 = 0V, 1 = 1V
   static void set_octave(DAC_CHANNEL channel, int v) {
-#ifdef FLIP_180
-    int cal_ch = DAC_CHANNEL(DAC_CHANNEL_LAST - channel - 1);
-#else
-    int cal_ch = channel;
-#endif
-    set(channel, calibration_data_->calibrated_octaves[cal_ch][kOctaveZero + v]);
+    set(channel, calibration_data_->calibrated_octaves[channel][kOctaveZero + v]);
   }
 
   // Set all channels to integer voltage value, where 0 = 0V, 1 = 1V
@@ -219,16 +208,10 @@ public:
   }
 
   static uint32_t get_zero_offset(DAC_CHANNEL channel) {
-#ifdef FLIP_180
-    channel = DAC_CHANNEL(DAC_CHANNEL_LAST - channel - 1);
-#endif
     return calibration_data_->calibrated_octaves[channel][kOctaveZero];
   }
 
   static uint32_t get_octave_offset(DAC_CHANNEL channel, int octave) {
-#ifdef FLIP_180
-    channel = DAC_CHANNEL(DAC_CHANNEL_LAST - channel - 1);
-#endif
     return calibration_data_->calibrated_octaves[channel][kOctaveZero + octave];
   }
 

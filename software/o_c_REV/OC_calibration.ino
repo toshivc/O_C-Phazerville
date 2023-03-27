@@ -79,6 +79,22 @@ void calibration_reset() {
   }
 }
 
+#ifdef FLIP_180
+void calibration_flip() {
+    uint16_t flip_dac[OCTAVES + 1];
+    uint16_t flip_adc;
+    for (int i = 0; i < 2; ++i) {
+        flip_adc = OC::calibration_data.adc.offset[i];
+        OC::calibration_data.adc.offset[i] = OC::calibration_data.adc.offset[ADC_CHANNEL_LAST-1 - i];
+        OC::calibration_data.adc.offset[ADC_CHANNEL_LAST-1 - i] = flip_adc;
+
+        memcpy(flip_dac, OC::calibration_data.dac.calibrated_octaves[i], sizeof(flip_dac));
+        memcpy(OC::calibration_data.dac.calibrated_octaves[i], OC::calibration_data.dac.calibrated_octaves[DAC_CHANNEL_LAST-1 - i], sizeof(flip_dac));
+        memcpy(OC::calibration_data.dac.calibrated_octaves[DAC_CHANNEL_LAST-1 - i], flip_dac, sizeof(flip_dac));
+    }
+}
+#endif
+
 void calibration_load() {
   SERIAL_PRINTLN("Cal.Storage: PAGESIZE=%u, PAGES=%u, LENGTH=%u",
                  OC::CalibrationStorage::PAGESIZE, OC::CalibrationStorage::PAGES, OC::CalibrationStorage::LENGTH);
@@ -97,6 +113,9 @@ void calibration_load() {
     SERIAL_PRINTLN("No calibration data, using defaults");
 #endif
   } else {
+#ifdef FLIP_180
+    calibration_flip();
+#endif
     SERIAL_PRINTLN("Calibration data loaded...");
   }
 
@@ -112,7 +131,13 @@ void calibration_load() {
 
 void calibration_save() {
   SERIAL_PRINTLN("Saving calibration data");
+#ifdef FLIP_180
+  calibration_flip();
+#endif
   OC::calibration_storage.Save(OC::calibration_data);
+#ifdef FLIP_180
+  calibration_flip();
+#endif
 }
 
 enum CALIBRATION_STEP {  
