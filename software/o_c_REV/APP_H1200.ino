@@ -33,6 +33,8 @@
 #include "util/util_ringbuffer.h"
 #include "bjorklund.h"
 
+namespace menu = OC::menu;
+
 // NOTE: H1200 state is updated in the ISR, and we're accessing shared state
 // (e.g. outputs) without any sync mechanism. So there is a chance of the
 // display being slightly inconsistent but the risk seems acceptable.
