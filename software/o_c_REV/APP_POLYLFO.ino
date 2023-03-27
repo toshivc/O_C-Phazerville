@@ -379,12 +379,19 @@ void POLYLFO_menu() {
     graphics.print("(T) Ch A: tap tempo") ;
   } else {
     float menu_freq_ = poly_lfo.lfo.get_freq_ch1();
+
     if (poly_lfo.freq_mult() < 0xFF) 
         graphics.drawBitmap8(122, menu::DefaultTitleBar::kTextY, 4, OC::bitmap_indicator_4x8); 
     if (menu_freq_ >= 0.1f) {
-        graphics.printf("(%s) Ch A: %6.2f Hz", PolyLfo::value_attr(poly_lfo_state.left_edit_mode).name, menu_freq_);
+        const int f = int(floor(menu_freq_ * 100));
+        const int value = f / 100;
+        const int cents = f % 100;
+        graphics.printf("(%s) Ch A: %3u.%02u Hz", PolyLfo::value_attr(poly_lfo_state.left_edit_mode).name, value, cents);
     } else {
-        graphics.printf("(%s) Ch A: %6.3fs", PolyLfo::value_attr(poly_lfo_state.left_edit_mode).name, 1.0f / menu_freq_);
+        const int f = int(floor(1.0f / menu_freq_ * 1000));
+        const int value = f / 1000;
+        const int cents = f % 1000;
+        graphics.printf("(%s) Ch A: %6u.%03us", PolyLfo::value_attr(poly_lfo_state.left_edit_mode).name, value, cents);
     }
   }
   menu::SettingsList<menu::kScreenLines, 0, menu::kDefaultValueX - 1> settings_list(poly_lfo_state.cursor);
