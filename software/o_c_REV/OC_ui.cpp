@@ -123,6 +123,9 @@ UiMode Ui::DispatchEvents(App *app) {
 
     switch (event.type) {
       case UI::EVENT_BUTTON_PRESS:
+        app->HandleButtonEvent(event);
+        break;
+      case UI::EVENT_BUTTON_DOWN:
 #ifdef VOR
     #ifdef VOR_NO_RANGE_BUTTON
         if (OC::CONTROL_BUTTON_UP == event.control) {
@@ -137,7 +140,6 @@ UiMode Ui::DispatchEvents(App *app) {
         } else app->HandleButtonEvent(event);
     #endif
 #else
-      case UI::EVENT_BUTTON_DOWN:
         app->HandleButtonEvent(event);
 #endif
         break;

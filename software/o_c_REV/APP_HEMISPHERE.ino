@@ -157,50 +157,67 @@ public:
     }
 
     void DelegateEncoderPush(const UI::Event &event) {
+        bool down = (event.type == UI::EVENT_BUTTON_DOWN);
         int h = (event.control == OC::CONTROL_BUTTON_L) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
-        if (clock_setup) {
-            HS::clock_setup_applet.OnButtonPress(LEFT_HEMISPHERE);
-        } else if (select_mode == h) {
+
+        // button down
+        if (down) {
+            // Clock Setup is more immediate for manual triggers
+            if (clock_setup) HS::clock_setup_applet.OnButtonPress(LEFT_HEMISPHERE);
+            // TODO: consider a new OnButtonDown handler for applets
+            return;
+        }
+
+        // button release
+        if (select_mode == h) {
             select_mode = -1; // Pushing a button for the selected side turns off select mode
-        } else {
+        } else if (!clock_setup) {
+            // regular applets get button release
             int index = my_applet[h];
-            if (event.type == UI::EVENT_BUTTON_DOWN) {
-                HS::available_applets[index].OnButtonPress(h);
-            }
+            HS::available_applets[index].OnButtonPress(h);
         }
     }
 
-    /*
-    void DelegateButtonRelease(const UI::Event &event) {
-        // TODO:
-    }
-    */
+    void DelegateSelectButtonPush(const UI::Event &event) {
+        bool down = (event.type == UI::EVENT_BUTTON_DOWN);
+        int hemisphere = (event.control == OC::CONTROL_BUTTON_UP) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
 
-    void DelegateSelectButtonPush(int hemisphere) {
-        if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME) {
-            // This is a double-click, so activate corresponding help screen, leave
-            // Select Mode, and reset the double-click timer
-            if (hemisphere == first_click)
-                SetHelpScreen(hemisphere);
-            else // up + down simultaneous
-                clock_setup = 1;
-            select_mode = -1;
-            click_tick = 0;
-        } else {
-            // This is a single click. If a help screen is already selected, and the
-            // button is for the opposite one, go to the other help screen
-            if (help_hemisphere > -1) {
-                if (help_hemisphere != hemisphere) SetHelpScreen(hemisphere);
-                else SetHelpScreen(-1); // Leave help screen if corresponding button is clicked
-            } else if (!clock_setup) {
-                // If we're in the clock setup screen, we want to exit the setup without turning on Select Mode
-                if (hemisphere == select_mode) select_mode = -1; // Leave Select Mode is same button is pressed
-                else select_mode = hemisphere; // Otherwise, set Select Mode
+        // -- button down
+        if (down) {
+            if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME) {
+                // This is a double-click. Activate corresponding help screen or Clock Setup
+                if (hemisphere == first_click)
+                    SetHelpScreen(hemisphere);
+                else // up + down simultaneous
+                    clock_setup = 1;
+
+                // leave Select Mode, and reset the double-click timer
+                select_mode = -1;
+                click_tick = 0;
+            } else {
+                // If a help screen is already selected, and the button is for
+                // the opposite one, go to the other help screen
+                if (help_hemisphere > -1) {
+                    if (help_hemisphere != hemisphere) SetHelpScreen(hemisphere);
+                    else SetHelpScreen(-1); // Leave help screen if corresponding button is clicked
+                }
+
+                // mark this single click
+                click_tick = OC::CORE::ticks;
+                first_click = hemisphere;
             }
-            click_tick = OC::CORE::ticks;
-            first_click = hemisphere;
-            clock_setup = 0; // Turn off clock setup with any single button press
+            return;
         }
+
+        // -- button release
+        if (!clock_setup) {
+            // Select Mode
+            if (hemisphere == select_mode) select_mode = -1; // Exit Select Mode if same button is pressed
+            else select_mode = hemisphere; // Otherwise, set Select Mode
+        }
+
+        if (click_tick)
+            clock_setup = 0; // Turn off clock setup with any single-click button release
     }
 
     void DelegateEncoderMovement(const UI::Event &event) {
@@ -408,16 +425,12 @@ void HEMISPHERE_screensaver() {} // Deprecated in favor of screen blanking
 void HEMISPHERE_handleButtonEvent(const UI::Event &event) {
     switch (event.type) {
     case UI::EVENT_BUTTON_DOWN:
+    case UI::EVENT_BUTTON_PRESS:
         if (event.control == OC::CONTROL_BUTTON_UP || event.control == OC::CONTROL_BUTTON_DOWN) {
-            int hemisphere = (event.control == OC::CONTROL_BUTTON_UP) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
-            manager.DelegateSelectButtonPush(hemisphere);
+            manager.DelegateSelectButtonPush(event);
         } else {
             manager.DelegateEncoderPush(event);
         }
-        break;
-    case UI::EVENT_BUTTON_PRESS:
-        // TODO:
-        //manager.DelegateButtonRelease(event);
         break;
 
     case UI::EVENT_BUTTON_LONG_PRESS:

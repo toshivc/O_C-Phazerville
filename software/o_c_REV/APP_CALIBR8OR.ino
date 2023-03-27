@@ -294,10 +294,9 @@ public:
     // Control handlers
     /////////////////////////////////////////////////////////////////
     void OnLeftButtonPress() {
-        if (clock_setup) {
-            HS::clock_setup_applet.OnButtonPress(0);
-            return;
-        }
+        // handled on button down
+        if (clock_setup) return;
+
         // Toggle between Transpose mode and Tracking Compensation
         // also doubles as Load or Save for preset select
         edit_mode = !edit_mode;
@@ -315,10 +314,8 @@ public:
     }
 
     void OnRightButtonPress() {
-        if (clock_setup) {
-            HS::clock_setup_applet.OnButtonPress(0);
-            return;
-        }
+        // handled on button down
+        if (clock_setup) return;
 
         if (preset_select) {
             // special case to clear values
@@ -338,6 +335,14 @@ public:
 
         // Scale selection
         scale_edit = !scale_edit;
+    }
+
+    void OnButtonDown(const UI::Event &event) {
+        // check for clock setup secret combo (dual press)
+        if ( event.control == OC::CONTROL_BUTTON_DOWN || event.control == OC::CONTROL_BUTTON_UP)
+            UpOrDownButtonPress(event.control == OC::CONTROL_BUTTON_UP);
+        else if (clock_setup) // pass button down to Clock Setup
+            HS::clock_setup_applet.OnButtonPress(0);
     }
 
     void UpOrDownButtonPress(bool up) {
@@ -620,9 +625,7 @@ void Calibr8or_handleButtonEvent(const UI::Event &event) {
     // For down button, handle press and long press
     switch (event.type) {
     case UI::EVENT_BUTTON_DOWN:
-        // check for clock setup secret combo (dual press)
-        if ( event.control == OC::CONTROL_BUTTON_DOWN || event.control == OC::CONTROL_BUTTON_UP)
-            Calibr8or_instance.UpOrDownButtonPress(event.control == OC::CONTROL_BUTTON_UP);
+        Calibr8or_instance.OnButtonDown(event);
 
         break;
     case UI::EVENT_BUTTON_PRESS: {

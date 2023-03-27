@@ -159,9 +159,9 @@ void Ui::DebugStats() {
 
     while (event_queue_.available()) {
       UI::Event event = event_queue_.PullEvent();
-      if (CONTROL_BUTTON_R == event.control) {
+      if (CONTROL_BUTTON_R == event.control && UI::EVENT_BUTTON_PRESS == event.type) {
         exit_loop = true;
-      } else if (CONTROL_BUTTON_L == event.control) {
+      } else if (CONTROL_BUTTON_L == event.control && UI::EVENT_BUTTON_PRESS == event.type) {
         ++current_menu;
         if (!current_menu->title || !current_menu->display_fn)
           current_menu = &debug_menus[0];

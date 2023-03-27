@@ -441,7 +441,7 @@ void OC::Ui::Calibrate() {
 
     while (event_queue_.available()) {
       const UI::Event event = event_queue_.PullEvent();
-      if (IgnoreEvent(event))
+      if (IgnoreEvent(event) || event.type == UI::EVENT_BUTTON_DOWN)
         continue;
 
       switch (event.control) {

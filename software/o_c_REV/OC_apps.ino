@@ -403,15 +403,17 @@ void Ui::AppSettings() {
         change_app = event.type != UI::EVENT_BUTTON_DOWN; // true on button release
         break;
       case CONTROL_BUTTON_L:
-        ui.DebugStats();
+        if (UI::EVENT_BUTTON_PRESS == event.type)
+            ui.DebugStats();
         break;
-      case CONTROL_BUTTON_UP: {
-        bool enabled = !global_settings.encoders_enable_acceleration;
-        SERIAL_PRINTLN("Encoder acceleration: %s", enabled ? "enabled" : "disabled");
-        ui.encoders_enable_acceleration(enabled);
-        global_settings.encoders_enable_acceleration = enabled;
-        break;
+      case CONTROL_BUTTON_UP:
+        if (UI::EVENT_BUTTON_PRESS == event.type) {
+            bool enabled = !global_settings.encoders_enable_acceleration;
+            SERIAL_PRINTLN("Encoder acceleration: %s", enabled ? "enabled" : "disabled");
+            ui.encoders_enable_acceleration(enabled);
+            global_settings.encoders_enable_acceleration = enabled;
         }
+        break;
 
         default: break;
       }
@@ -459,10 +461,10 @@ bool Ui::ConfirmReset() {
       UI::Event event = event_queue_.PullEvent();
       if (IgnoreEvent(event))
         continue;
-      if (CONTROL_BUTTON_R == event.control) {
+      if (CONTROL_BUTTON_R == event.control && UI::EVENT_BUTTON_PRESS == event.type) {
         confirm = true;
         done = true;
-      } else if (CONTROL_BUTTON_L == event.control) {
+      } else if (CONTROL_BUTTON_L == event.control && UI::EVENT_BUTTON_PRESS == event.type) {
         confirm = false;
         done = true;
       }
