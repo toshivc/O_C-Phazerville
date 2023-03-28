@@ -31,8 +31,7 @@ struct MIDILogEntry {
 class hMIDIIn : public HemisphereApplet {
 public:
 
-// The functions available for each output
-// TODO: make this an enum
+    // The functions available for each output
     enum hMIDIFunctions {
         HEM_MIDI_NOTE_OUT,
         HEM_MIDI_TRIG_OUT,

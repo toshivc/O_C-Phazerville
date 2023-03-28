@@ -473,7 +473,6 @@ private:
     ClockManager *clock_m = clock_m->get();
 
     void DrawPresetSelector() {
-        // TODO: Preset selection screen
         // index is the currently loaded preset (0-3)
         // preset_select is current selection (1-4, 5=clear)
         int y = 5 + 10*preset_select;
