@@ -166,6 +166,7 @@ private:
     }
     if (screensaver_) {
       screensaver_ = false;
+      SetButtonIgnoreMask(); // ignore whatever button is about to be released
       ignore = true;
     }
 
