@@ -1,14 +1,17 @@
 TODO
 ===
 
+* Pull in Automatonnetz
 * Update Boilerplates
 * General Config screen (long-press right button)
+* Stepped Mode for internal Clock
 
 [APP IDEAS]
 * QUADRANTS
 * Two Spheres
+* Snake Game
 
 [DONE]
-X Fix FLIP_180 calibration
-X Add Clock Setup to Calibr8or
-X Calibr8or screensaver
+* - Fix FLIP_180 calibration
+* - Add Clock Setup to Calibr8or
+* - Calibr8or screensaver
