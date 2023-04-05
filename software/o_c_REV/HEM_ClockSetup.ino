@@ -81,9 +81,29 @@ public:
             else CursorAction(cursor, LAST_SETTING);
         }
         else CursorAction(cursor, LAST_SETTING);
+
+        if (cursor == TEMPO) {
+            // Tap Tempo detection
+            if (last_tap_tick) {
+                tap_time[taps++] = OC::CORE::ticks - last_tap_tick;
+
+                if (tap_time[taps-1] > CLOCK_TICKS_MAX) {
+                    taps = 0;
+                    last_tap_tick = 0;
+                }
+
+                if (taps == NR_OF_TAPS)
+                    clock_m->SetTempoFromTaps(tap_time, taps);
+
+                taps %= NR_OF_TAPS;
+            } else {
+                last_tap_tick = OC::CORE::ticks;
+            }
+        }
     }
 
     void OnEncoderMove(int direction) {
+        taps = 0;
         if (!EditMode()) {
             MoveCursor(cursor, direction, LAST_SETTING);
             return;
@@ -165,6 +185,12 @@ private:
     int flash_ticker[4];
     int button_ticker;
     ClockManager *clock_m = clock_m->get();
+
+    static const int NR_OF_TAPS = 3;
+
+    int taps = 0; // tap tempo
+    uint32_t tap_time[NR_OF_TAPS]; // buffer of past tap tempo measurements
+    uint32_t last_tap_tick = 0;
 
     void PlayStop() {
         if (clock_m->IsRunning()) {

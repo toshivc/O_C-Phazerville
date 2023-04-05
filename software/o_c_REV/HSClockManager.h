@@ -93,6 +93,18 @@ public:
         ticks_per_beat = 1000000 / bpm;
         tempo = bpm;
     }
+    
+    void SetTempoFromTaps(uint32_t *taps, int count) {
+        uint32_t total = 0;
+        for (int i = 0; i < count; ++i) {
+            total += taps[i];
+        }
+        
+        // update the tempo
+        uint32_t clock_diff = total / count;
+        ticks_per_beat = constrain(clock_diff, CLOCK_TICKS_MIN, CLOCK_TICKS_MAX); // time since last clock is new tempo
+        tempo = 1000000 / ticks_per_beat; // imprecise, for display purposes
+    }
 
     int GetMultiply(int ch = 0) {return tocks_per_beat[ch];}
     int GetClockPPQN() { return clock_ppqn; }
