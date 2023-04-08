@@ -31,7 +31,7 @@
 #include "bjorklund.h"
 
 const int NUM_PARAMS = 5;
-const int PARAM_SIZE = 5;
+const int PARAM_SIZE = 6;
 
 class EuclidX : public HemisphereApplet {
 public:
@@ -89,7 +89,7 @@ public:
 
                     break;
                 case BEATS1:
-                    actual_beats[ch] = constrain(actual_beats[ch] + Proportion(cv_data[cv_ch], HEMISPHERE_MAX_CV, actual_length[ch]), 1, actual_length[ch]);
+                    actual_beats[ch] = constrain(actual_beats[ch] + Proportion(cv_data[cv_ch], HEMISPHERE_MAX_CV, actual_length[ch]), 0, actual_length[ch]);
                     break;
                 case OFFSET1:
                     actual_offset[ch] = constrain(actual_offset[ch] + Proportion(cv_data[cv_ch], HEMISPHERE_MAX_CV, actual_length[ch] + actual_padding[ch]), 0, actual_length[ch] + padding[ch] - 1);
@@ -153,7 +153,7 @@ public:
             break;
         case BEATS1:
         case BEATS2:
-            actual_beats[ch] = beats[ch] = constrain(beats[ch] + direction, 1, length[ch]);
+            actual_beats[ch] = beats[ch] = constrain(beats[ch] + direction, 0, length[ch]);
             break;
         case OFFSET1:
         case OFFSET2:
@@ -174,30 +174,26 @@ public:
 
     uint64_t OnDataRequest() {
         uint64_t data = 0;
-        Pack(data, PackLocation {0 * PARAM_SIZE, PARAM_SIZE}, length[0] - 1);
-        Pack(data, PackLocation {1 * PARAM_SIZE, PARAM_SIZE}, beats[0] - 1);
-        Pack(data, PackLocation {2 * PARAM_SIZE, PARAM_SIZE}, length[1] - 1);
-        Pack(data, PackLocation {3 * PARAM_SIZE, PARAM_SIZE}, beats[1] - 1);
-        Pack(data, PackLocation {4 * PARAM_SIZE, PARAM_SIZE}, offset[0]);
-        Pack(data, PackLocation {5 * PARAM_SIZE, PARAM_SIZE}, offset[1]);
-        Pack(data, PackLocation {6 * PARAM_SIZE, PARAM_SIZE}, cv_dest[0]);
-        Pack(data, PackLocation {7 * PARAM_SIZE, PARAM_SIZE}, cv_dest[1]);
-        Pack(data, PackLocation {8 * PARAM_SIZE, PARAM_SIZE}, padding[0]);
-        Pack(data, PackLocation {9 * PARAM_SIZE, PARAM_SIZE}, padding[1]);
+        size_t idx = 0;
+        ForEachChannel(ch) {
+            Pack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE}, length[ch] - 1);
+            Pack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE}, beats[ch]);
+            Pack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE}, offset[ch]);
+            Pack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE}, padding[ch]);
+            Pack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE}, cv_dest[ch]);
+        }
         return data;
     }
 
     void OnDataReceive(uint64_t data) {
-        actual_length[0] = length[0] = Unpack(data, PackLocation {0 * PARAM_SIZE, PARAM_SIZE}) + 1;
-        actual_beats[0]  = beats[0]  = Unpack(data, PackLocation {1 * PARAM_SIZE, PARAM_SIZE}) + 1;
-        actual_length[1] = length[1] = Unpack(data, PackLocation {2 * PARAM_SIZE, PARAM_SIZE}) + 1;
-        actual_beats[1]  = beats[1]  = Unpack(data, PackLocation {3 * PARAM_SIZE, PARAM_SIZE}) + 1;
-        actual_offset[0] = offset[0] = Unpack(data, PackLocation {4 * PARAM_SIZE, PARAM_SIZE});
-        actual_offset[1] = offset[1] = Unpack(data, PackLocation {5 * PARAM_SIZE, PARAM_SIZE});
-        cv_dest[0] = (EuclidXParam) Unpack(data, PackLocation {6 * PARAM_SIZE, PARAM_SIZE});
-        cv_dest[1] = (EuclidXParam) Unpack(data, PackLocation {7 * PARAM_SIZE, PARAM_SIZE});
-        actual_padding[0] = padding[0] = Unpack(data, PackLocation {8 * PARAM_SIZE, PARAM_SIZE});
-        actual_padding[1] = padding[1] = Unpack(data, PackLocation {9 * PARAM_SIZE, PARAM_SIZE});
+        size_t idx = 0;
+        ForEachChannel(ch) {
+            actual_length[ch] = length[ch] = Unpack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE}) + 1;
+            actual_beats[ch]  = beats[ch]  = Unpack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE});
+            actual_offset[ch] = offset[ch] = Unpack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE});
+            actual_padding[ch] = padding[ch] = Unpack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE});
+            cv_dest[ch] = (EuclidXParam) Unpack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE});
+        }
     }
 
 protected:
