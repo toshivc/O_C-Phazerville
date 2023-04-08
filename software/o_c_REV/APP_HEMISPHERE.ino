@@ -26,6 +26,7 @@
 namespace menu = OC::menu;
 
 #include "HemisphereApplet.h"
+#include "HSApplication.h"
 #include "HSicons.h"
 #include "HSMIDI.h"
 #include "HSClockManager.h"
@@ -44,240 +45,68 @@ enum HEMISPHERE_SETTINGS {
     HEMISPHERE_RIGHT_DATA_B4,
     HEMISPHERE_CLOCK_DATA1,
     HEMISPHERE_CLOCK_DATA2,
+    HEMISPHERE_CLOCK_DATA3,
+    HEMISPHERE_CLOCK_DATA4,
     HEMISPHERE_SETTING_LAST
 };
 
 static constexpr int HEMISPHERE_AVAILABLE_APPLETS = ARRAY_SIZE(HS::available_applets);
+static const int HEM_NR_OF_PRESETS = 4;
 
-////////////////////////////////////////////////////////////////////////////////
-//// Hemisphere Manager
-////////////////////////////////////////////////////////////////////////////////
+static const char * hem_preset_name[HEM_NR_OF_PRESETS] = { "A", "B", "C", "D" };
 
-class HemisphereManager : public SystemExclusiveHandler,
-    public settings::SettingsBase<HemisphereManager, HEMISPHERE_SETTING_LAST> {
+/* Hemisphere Preset
+ * - conveniently store/recall multiple configurations
+ */
+class HemispherePreset : public SystemExclusiveHandler,
+    public settings::SettingsBase<HemispherePreset, HEMISPHERE_SETTING_LAST> {
 public:
-    void Init() {
-        select_mode = -1; // Not selecting
-        midi_in_hemisphere = -1; // No MIDI In
-
-        help_hemisphere = -1;
-        clock_setup = 0;
-
-        SetApplet(0, get_applet_index_by_id(18)); // DualTM
-        SetApplet(1, get_applet_index_by_id(15)); // EuclidX
+    int GetAppletId(int h) {
+        return (h == LEFT_HEMISPHERE) ? values_[HEMISPHERE_SELECTED_LEFT_ID]
+                                      : values_[HEMISPHERE_SELECTED_RIGHT_ID];
+    }
+    void SetAppletId(int h, int id) {
+        apply_value(h, id);
+    }
+    bool is_valid() {
+        return values_[HEMISPHERE_SELECTED_LEFT_ID] != 0;
     }
 
-    void Resume() {
-        for (int h = 0; h < 2; h++)
-        {
-            int index = get_applet_index_by_id(values_[h]);
-            SetApplet(h, index);
-            uint64_t data =
-                (uint64_t(values_[8 + h]) << 48) |
-                (uint64_t(values_[6 + h]) << 32) |
-                (uint64_t(values_[4 + h]) << 16) |
-                (uint64_t(values_[2 + h]));
-            HS::available_applets[index].OnDataReceive(h, data);
-        }
-        HS::clock_setup_applet.OnDataReceive(0, (uint64_t(values_[HEMISPHERE_CLOCK_DATA2]) << 16) |
-                                    uint64_t(values_[HEMISPHERE_CLOCK_DATA1]));
+    // restore state by setting applets and giving them data
+    void LoadClockData() {
+        HS::clock_setup_applet.OnDataReceive(0, (uint64_t(values_[HEMISPHERE_CLOCK_DATA4]) << 48) |
+                                                (uint64_t(values_[HEMISPHERE_CLOCK_DATA3]) << 32) |
+                                                (uint64_t(values_[HEMISPHERE_CLOCK_DATA2]) << 16) |
+                                                 uint64_t(values_[HEMISPHERE_CLOCK_DATA1]));
     }
-
-    void SetApplet(int hemisphere, int index) {
-        my_applet[hemisphere] = index;
-        if (midi_in_hemisphere == hemisphere) midi_in_hemisphere = -1;
-        if (HS::available_applets[index].id & 0x80) midi_in_hemisphere = hemisphere;
-        HS::available_applets[index].Start(hemisphere);
-        apply_value(hemisphere, HS::available_applets[index].id);
-    }
-
-    void ChangeApplet(int dir) {
-        if (SelectModeEnabled() and help_hemisphere == -1) {
-            int index = get_next_applet_index(my_applet[select_mode], dir);
-            SetApplet(select_mode, index);
-        }
-    }
-
-    bool SelectModeEnabled() {
-        return select_mode > -1;
-    }
-
-    void ExecuteControllers() {
-        if (midi_in_hemisphere == -1) {
-            // Only one ISR can look for MIDI messages at a time, so we need to check
-            // for another MIDI In applet before looking for sysex. Note that applets
-            // that use MIDI In should check for sysex themselves; see Midi In for an
-            // example.
-            if (usbMIDI.read() && usbMIDI.getType() == usbMIDI.SystemExclusive) {
-                OnReceiveSysEx();
-            }
-        }
-
-        // Advance internal clock, sync to external pulse
-        if (clock_m->IsRunning())
-            clock_m->SyncTrig( OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>() );
-
-        // NJM: always execute ClockSetup controller - it handles MIDI clock out
-        HS::clock_setup_applet.Controller(LEFT_HEMISPHERE, clock_m->IsForwarded());
-
-        for (int h = 0; h < 2; h++)
-        {
-            int index = my_applet[h];
-            HS::available_applets[index].Controller(h, clock_m->IsForwarded());
-        }
-    }
-
-    void DrawViews() {
-        if (clock_setup) {
-            HS::clock_setup_applet.View(LEFT_HEMISPHERE);
-        } else if (help_hemisphere > -1) {
-            int index = my_applet[help_hemisphere];
-            HS::available_applets[index].View(help_hemisphere);
-        } else {
-            for (int h = 0; h < 2; h++)
-            {
-                int index = my_applet[h];
-                HS::available_applets[index].View(h);
-                if (h == 0) {
-                    if (clock_m->IsRunning() || clock_m->IsPaused()) {
-                        // Metronome icon
-                        graphics.drawBitmap8(56, 1, 8, clock_m->Cycle() ? METRO_L_ICON : METRO_R_ICON);
-                    }
-
-                    if (clock_m->IsForwarded()) {
-                        // CV Forwarding Icon
-                        graphics.drawBitmap8(120, 1, 8, CLOCK_ICON);
-                    }
-                }
-            }
-
-            if (select_mode == LEFT_HEMISPHERE) graphics.drawFrame(0, 0, 64, 64);
-            if (select_mode == RIGHT_HEMISPHERE) graphics.drawFrame(64, 0, 64, 64);
-        }
-    }
-
-    void DelegateEncoderPush(const UI::Event &event) {
-        bool down = (event.type == UI::EVENT_BUTTON_DOWN);
-        int h = (event.control == OC::CONTROL_BUTTON_L) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
-
-        // button down
-        if (down) {
-            // Clock Setup is more immediate for manual triggers
-            if (clock_setup) HS::clock_setup_applet.OnButtonPress(LEFT_HEMISPHERE);
-            // TODO: consider a new OnButtonDown handler for applets
-            return;
-        }
-
-        // button release
-        if (select_mode == h) {
-            select_mode = -1; // Pushing a button for the selected side turns off select mode
-        } else if (!clock_setup) {
-            // regular applets get button release
-            int index = my_applet[h];
-            HS::available_applets[index].OnButtonPress(h);
-        }
-    }
-
-    void DelegateSelectButtonPush(const UI::Event &event) {
-        bool down = (event.type == UI::EVENT_BUTTON_DOWN);
-        int hemisphere = (event.control == OC::CONTROL_BUTTON_UP) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
-
-        // -- button down
-        if (down) {
-            if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME) {
-                // This is a double-click. Activate corresponding help screen or Clock Setup
-                if (hemisphere == first_click)
-                    SetHelpScreen(hemisphere);
-                else // up + down simultaneous
-                    clock_setup = 1;
-
-                // leave Select Mode, and reset the double-click timer
-                select_mode = -1;
-                click_tick = 0;
-            } else {
-                // If a help screen is already selected, and the button is for
-                // the opposite one, go to the other help screen
-                if (help_hemisphere > -1) {
-                    if (help_hemisphere != hemisphere) SetHelpScreen(hemisphere);
-                    else SetHelpScreen(-1); // Leave help screen if corresponding button is clicked
-                }
-
-                // mark this single click
-                click_tick = OC::CORE::ticks;
-                first_click = hemisphere;
-            }
-            return;
-        }
-
-        // -- button release
-        if (!clock_setup) {
-            // Select Mode
-            if (hemisphere == select_mode) select_mode = -1; // Exit Select Mode if same button is pressed
-            else select_mode = hemisphere; // Otherwise, set Select Mode
-        }
-
-        if (click_tick)
-            clock_setup = 0; // Turn off clock setup with any single-click button release
-    }
-
-    void DelegateEncoderMovement(const UI::Event &event) {
-        int h = (event.control == OC::CONTROL_ENCODER_L) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
-        if (clock_setup) {
-            HS::clock_setup_applet.OnEncoderMove(LEFT_HEMISPHERE, event.value);
-        } else if (select_mode == h) {
-            ChangeApplet(event.value);
-        } else {
-            int index = my_applet[h];
-            HS::available_applets[index].OnEncoderMove(h, event.value);
-        }
-    }
-
-    void ToggleClockRun() {
-        if (clock_m->IsRunning()) {
-            clock_m->Stop();
-            usbMIDI.sendRealTime(usbMIDI.Stop);
-        } else {
-            clock_m->Start();
-            usbMIDI.sendRealTime(usbMIDI.Start);
-        }
-    }
-
-    void ToggleClockSetup() {
-        clock_setup = 1 - clock_setup;
-    }
-
-    void SetHelpScreen(int hemisphere) {
-        if (help_hemisphere > -1) { // Turn off the previous help screen
-            int index = my_applet[help_hemisphere];
-            HS::available_applets[index].ToggleHelpScreen(help_hemisphere);
-        }
-
-        if (hemisphere > -1) { // Turn on the next hemisphere's screen
-            int index = my_applet[hemisphere];
-            HS::available_applets[index].ToggleHelpScreen(hemisphere);
-        }
-
-        help_hemisphere = hemisphere;
-    }
-
-    void RequestAppletData() {
-        for (int h = 0; h < 2; h++)
-        {
-            int index = my_applet[h];
-            uint64_t data = HS::available_applets[index].OnDataRequest(h);
-            apply_value(2 + h, data & 0xffff);
-            apply_value(4 + h, (data >> 16) & 0xffff);
-            apply_value(6 + h, (data >> 32) & 0xffff);
-            apply_value(8 + h, (data >> 48) & 0xffff);
-        }
+    void StoreClockData() {
         uint64_t data = HS::clock_setup_applet.OnDataRequest(0);
         apply_value(HEMISPHERE_CLOCK_DATA1, data & 0xffff);
         apply_value(HEMISPHERE_CLOCK_DATA2, (data >> 16) & 0xffff);
+        apply_value(HEMISPHERE_CLOCK_DATA3, (data >> 32) & 0xffff);
+        apply_value(HEMISPHERE_CLOCK_DATA4, (data >> 48) & 0xffff);
+    }
+
+
+    // Manually get data for one side
+    uint64_t GetData(int h) {
+        return (uint64_t(values_[8 + h]) << 48) |
+               (uint64_t(values_[6 + h]) << 32) |
+               (uint64_t(values_[4 + h]) << 16) |
+               (uint64_t(values_[2 + h]));
+    }
+
+    /* Manually store state data for one side */
+    void SetData(int h, uint64_t data) {
+        apply_value(2 + h, data & 0xffff);
+        apply_value(4 + h, (data >> 16) & 0xffff);
+        apply_value(6 + h, (data >> 32) & 0xffff);
+        apply_value(8 + h, (data >> 48) & 0xffff);
     }
 
     void OnSendSysEx() {
         // Set the values_ array prior to packing it
-        RequestAppletData();
+        //StoreClockData();
 
         // Describe the data structure for the audience
         uint8_t V[18];
@@ -320,22 +149,399 @@ public:
             values_[HEMISPHERE_RIGHT_DATA_B3] = ((uint16_t)V[13] << 8) + V[12];
             values_[HEMISPHERE_LEFT_DATA_B4] = ((uint16_t)V[15] << 8) + V[14];
             values_[HEMISPHERE_RIGHT_DATA_B4] = ((uint16_t)V[17] << 8) + V[16];
-            Resume();
+            //LoadClockData();
         }
     }
 
+};
+
+// HemispherePreset hem_config; // special place for Clock data and Config data, 64 bits each
+
+HemispherePreset hem_presets[HEM_NR_OF_PRESETS];
+HemispherePreset *hem_active_preset;
+
+////////////////////////////////////////////////////////////////////////////////
+//// Hemisphere Manager
+////////////////////////////////////////////////////////////////////////////////
+
+class HemisphereManager : public HSApplication {
+public:
+    void Start() {
+        select_mode = -1; // Not selecting
+        midi_in_hemisphere = -1; // No MIDI In
+
+        help_hemisphere = -1;
+        clock_setup = 0;
+
+        SetApplet(0, get_applet_index_by_id(18)); // DualTM
+        SetApplet(1, get_applet_index_by_id(15)); // EuclidX
+    }
+
+    void Resume() {
+        if (!hem_active_preset)
+            LoadFromPreset(0);
+    }
+    void Suspend() {
+        if (hem_active_preset)
+            hem_active_preset->OnSendSysEx();
+    }
+
+    void StoreToPreset(int id) {
+        hem_active_preset = (HemispherePreset*)(hem_presets + id);
+        for (int h = 0; h < 2; h++)
+        {
+            int index = my_applet[h];
+            hem_active_preset->SetAppletId(h, HS::available_applets[index].id);
+
+            uint64_t data = HS::available_applets[index].OnDataRequest(h);
+            hem_active_preset->SetData(h, data);
+        }
+        hem_active_preset->StoreClockData();
+        preset_id = id;
+    }
+    void LoadFromPreset(int id) {
+        hem_active_preset = (HemispherePreset*)(hem_presets + id);
+        if (hem_active_preset->is_valid()) {
+            hem_active_preset->LoadClockData();
+            for (int h = 0; h < 2; h++)
+            {
+                int index = get_applet_index_by_id( hem_active_preset->GetAppletId(h) );
+                SetApplet(h, index);
+                HS::available_applets[index].OnDataReceive(h, hem_active_preset->GetData(h));
+            }
+        }
+        preset_id = id;
+    }
+
+    // does not modify the preset, only the manager
+    void SetApplet(int hemisphere, int index) {
+        my_applet[hemisphere] = index;
+        if (midi_in_hemisphere == hemisphere) midi_in_hemisphere = -1;
+        if (HS::available_applets[index].id & 0x80) midi_in_hemisphere = hemisphere;
+        HS::available_applets[index].Start(hemisphere);
+    }
+
+    void ChangeApplet(int h, int dir) {
+        int index = get_next_applet_index(my_applet[h], dir);
+        SetApplet(select_mode, index);
+    }
+
+    bool SelectModeEnabled() {
+        return select_mode > -1;
+    }
+
+    void Controller() {
+        // TODO: eliminate the need for this with top-level MIDI handling
+        if (midi_in_hemisphere == -1) {
+            // Only one ISR can look for MIDI messages at a time, so we need to check
+            // for another MIDI In applet before looking for sysex. Note that applets
+            // that use MIDI In should check for sysex themselves; see Midi In for an
+            // example.
+            if (usbMIDI.read() && usbMIDI.getType() == usbMIDI.SystemExclusive) {
+                if (hem_active_preset)
+                    hem_active_preset->OnReceiveSysEx();
+            }
+        }
+
+        // Advance internal clock, sync to external pulse
+        if (clock_m->IsRunning())
+            clock_m->SyncTrig( OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>() );
+
+        // NJM: always execute ClockSetup controller - it handles MIDI clock out
+        HS::clock_setup_applet.Controller(LEFT_HEMISPHERE, clock_m->IsForwarded());
+
+        for (int h = 0; h < 2; h++)
+        {
+            int index = my_applet[h];
+            HS::available_applets[index].Controller(h, clock_m->IsForwarded());
+        }
+    }
+
+    void View() {
+        if (config_menu) {
+            DrawConfigMenu();
+            return;
+        }
+
+        if (clock_setup) {
+            HS::clock_setup_applet.View(LEFT_HEMISPHERE);
+            return;
+        }
+
+        if (help_hemisphere > -1) {
+            int index = my_applet[help_hemisphere];
+            HS::available_applets[index].View(help_hemisphere);
+        } else {
+            for (int h = 0; h < 2; h++)
+            {
+                int index = my_applet[h];
+                HS::available_applets[index].View(h);
+            }
+
+            if (clock_m->IsRunning() || clock_m->IsPaused()) {
+                // Metronome icon
+                graphics.drawBitmap8(56, 1, 8, clock_m->Cycle() ? METRO_L_ICON : METRO_R_ICON);
+            }
+
+            if (clock_m->IsForwarded()) {
+                // CV Forwarding Icon
+                graphics.drawBitmap8(120, 1, 8, CLOCK_ICON);
+            }
+
+            if (select_mode == LEFT_HEMISPHERE) graphics.drawFrame(0, 0, 64, 64);
+            if (select_mode == RIGHT_HEMISPHERE) graphics.drawFrame(64, 0, 64, 64);
+        }
+    }
+
+    void DelegateEncoderPush(const UI::Event &event) {
+        bool down = (event.type == UI::EVENT_BUTTON_DOWN);
+        int h = (event.control == OC::CONTROL_BUTTON_L) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
+
+        if (config_menu) {
+            // button release for config screen
+            if (!down) ConfigButtonPush(h);
+            return;
+        }
+
+        // button down
+        if (down) {
+            // Clock Setup is more immediate for manual triggers
+            if (clock_setup) HS::clock_setup_applet.OnButtonPress(LEFT_HEMISPHERE);
+            // TODO: consider a new OnButtonDown handler for applets
+            return;
+        }
+
+        // button release
+        if (select_mode == h) {
+            select_mode = -1; // Pushing a button for the selected side turns off select mode
+        } else if (!clock_setup) {
+            // regular applets get button release
+            int index = my_applet[h];
+            HS::available_applets[index].OnButtonPress(h);
+        }
+    }
+
+    void DelegateSelectButtonPush(const UI::Event &event) {
+        bool down = (event.type == UI::EVENT_BUTTON_DOWN);
+        int hemisphere = (event.control == OC::CONTROL_BUTTON_UP) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
+
+        if (config_menu) {
+            // cancel preset select, or config screen on select button release
+            if (!down) {
+                if (preset_cursor) {
+                    preset_cursor = 0;
+                }
+                else config_menu = 0;
+            }
+            return;
+        }
+
+        // -- button down
+        if (down) {
+            if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME) {
+                // This is a double-click. Activate corresponding help screen or Clock Setup
+                if (hemisphere == first_click)
+                    SetHelpScreen(hemisphere);
+                else // up + down simultaneous
+                    clock_setup = 1;
+
+                // leave Select Mode, and reset the double-click timer
+                select_mode = -1;
+                click_tick = 0;
+            } else {
+                // If a help screen is already selected, and the button is for
+                // the opposite one, go to the other help screen
+                if (help_hemisphere > -1) {
+                    if (help_hemisphere != hemisphere) SetHelpScreen(hemisphere);
+                    else SetHelpScreen(-1); // Leave help screen if corresponding button is clicked
+                }
+
+                // mark this single click
+                click_tick = OC::CORE::ticks;
+                first_click = hemisphere;
+            }
+            return;
+        }
+
+        // -- button release
+        if (!clock_setup) {
+            // Select Mode
+            if (hemisphere == select_mode) select_mode = -1; // Exit Select Mode if same button is pressed
+            else select_mode = hemisphere; // Otherwise, set Select Mode
+        }
+
+        if (click_tick)
+            clock_setup = 0; // Turn off clock setup with any single-click button release
+    }
+
+    void DelegateEncoderMovement(const UI::Event &event) {
+        int h = (event.control == OC::CONTROL_ENCODER_L) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
+        if (config_menu) {
+            // TODO
+            ConfigEncoderAction(h, event.value);
+            return;
+        }
+
+        if (clock_setup) {
+            HS::clock_setup_applet.OnEncoderMove(LEFT_HEMISPHERE, event.value);
+        } else if (select_mode == h) {
+            ChangeApplet(h, event.value);
+        } else {
+            int index = my_applet[h];
+            HS::available_applets[index].OnEncoderMove(h, event.value);
+        }
+    }
+
+    void ToggleClockRun() {
+        if (clock_m->IsRunning()) {
+            clock_m->Stop();
+            usbMIDI.sendRealTime(usbMIDI.Stop);
+        } else {
+            clock_m->Start();
+            usbMIDI.sendRealTime(usbMIDI.Start);
+        }
+    }
+
+    void ToggleClockSetup() {
+        clock_setup = 1 - clock_setup;
+    }
+
+    void ToggleConfigMenu() {
+        config_menu = !config_menu;
+    }
+
+    void SetHelpScreen(int hemisphere) {
+        if (help_hemisphere > -1) { // Turn off the previous help screen
+            int index = my_applet[help_hemisphere];
+            HS::available_applets[index].ToggleHelpScreen(help_hemisphere);
+        }
+
+        if (hemisphere > -1) { // Turn on the next hemisphere's screen
+            int index = my_applet[hemisphere];
+            HS::available_applets[index].ToggleHelpScreen(hemisphere);
+        }
+
+        help_hemisphere = hemisphere;
+    }
+
 private:
+    int preset_id = 0;
+    int preset_cursor = 0;
     int my_applet[2]; // Indexes to available_applets
     int select_mode;
     bool clock_setup;
+    bool config_menu;
+    bool isEditing = false;
+    int config_cursor = 0;
+
     int help_hemisphere; // Which of the hemispheres (if any) is in help mode, or -1 if none
     int midi_in_hemisphere; // Which of the hemispheres (if any) is using MIDI In
     uint32_t click_tick; // Measure time between clicks for double-click
     int first_click; // The first button pushed of a double-click set, to see if the same one is pressed
     ClockManager *clock_m = clock_m->get();
 
-    void DrawClockSetup() {
+    enum HEMConfigCursor {
+        LOAD_PRESET, SAVE_PRESET,
+        TRIG_LENGTH,
+        CURSOR_MODE,
 
+        MAX_CURSOR = CURSOR_MODE
+    };
+
+    void ConfigEncoderAction(int h, int dir) {
+        if (!isEditing && !preset_cursor) {
+            config_cursor += dir;
+            config_cursor = constrain(config_cursor, 0, MAX_CURSOR);
+            ResetCursor();
+            return;
+        }
+
+        if (config_cursor == TRIG_LENGTH) {
+            HemisphereApplet::trig_length = (uint32_t) constrain( int(HemisphereApplet::trig_length + dir), 1, 127);
+        }
+        else if (config_cursor == SAVE_PRESET || config_cursor == LOAD_PRESET) {
+            preset_cursor = constrain(preset_cursor + dir, 1, HEM_NR_OF_PRESETS);
+        }
+    }
+    void ConfigButtonPush(int h) {
+        if (preset_cursor) {
+            // Save or Load on button push
+            if (config_cursor == SAVE_PRESET)
+                StoreToPreset(preset_cursor-1);
+            else
+                LoadFromPreset(preset_cursor-1);
+
+            preset_cursor = 0; // deactivate preset selection
+            config_menu = 0;
+            isEditing = false;
+            return;
+        }
+
+        switch (config_cursor) {
+        case SAVE_PRESET:
+        case LOAD_PRESET:
+            preset_cursor = preset_id + 1;
+            break;
+
+        case TRIG_LENGTH:
+            isEditing = !isEditing;
+            break;
+
+        case CURSOR_MODE:
+            HemisphereApplet::CycleEditMode();
+            break;
+        }
+    }
+
+    void DrawConfigMenu() {
+        // --- Preset Selector
+        if (preset_cursor) {
+            DrawPresetSelector();
+            return;
+        }
+
+        // --- Config Selection
+        gfxHeader("Hemisphere Config");
+        gfxPrint(1, 15, "Preset: ");
+        gfxPrint(48, 15, "Load / Save");
+
+        gfxPrint(1, 35, "Trig Length: ");
+        gfxPrint(HemisphereApplet::trig_length);
+
+        const char * cursor_mode_name[3] = { "legacy", "modal", "modal+wrap" };
+        gfxPrint(1, 45, "Cursor:  ");
+        gfxPrint(cursor_mode_name[HemisphereApplet::modal_edit_mode]);
+        
+        switch (config_cursor) {
+        case LOAD_PRESET:
+        case SAVE_PRESET:
+            gfxIcon(55 + (config_cursor - LOAD_PRESET)*45, 25, UP_ICON);
+            break;
+
+        case TRIG_LENGTH:
+            if (isEditing) gfxInvert(79, 34, 25, 9);
+            else gfxCursor(80, 43, 24);
+            break;
+        case CURSOR_MODE:
+            gfxIcon(43, 45, RIGHT_ICON);
+            break;
+        }
+    }
+
+    void DrawPresetSelector() {
+        gfxHeader("Hemisphere Presets");
+        int y = 5 + preset_cursor*10;
+        gfxPrint(1, y, (config_cursor == SAVE_PRESET) ? "Save" : "Load");
+        gfxIcon(26, y, RIGHT_ICON);
+        for (int i = 0; i < HEM_NR_OF_PRESETS; ++i) {
+            y = 15 + i*10;
+            gfxPrint(35, y, hem_preset_name[i]);
+
+            if (!hem_presets[i].is_valid())
+                gfxPrint(" (empty)");
+            else if (i == preset_id)
+                gfxIcon(45, y, ZAP_ICON);
+        }
     }
 
     int get_applet_index_by_id(int id) {
@@ -364,7 +570,7 @@ private:
     }
 };
 
-SETTINGS_DECLARE(HemisphereManager, HEMISPHERE_SETTING_LAST) {
+SETTINGS_DECLARE(HemispherePreset, HEMISPHERE_SETTING_LAST) {
     {0, 0, 255, "Applet ID L", NULL, settings::STORAGE_TYPE_U8},
     {0, 0, 255, "Applet ID R", NULL, settings::STORAGE_TYPE_U8},
     {0, 0, 65535, "Data L block 1", NULL, settings::STORAGE_TYPE_U16},
@@ -376,13 +582,16 @@ SETTINGS_DECLARE(HemisphereManager, HEMISPHERE_SETTING_LAST) {
     {0, 0, 65535, "Data L block 4", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Data R block 4", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 1", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Clock data 2", NULL, settings::STORAGE_TYPE_U16}
+    {0, 0, 65535, "Clock data 2", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Clock data 3", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Clock data 4", NULL, settings::STORAGE_TYPE_U16}
 };
 
 HemisphereManager manager;
 
 void ReceiveManagerSysEx() {
-    manager.OnReceiveSysEx();
+    if (hem_active_preset)
+        hem_active_preset->OnReceiveSysEx();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -391,38 +600,44 @@ void ReceiveManagerSysEx() {
 
 // App stubs
 void HEMISPHERE_init() {
-    manager.Init();
+    manager.BaseStart();
 }
 
 size_t HEMISPHERE_storageSize() {
-    return HemisphereManager::storageSize();
+    return HemispherePreset::storageSize() * HEM_NR_OF_PRESETS;
 }
 
 size_t HEMISPHERE_save(void *storage) {
-    manager.RequestAppletData();
-    return manager.Save(storage);
+    size_t used = 0;
+    for (int i = 0; i < HEM_NR_OF_PRESETS; ++i) {
+        used += hem_presets[i].Save(static_cast<char*>(storage) + used);
+    }
+    return used;
 }
 
 size_t HEMISPHERE_restore(const void *storage) {
-    size_t s = manager.Restore(storage);
+    size_t used = 0;
+    for (int i = 0; i < HEM_NR_OF_PRESETS; ++i) {
+        used += hem_presets[i].Restore(static_cast<const char*>(storage) + used);
+    }
     manager.Resume();
-    return s;
+    return used;
 }
 
 void FASTRUN HEMISPHERE_isr() {
-    manager.ExecuteControllers();
+    manager.BaseController();
 }
 
 void HEMISPHERE_handleAppEvent(OC::AppEvent event) {
     if (event == OC::APP_EVENT_SUSPEND) {
-        manager.OnSendSysEx();
+        manager.Suspend();
     }
 }
 
 void HEMISPHERE_loop() {} // Essentially deprecated in favor of ISR
 
 void HEMISPHERE_menu() {
-    manager.DrawViews();
+    manager.View();
 }
 
 void HEMISPHERE_screensaver() {} // Deprecated in favor of screen blanking
@@ -439,7 +654,7 @@ void HEMISPHERE_handleButtonEvent(const UI::Event &event) {
         break;
 
     case UI::EVENT_BUTTON_LONG_PRESS:
-        if (event.control == OC::CONTROL_BUTTON_DOWN) manager.ToggleClockSetup();
+        if (event.control == OC::CONTROL_BUTTON_DOWN) manager.ToggleConfigMenu();
         if (event.control == OC::CONTROL_BUTTON_L) manager.ToggleClockRun();
         break;
 

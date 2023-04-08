@@ -182,7 +182,7 @@ public:
               if (clk && (reg[outmode[ch]-TRIG1] & 0x01) == 1) // trigger if 1st bit is high
               {
                 Output[ch] = HEMISPHERE_MAX_CV; //ClockOut(ch);
-                trigpulse[ch] = HEMISPHERE_CLOCK_TICKS;
+                trigpulse[ch] = HEMISPHERE_CLOCK_TICKS * trig_length;
               }
               else // decay
               {
@@ -289,8 +289,10 @@ public:
         cvmode[1] = (InputMode) Unpack(data, PackLocation {37,4});
         smoothing = Unpack(data, PackLocation {41,6});
 
+        /* XXX: registers could be saved/loaded from global storage instead?
         reg[0] = Unpack(data, PackLocation {32,32});
         reg[1] = Unpack(data, PackLocation {0, 32}); // lol it could be fun
+        */
     }
 
 protected:

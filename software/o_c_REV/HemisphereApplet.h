@@ -43,7 +43,7 @@
 #endif
 #define HEMISPHERE_CENTER_DETENT 80
 #define HEMISPHERE_3V_CV 4608
-#define HEMISPHERE_CLOCK_TICKS 100
+#define HEMISPHERE_CLOCK_TICKS 50
 #define HEMISPHERE_CURSOR_TICKS 12000
 #define HEMISPHERE_ADC_LAG 33
 #define HEMISPHERE_CHANGE_THRESHOLD 32
@@ -124,12 +124,13 @@ public:
     static int last_cv[4]; // For change detection
     static int cursor_countdown[2];
 
+    static uint8_t trig_length;
     static uint8_t modal_edit_mode;
-    /* we might need this again...
+
     static void CycleEditMode() {
         ++modal_edit_mode %= 3;
     }
-    */
+
 
     virtual const char* applet_name(); // Maximum of 9 characters
     virtual void Start();
@@ -459,7 +460,7 @@ public:
     }
 
     void ClockOut(int ch, int ticks = HEMISPHERE_CLOCK_TICKS) {
-        clock_countdown[io_offset + ch] = ticks;
+        clock_countdown[io_offset + ch] = ticks * trig_length;
         Out(ch, 0, PULSE_VOLTAGE);
     }
 
@@ -574,6 +575,7 @@ private:
 };
 
 uint8_t HemisphereApplet::modal_edit_mode = 2; // 0=old behavior, 1=modal editing, 2=modal with wraparound
+uint8_t HemisphereApplet::trig_length = 2; // multiplier for HEMISPHERE_CLOCK_TICKS
 int HemisphereApplet::inputs[4];
 int HemisphereApplet::outputs[4];
 int HemisphereApplet::outputs_smooth[4];

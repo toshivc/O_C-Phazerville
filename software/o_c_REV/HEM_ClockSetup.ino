@@ -149,23 +149,35 @@ public:
         Pack(data, PackLocation { 0, 1 }, clock_m->IsRunning() || clock_m->IsPaused());
         Pack(data, PackLocation { 1, 1 }, clock_m->IsForwarded());
         Pack(data, PackLocation { 2, 9 }, clock_m->GetTempo());
-        Pack(data, PackLocation { 11, 6 }, clock_m->GetMultiply(0)+32);
-        Pack(data, PackLocation { 17, 6 }, clock_m->GetMultiply(2)+32);
-        Pack(data, PackLocation { 23, 5 }, clock_m->GetClockPPQN());
+        Pack(data, PackLocation { 11, 5 }, clock_m->GetClockPPQN());
+        for (size_t i = 0; i < 4; ++i) {
+            Pack(data, PackLocation { 16+i*6, 6 }, clock_m->GetMultiply(i)+32);
+        }
+
+        // other config settings are kept here as well, it's convenient
+        Pack(data, PackLocation { 50, 2 }, HemisphereApplet::modal_edit_mode);
+        Pack(data, PackLocation { 52, 7 }, HemisphereApplet::trig_length);
+
         return data;
     }
 
     void OnDataReceive(uint64_t data) {
+        /* leave Play state unchanged - Start/Stop will always be manual
         if (Unpack(data, PackLocation { 0, 1 })) {
             clock_m->Start(1); // start paused
         } else {
             clock_m->Stop();
         }
+        */
         clock_m->SetForwarding(Unpack(data, PackLocation { 1, 1 }));
         clock_m->SetTempoBPM(Unpack(data, PackLocation { 2, 9 }));
-        clock_m->SetMultiply(Unpack(data, PackLocation { 11, 6 })-32,0);
-        clock_m->SetMultiply(Unpack(data, PackLocation { 17, 6 })-32,2);
-        clock_m->SetClockPPQN(Unpack(data, PackLocation { 23, 5 }));
+        clock_m->SetClockPPQN(Unpack(data, PackLocation { 11, 5 }));
+        for (size_t i = 0; i < 4; ++i) {
+            clock_m->SetMultiply(Unpack(data, PackLocation { 16+i*6, 6 })-32, i);
+        }
+
+        HemisphereApplet::modal_edit_mode = Unpack(data, PackLocation { 50, 2 });
+        HemisphereApplet::trig_length = constrain( Unpack(data, PackLocation { 52, 7 }), 1, 127);
     }
 
 protected:
@@ -272,7 +284,7 @@ private:
         case TRIG3:
         case TRIG4:
             if (0 == button_ticker)
-                gfxIcon(12 + 32*(cursor-TRIG1), 50, LEFT_ICON);
+                gfxIcon(12 + 32*(cursor-TRIG1), 49, LEFT_ICON);
             break;
 
         default: break;
