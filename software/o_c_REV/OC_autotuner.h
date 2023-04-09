@@ -160,6 +160,7 @@ private:
         if (_freq == 0.0f)
           graphics.printf("wait ...");
         else 
+          // TODO: printf doesn't handle floats with TEENSY_OPT_SMALLEST_CODE
           graphics.printf("%7.3f", _freq);
         }
         break;
@@ -177,6 +178,7 @@ private:
             if (!owner_->_ready())
               graphics.print(" ");
             else 
+              // TODO: printf doesn't handle floats with TEENSY_OPT_SMALLEST_CODE
               graphics.printf(" > %7.3f", owner_->get_auto_frequency());
           }
         }
