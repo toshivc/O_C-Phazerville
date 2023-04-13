@@ -269,6 +269,7 @@ public:
         Pack(data, PackLocation {25,8}, constrain(scale, 0, 255));
         Pack(data, PackLocation {33,4}, cvmode[0]);
         Pack(data, PackLocation {37,4}, cvmode[1]);
+        Pack(data, PackLocation {41,6}, smoothing);
 
         // maybe don't bother saving the damn register
         //Pack(data, PackLocation {32,32}, reg);
@@ -286,6 +287,7 @@ public:
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
         cvmode[0] = (InputMode) Unpack(data, PackLocation {33,4});
         cvmode[1] = (InputMode) Unpack(data, PackLocation {37,4});
+        smoothing = Unpack(data, PackLocation {41,6});
 
         reg[0] = Unpack(data, PackLocation {32,32});
         reg[1] = Unpack(data, PackLocation {0, 32}); // lol it could be fun
