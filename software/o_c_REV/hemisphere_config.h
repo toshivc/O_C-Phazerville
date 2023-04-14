@@ -38,6 +38,7 @@
     DECLARE_APPLET( 45, 0x02, EnigmaJr), \
     DECLARE_APPLET( 42, 0x11, EnvFollow), \
     DECLARE_APPLET( 15, 0x02, EuclidX), \
+    DECLARE_APPLET( 22, 0x01, GameOfLife), \
     DECLARE_APPLET( 29, 0x04, GateDelay), \
     DECLARE_APPLET( 17, 0x50, GatedVCA), \
     DECLARE_APPLET( 16, 0x80, LoFiPCM), \
