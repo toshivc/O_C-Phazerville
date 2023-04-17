@@ -41,7 +41,6 @@
     DECLARE_APPLET( 22, 0x01, GameOfLife), \
     DECLARE_APPLET( 29, 0x04, GateDelay), \
     DECLARE_APPLET( 17, 0x50, GatedVCA), \
-    DECLARE_APPLET( 63, 0x08, Harmonizer), \
     DECLARE_APPLET( 16, 0x80, LoFiPCM), \
     DECLARE_APPLET( 10, 0x44, Logic), \
     DECLARE_APPLET( 21, 0x01, LowerRenz), \
