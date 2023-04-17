@@ -94,6 +94,8 @@ public:
 
     void Controller() {
         bool clk = Clock(0);
+        if (clk) StartADCLag(0);
+        bool update_cv = EndOfADCLag(0);
 
         int cv_data[2];
         cv_data[0] = DetentedIn(0);
@@ -128,7 +130,7 @@ public:
             case TRANSPOSE1:
             case TRANSPOSE2:
             case TRANSPOSE_BOTH:
-                if (clk) // S&H style transpose
+                if (update_cv) // S&H style transpose
                     trans_mod[cvmode[ch] - TRANSPOSE1] = MIDIQuantizer::NoteNumber(cv_data[ch], 0) - 60; // constrain to range_mod?
                 break;
 
@@ -136,11 +138,13 @@ public:
             }
         }
 
-        // Advance the register on clock, flipping bits as necessary
-        if (clk) {
+        if (update_cv) {
             // Update transpose values
             for (int i = 0; i < 3; ++i) { note_trans[i] = trans_mod[i]; }
+        }
 
+        // Advance the register on clock, flipping bits as necessary
+        if (clk) {
             // If the cursor is not on the p value, and Digital 2 is not gated, the sequence remains the same
             int prob = (cursor == PROB || Gate(1)) ? p_mod : 0;
 
@@ -157,19 +161,24 @@ public:
         }
  
         // Send 8-bit scaled and quantized CV
-        int32_t note = Proportion(reg[0] & 0xff, 0xff, range_mod);
-        int32_t note2 = Proportion(reg[1] & 0xff, 0xff, range_mod);
+        int32_t note = Proportion(reg[0] & 0xff, 0xff, range_mod) + 60;
+        int32_t note2 = Proportion(reg[1] & 0xff, 0xff, range_mod) + 60;
 
         ForEachChannel(ch) {
             switch (outmode[ch]) {
-            case PITCH_SUM:
-              Output[ch] = slew(Output[ch], quantizer.Lookup(note + note2 + note_trans[2] + 64));
+            case PITCH_SUM: {
+              // this is the unique case where input CV crossfades between the two melodies
+              int x = constrain(note_trans[2], -range_mod, range_mod);
+              int y = range_mod;
+              int n = (note * (y + x) + note2 * (y - x)) / (2*y);
+              Output[ch] = slew(Output[ch], quantizer.Lookup(n));
               break;
+              }
             case PITCH1:
-              Output[ch] = slew(Output[ch], quantizer.Lookup(note + note_trans[0] + note_trans[2] + 64));
+              Output[ch] = slew(Output[ch], quantizer.Lookup(note + note_trans[0] + note_trans[2]));
               break;
             case PITCH2:
-              Output[ch] = slew(Output[ch], quantizer.Lookup(note2 + note_trans[1] + note_trans[2] + 64));
+              Output[ch] = slew(Output[ch], quantizer.Lookup(note2 + note_trans[1] + note_trans[2]));
               break;
             case MOD1: // 8-bit bi-polar proportioned CV
               Output[ch] = slew(Output[ch], Proportion( int(reg[0] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
@@ -269,10 +278,9 @@ public:
         Pack(data, PackLocation {25,8}, constrain(scale, 0, 255));
         Pack(data, PackLocation {33,4}, cvmode[0]);
         Pack(data, PackLocation {37,4}, cvmode[1]);
-        Pack(data, PackLocation {41,6}, smoothing);
+        Pack(data, PackLocation {41,6}, smoothing - 1);
 
-        // maybe don't bother saving the damn register
-        //Pack(data, PackLocation {32,32}, reg);
+        // TODO: utilize enigma's global turing machine storage for the registers
 
         return data;
     }
@@ -287,12 +295,8 @@ public:
         quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
         cvmode[0] = (InputMode) Unpack(data, PackLocation {33,4});
         cvmode[1] = (InputMode) Unpack(data, PackLocation {37,4});
-        smoothing = Unpack(data, PackLocation {41,6});
-
-        /* XXX: registers could be saved/loaded from global storage instead?
-        reg[0] = Unpack(data, PackLocation {32,32});
-        reg[1] = Unpack(data, PackLocation {0, 32}); // lol it could be fun
-        */
+        smoothing = Unpack(data, PackLocation {41,6}) + 1;
+        smoothing = constrain(smoothing, 1, 128);
     }
 
 protected:
