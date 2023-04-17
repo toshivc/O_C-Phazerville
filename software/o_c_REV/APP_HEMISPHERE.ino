@@ -408,6 +408,7 @@ public:
 
     void ToggleConfigMenu() {
         config_menu = !config_menu;
+        if (config_menu) SetHelpScreen(-1);
     }
 
     void SetHelpScreen(int hemisphere) {
