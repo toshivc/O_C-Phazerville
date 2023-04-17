@@ -210,7 +210,7 @@ private:
             clock_m->Stop();
         } else {
             start_q = 1;
-            clock_m->Start();
+            clock_m->Start( !clock_m->IsPaused() ); // stop->pause->start
         }
     }
 

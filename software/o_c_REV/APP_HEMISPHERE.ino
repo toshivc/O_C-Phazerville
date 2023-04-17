@@ -243,9 +243,15 @@ public:
             }
         }
 
-        // Advance internal clock, sync to external pulse
-        if (clock_m->IsRunning())
-            clock_m->SyncTrig( OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>() );
+        bool clock_sync = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
+        bool reset = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
+
+        // Paused means wait for clock-sync to start
+        if (clock_m->IsPaused() && clock_sync) clock_m->Start();
+        // TODO: automatically stop...
+
+        // Advance internal clock, sync to external clock / reset
+        if (clock_m->IsRunning()) clock_m->SyncTrig( clock_sync, reset );
 
         // NJM: always execute ClockSetup controller - it handles MIDI clock out
         HS::clock_setup_applet.Controller(LEFT_HEMISPHERE, clock_m->IsForwarded());
@@ -278,14 +284,16 @@ public:
                 HS::available_applets[index].View(h);
             }
 
-            if (clock_m->IsRunning() || clock_m->IsPaused()) {
+            if (clock_m->IsRunning()) {
                 // Metronome icon
-                graphics.drawBitmap8(56, 1, 8, clock_m->Cycle() ? METRO_L_ICON : METRO_R_ICON);
+                gfxIcon(56, 1, clock_m->Cycle() ? METRO_L_ICON : METRO_R_ICON);
+            } else if (clock_m->IsPaused()) {
+                gfxIcon(56, 1, PAUSE_ICON);
             }
 
             if (clock_m->IsForwarded()) {
                 // CV Forwarding Icon
-                graphics.drawBitmap8(120, 1, 8, CLOCK_ICON);
+                gfxIcon(120, 1, CLOCK_ICON);
             }
 
             if (select_mode == LEFT_HEMISPHERE) graphics.drawFrame(0, 0, 64, 64);
