@@ -404,8 +404,9 @@ public:
             clock_m->Stop();
             usbMIDI.sendRealTime(usbMIDI.Stop);
         } else {
-            clock_m->Start();
-            usbMIDI.sendRealTime(usbMIDI.Start);
+            bool p = clock_m->IsPaused();
+            clock_m->Start( !p );
+            if (p) usbMIDI.sendRealTime(usbMIDI.Start);
         }
     }
 

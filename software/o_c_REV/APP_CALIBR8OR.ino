@@ -224,6 +224,9 @@ public:
         }
         if (midi_sync) clock_m->SetClockPPQN(24); // rudely snap to MIDI clock sync speed
 
+        // Paused means wait for clock-sync to start
+        if (clock_m->IsPaused() && clock_sync) clock_m->Start();
+
         // Advance internal clock, sync to external clock / reset
         if (clock_m->IsRunning()) clock_m->SyncTrig( clock_sync, reset );
 

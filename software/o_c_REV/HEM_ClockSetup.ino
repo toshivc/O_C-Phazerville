@@ -209,8 +209,8 @@ private:
             stop_q = 1;
             clock_m->Stop();
         } else {
-            start_q = 1;
-            clock_m->Start( !clock_m->IsPaused() ); // stop->pause->start
+            start_q = clock_m->IsPaused();
+            clock_m->Start( !start_q ); // stop->pause->start
         }
     }
 
