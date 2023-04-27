@@ -385,7 +385,6 @@ public:
     void DelegateEncoderMovement(const UI::Event &event) {
         int h = (event.control == OC::CONTROL_ENCODER_L) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
         if (config_menu) {
-            // TODO
             ConfigEncoderAction(h, event.value);
             return;
         }
