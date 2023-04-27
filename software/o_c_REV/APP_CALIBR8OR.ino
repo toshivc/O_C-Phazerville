@@ -271,8 +271,10 @@ public:
         gfxHeader("Calibr8or");
 
         // Metronome icon
-        if (clock_m->IsRunning() || clock_m->IsPaused()) {
-            graphics.drawBitmap8(56, 1, 8, clock_m->Cycle() ? METRO_L_ICON : METRO_R_ICON);
+        if (clock_m->IsRunning()) {
+            gfxIcon(56, 1, clock_m->Cycle() ? METRO_L_ICON : METRO_R_ICON);
+        } else if (clock_m->IsPaused()) {
+            gfxIcon(56, 1, PAUSE_ICON);
         }
 
         if (preset_select) {
@@ -402,6 +404,8 @@ public:
         }
         if (preset_select) {
             edit_mode = (direction>0);
+            // prevent saving to the (clear) slot
+            if (edit_mode && preset_select == 5) preset_select = 4;
             return;
         }
 
