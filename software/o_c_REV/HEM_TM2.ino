@@ -161,8 +161,8 @@ public:
         }
  
         // Send 8-bit scaled and quantized CV
-        int32_t note = Proportion(reg[0] & 0xff, 0xff, range_mod) + 60;
-        int32_t note2 = Proportion(reg[1] & 0xff, 0xff, range_mod) + 60;
+        int32_t note = Proportion(reg[0] & 0xff, 0xff, range_mod) + 64;
+        int32_t note2 = Proportion(reg[1] & 0xff, 0xff, range_mod) + 64;
 
         ForEachChannel(ch) {
             switch (outmode[ch]) {
