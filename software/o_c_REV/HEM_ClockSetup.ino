@@ -85,25 +85,24 @@ public:
         if (cursor == TEMPO) {
             // Tap Tempo detection
             if (last_tap_tick) {
-                tap_time[taps++] = OC::CORE::ticks - last_tap_tick;
+                tap_time[taps] = OC::CORE::ticks - last_tap_tick;
 
-                if (tap_time[taps-1] > CLOCK_TICKS_MAX) {
+                if (tap_time[taps] > CLOCK_TICKS_MAX) {
                     taps = 0;
                     last_tap_tick = 0;
                 }
-
-                if (taps == NR_OF_TAPS)
+                else if (++taps == NR_OF_TAPS)
                     clock_m->SetTempoFromTaps(tap_time, taps);
 
                 taps %= NR_OF_TAPS;
-            } else {
-                last_tap_tick = OC::CORE::ticks;
             }
+            last_tap_tick = OC::CORE::ticks;
         }
     }
 
     void OnEncoderMove(int direction) {
         taps = 0;
+        last_tap_tick = 0;
         if (!EditMode()) {
             MoveCursor(cursor, direction, LAST_SETTING);
             return;
