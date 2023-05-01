@@ -48,7 +48,7 @@ public:
         int scale = DetentedIn(1);
         if (scale < 0) scale = 0;        
         if (scale > 0) {
-            scale = constrain(ProportionCV(scale, MS_QUANT_SCALES_COUNT + 1), 0, MS_QUANT_SCALES_COUNT);
+            scale = constrain(ProportionCV(scale, MS_QUANT_SCALES_COUNT + 1), 0, MS_QUANT_SCALES_COUNT - 1);
         }
         if (scale != current_scale) {
             current_scale = scale;
@@ -102,18 +102,20 @@ public:
         ResetCursor();
     }
         
-    uint32_t OnDataRequest() {
-        uint32_t data = 0;
-        Pack(data, PackLocation {0,12}, scale_mask[0]);
-        Pack(data, PackLocation {12,12}, scale_mask[1]);
-        Pack(data, PackLocation {24,8}, scale_mask[2]);
+    uint64_t OnDataRequest() {
+        uint64_t data = 0;
+        Pack(data, PackLocation { 0, 12}, scale_mask[0]);
+        Pack(data, PackLocation {12, 12}, scale_mask[1]);
+        Pack(data, PackLocation {24, 12}, scale_mask[2]);
+        Pack(data, PackLocation {36, 12}, scale_mask[3]);
         return data;
     }
 
-    void OnDataReceive(uint32_t data) {
-        scale_mask[0] = Unpack(data, PackLocation {0,12});
-        scale_mask[1] = Unpack(data, PackLocation {12,12});
-        scale_mask[2] = Unpack(data, PackLocation {24, 8});
+    void OnDataReceive(uint64_t data) {
+        scale_mask[0] = Unpack(data, PackLocation { 0, 12});
+        scale_mask[1] = Unpack(data, PackLocation {12, 12});
+        scale_mask[2] = Unpack(data, PackLocation {24, 12});
+        scale_mask[3] = Unpack(data, PackLocation {36, 12});
         quantizer.Configure(OC::Scales::GetScale(5), scale_mask[0]);
     }
 
