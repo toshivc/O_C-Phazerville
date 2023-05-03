@@ -1158,6 +1158,7 @@ private:
 //     The first 32 song steps @ 4 bytes each = 128 bytes
 //     Four track settings @ 1 byte each      =   4 bytes
 //     Song length                            =   1 byte
+// TOTAL EEPROM SIZE: 150 bytes
 #define ENIGMA_EEPROM_DATA {0,0,255,"St",NULL,settings::STORAGE_TYPE_U8},
 #define ENIGMA_DO_THIRTY_TIMES(A) A A A A A A A A A A A A A A A A A A A A A A A A A A A A A A
 SETTINGS_DECLARE(EnigmaTMWS, ENIGMA_SETTING_LAST) {

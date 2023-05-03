@@ -1972,6 +1972,7 @@ const char* const arp_range[] = {
   "1", "2", "3", "4"
 };
 
+// TOTAL EEPROM SIZE: 2 * 54 bytes
 SETTINGS_DECLARE(SEQ_Channel, SEQ_CHANNEL_SETTING_LAST) {
 
   { 0, 0, 4, "aux. mode", modes, settings::STORAGE_TYPE_U4 },

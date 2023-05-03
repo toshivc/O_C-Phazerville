@@ -207,6 +207,7 @@ const char* const bb_cv_mapping_names[BB_CV_MAPPING_LAST] = {
   "off", "grav", "bnce", "ampl", "vel", "retr"
 };
 
+// TOTAL EEPROM SIZE: 4 * 9 bytes
 SETTINGS_DECLARE(BouncingBall, BB_SETTING_LAST) {
   { 128, 0, 255, "Gravity", NULL, settings::STORAGE_TYPE_U8 },
   { 96, 0, 255, "Bounce loss", NULL, settings::STORAGE_TYPE_U8 },

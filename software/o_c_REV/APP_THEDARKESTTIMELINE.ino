@@ -513,6 +513,7 @@ private:
 };
 
 // MIDI channels are U8 instead of U4 because the channel number is not zero-indexed; 0 means "off"
+// TOTAL EEPROM SIZE: 8 bytes
 SETTINGS_DECLARE(TheDarkestTimeline, DT_SETTING_LAST) {
     {16, 1, 32, "Length", NULL, settings::STORAGE_TYPE_U8},
     {0, 0, 31, "Index", NULL, settings::STORAGE_TYPE_U8},

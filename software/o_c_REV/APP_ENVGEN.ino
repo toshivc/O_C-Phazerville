@@ -730,6 +730,7 @@ const char* const internal_trigger_types[INT_TRIGGER_LAST] = {
   "EOC", // Keep length == 3
 };
 
+// TOTAL EEPROM SIZE: 4 * 30 bytes
 SETTINGS_DECLARE(EnvelopeGenerator, ENV_SETTING_LAST) {
   { ENV_TYPE_AD, ENV_TYPE_FIRST, ENV_TYPE_LAST-1, "TYPE", envelope_types, settings::STORAGE_TYPE_U8 },
   { 128, 0, 255, "S1", NULL, settings::STORAGE_TYPE_U16 }, // u16 in case resolution proves insufficent

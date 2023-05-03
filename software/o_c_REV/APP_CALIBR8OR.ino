@@ -558,6 +558,7 @@ private:
     }
 };
 
+// TOTAL EEPROM SIZE: 4 * 29 bytes
 SETTINGS_DECLARE(Calibr8orPreset, CAL8_SETTING_LAST) {
     {0, 0, 1, "validity flag", NULL, settings::STORAGE_TYPE_U4},
 

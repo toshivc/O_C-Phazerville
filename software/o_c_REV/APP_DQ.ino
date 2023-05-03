@@ -1113,6 +1113,7 @@ const char* const dq_tm_trig_out[] = {
   "echo", "lsb", "chng"
 };
 
+// TOTAL EEPROM SIZE: 2 * 34 bytes
 SETTINGS_DECLARE(DQ_QuantizerChannel, DQ_CHANNEL_SETTING_LAST) {
   { OC::Scales::SCALE_SEMI, 0, OC::Scales::NUM_SCALES - 1, "scale", OC::scale_names, settings::STORAGE_TYPE_U8 },
   { OC::Scales::SCALE_SEMI, 0, OC::Scales::NUM_SCALES - 1, "scale", OC::scale_names, settings::STORAGE_TYPE_U8 },

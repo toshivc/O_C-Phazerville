@@ -434,6 +434,7 @@ const char* const h1200_eucl_cv_mappings[] = {
   "Hlen", "Hfil", "Hoff",  
 };
 
+// TOTAL EEPROM SIZE: 37 bytes
 SETTINGS_DECLARE(H1200Settings, H1200_SETTING_LAST) {
   {0, -11, 11, "Transpose", NULL, settings::STORAGE_TYPE_I8},
   {H1200_CV_SOURCE_NONE, H1200_CV_SOURCE_NONE, H1200_CV_SOURCE_LAST-1, "Transpose CV", OC::Strings::cv_input_names_none, settings::STORAGE_TYPE_U8},

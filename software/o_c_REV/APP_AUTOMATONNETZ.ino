@@ -149,6 +149,7 @@ const char *cell_event_masks[] = {
   "rTOI", // 0x4 + 0x2 + 0x1
 };
 
+// TOTAL EEPROM SIZE: 25 * 4 bytes
 SETTINGS_DECLARE(TransformCell, CELL_SETTING_LAST) {
   {0, tonnetz::TRANSFORM_NONE, tonnetz::TRANSFORM_LAST, "Trfm", tonnetz::transform_names_str, settings::STORAGE_TYPE_U8},
   {0, -12, 12, "Offs", NULL, settings::STORAGE_TYPE_I8},
@@ -341,6 +342,7 @@ const char * const clear_mode_names[] = {
   "zero", "rT", "rTev"
 };
 
+// TOTAL EEPROM SIZE: 6 bytes
 SETTINGS_DECLARE(AutomatonnetzState, GRID_SETTING_LAST) {
   {8, 0, 8*GRID_DIMENSION - 1, "dx", NULL, settings::STORAGE_TYPE_I8},
   {4, 0, 8*GRID_DIMENSION - 1, "dy", NULL, settings::STORAGE_TYPE_I8},

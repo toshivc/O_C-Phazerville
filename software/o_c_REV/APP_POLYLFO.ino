@@ -210,6 +210,7 @@ const char* const tr4_multiplier[6] = {
   "/8", "/4", "/2", "x2", "x4", "x8"
 };
 
+// TOTAL EEPROM SIZE: 22 bytes
 SETTINGS_DECLARE(PolyLfo, POLYLFO_SETTING_LAST) {
   { 64, 0, 255, "C", NULL, settings::STORAGE_TYPE_U8 },
   { 0, -128, 127, "F", NULL, settings::STORAGE_TYPE_I16 },

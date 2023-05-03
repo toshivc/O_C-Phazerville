@@ -576,7 +576,7 @@ private:
     }
 };
 
-// Declare 216 bytes for storage
+// TOTAL EEPROM SIZE: 216 bytes
 #define NN_EEPROM_DATA {0,0,255,"St",NULL,settings::STORAGE_TYPE_U8},
 #define NN_DO_TWENTYFOUR_TIMES(A) A A A A A A A A A A A A A A A A A A A A A A A A
 SETTINGS_DECLARE(NeuralNetwork, NN_SETTING_LAST) {

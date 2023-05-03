@@ -1126,6 +1126,7 @@ const char* const aux_cv_dest[5] = {
   "-", "root", "oct", "trns", "mask"
 };
 
+// TOTAL EEPROM SIZE: 4 * 40 bytes
 SETTINGS_DECLARE(QuantizerChannel, CHANNEL_SETTING_LAST) {
   { OC::Scales::SCALE_SEMI, 0, OC::Scales::NUM_SCALES - 1, "Scale", OC::scale_names, settings::STORAGE_TYPE_U8 },
   { 0, 0, 11, "Root", OC::Strings::note_names_unpadded, settings::STORAGE_TYPE_U8 },

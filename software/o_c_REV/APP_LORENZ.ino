@@ -149,6 +149,7 @@ const char* const lorenz_freq_range_names[5] = {
  "sloth",  "lazy",  "slow", "med", "fast",
 };
 
+// TOTAL EEPROM SIZE: 9 bytes
 SETTINGS_DECLARE(LorenzGenerator, LORENZ_SETTING_LAST) {
   #ifdef BUCHLA_4U
   { 0, 0, 255, "Freq 1", NULL, settings::STORAGE_TYPE_U8 },

@@ -742,7 +742,7 @@ const char* const int_seq_CV_destinations[] = {
   "igain", "seq", "strt", "len", "strd", "mod"
 };
 
-
+// TOTAL EEPROM SIZE: 23 bytes
 SETTINGS_DECLARE(ASRApp, ASR_SETTING_LAST) {
   { OC::Scales::SCALE_SEMI, 0, OC::Scales::NUM_SCALES - 1, "Scale", OC::scale_names_short, settings::STORAGE_TYPE_U8 },
   { 0, -5, 5, "octave", NULL, settings::STORAGE_TYPE_I8 }, // octave

@@ -996,6 +996,7 @@ const char* const chord_playmodes[] = {
   "-", "SEQ+1", "SEQ+2", "SEQ+3", "TR3+1", "TR3+2", "TR3+3", "S+H#1", "S+H#2", "S+H#3", "S+H#4", "CV#1", "CV#2", "CV#3", "CV#4"
 };
 
+// TOTAL EEPROM SIZE: 25 bytes
 SETTINGS_DECLARE(Chords, CHORDS_SETTING_LAST) {
   { OC::Scales::SCALE_SEMI, OC::Scales::SCALE_SEMI, OC::Scales::NUM_SCALES - 1, "scale", OC::scale_names, settings::STORAGE_TYPE_U8 },
   { 0, 0, 11, "root", OC::Strings::note_names_unpadded, settings::STORAGE_TYPE_U8 },
