@@ -104,10 +104,9 @@ public:
         apply_value(8 + h, (data >> 48) & 0xffff);
     }
 
+    // TODO: I haven't updated the SysEx data structure here because I don't use it.
+    // Clock data would probably be useful if it's not too big. -NJM
     void OnSendSysEx() {
-        // Set the values_ array prior to packing it
-        //StoreClockData();
-
         // Describe the data structure for the audience
         uint8_t V[18];
         V[0] = (uint8_t)values_[HEMISPHERE_SELECTED_LEFT_ID];
@@ -182,12 +181,15 @@ public:
             LoadFromPreset(0);
     }
     void Suspend() {
-        if (hem_active_preset)
+        if (hem_active_preset) {
+            // Preset A will auto-save
+            if (preset_id == 0) StoreToPreset(0);
             hem_active_preset->OnSendSysEx();
+        }
     }
 
-    void StoreToPreset(int id) {
-        hem_active_preset = (HemispherePreset*)(hem_presets + id);
+    void StoreToPreset(HemispherePreset* preset) {
+        hem_active_preset = preset;
         for (int h = 0; h < 2; h++)
         {
             int index = my_applet[h];
@@ -197,6 +199,9 @@ public:
             hem_active_preset->SetData(h, data);
         }
         hem_active_preset->StoreClockData();
+    }
+    void StoreToPreset(int id) {
+        StoreToPreset( (HemispherePreset*)(hem_presets + id) );
         preset_id = id;
     }
     void LoadFromPreset(int id) {
