@@ -35,24 +35,24 @@
 #define LEFT_HEMISPHERE 0
 #define RIGHT_HEMISPHERE 1
 #ifdef BUCHLA_4U
+#define PULSE_VOLTAGE 8
 #define HEMISPHERE_MAX_CV 15360
-#define HEMISPHERE_CENTER_CV 7680
+#define HEMISPHERE_CENTER_CV 7680 // 5V
+#elif defined(VOR)
+#define PULSE_VOLTAGE 8
+#define HEMISPHERE_MAX_CV (HS::octave_max * 12 << 7)
+#define HEMISPHERE_CENTER_CV 0
 #else
+#define PULSE_VOLTAGE 5
 #define HEMISPHERE_MAX_CV 7680
 #define HEMISPHERE_CENTER_CV 0
 #endif
+#define HEMISPHERE_3V_CV (HEMISPHERE_CENTER_CV + 4608)
 #define HEMISPHERE_CENTER_DETENT 80
-#define HEMISPHERE_3V_CV 4608
 #define HEMISPHERE_CLOCK_TICKS 50
 #define HEMISPHERE_CURSOR_TICKS 12000
 #define HEMISPHERE_ADC_LAG 33
 #define HEMISPHERE_CHANGE_THRESHOLD 32
-
-#ifdef BUCHLA_4U
-#define PULSE_VOLTAGE 8
-#else
-#define PULSE_VOLTAGE 5
-#endif
 
 // Codes for help system sections
 #define HEMISPHERE_HELP_DIGITALS 0
@@ -103,6 +103,7 @@ typedef struct Applet {
 Applet available_applets[] = HEMISPHERE_APPLETS;
 Applet clock_setup_applet = DECLARE_APPLET(9999, 0x01, ClockSetup);
 
+int octave_max = 5;
 }
 
 // Specifies where data goes in flash storage for each selcted applet, and how big it is

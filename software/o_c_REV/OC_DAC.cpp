@@ -45,6 +45,10 @@
 
 namespace OC {
 
+#ifdef VOR
+int DAC::kOctaveZero = 0;
+#endif
+
 /*static*/
 void DAC::Init(CalibrationData *calibration_data) {
 

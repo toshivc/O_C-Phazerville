@@ -454,6 +454,12 @@ void OC::Ui::Calibrate() {
   tick_count.Init();
 
   encoder_enable_acceleration(CONTROL_ENCODER_R, true);
+  #ifdef VOR
+  {
+    VBiasManager *vb = vb->get();
+    vb->ChangeBiasToState(VBiasManager::UNI);
+  }
+  #endif
 
   bool calibration_complete = false;
   while (!calibration_complete) {

@@ -42,10 +42,10 @@ typedef int32_t simfloat;
 #define HSAPPLICATION_3V 4608
 #define HSAPPLICATION_CHANGE_THRESHOLD 32
 
-#ifdef BUCHLA_4U
-#define PULSE_VOLTAGE 8
+#if defined(BUCHLA_4U) || defined(VOR)
+#define HSAPP_PULSE_VOLTAGE 8
 #else
-#define PULSE_VOLTAGE 5
+#define HSAPP_PULSE_VOLTAGE 5
 #endif
 
 class HSApplication {
@@ -129,7 +129,7 @@ public:
     }
 
     void GateOut(int ch, bool high) {
-        Out(ch, 0, (high ? PULSE_VOLTAGE : 0));
+        Out(ch, 0, (high ? HSAPP_PULSE_VOLTAGE : 0));
     }
 
     bool Clock(int ch) {
@@ -157,7 +157,7 @@ public:
 
     void ClockOut(int ch, int ticks = 100) {
         clock_countdown[ch] = ticks;
-        Out(ch, 0, PULSE_VOLTAGE);
+        Out(ch, 0, HSAPP_PULSE_VOLTAGE);
     }
 
     // Buffered I/O functions for use in Views

@@ -34,6 +34,10 @@
 
 #define BIAS_EDITOR_TIMEOUT 20000
 
+namespace HS {
+extern int octave_max;
+}
+
 class VBiasManager {
     static VBiasManager *instance;
     int bias_state;
@@ -48,6 +52,8 @@ public:
     static const int BI = 0;
     static const int ASYM = 1;
     static const int UNI = 2;
+    const int OCTAVE_BIAS[3] = {5, 3, 0};
+    const int OCTAVE_MAX[3] = {5, 7, 10};
 
     static VBiasManager *get() {
         if (!instance) instance = new VBiasManager;
@@ -88,6 +94,35 @@ public:
         if (new_bias_state == VBiasManager::ASYM) new_bias_value = (OC::calibration_data.v_bias >> 16); // asym. = upper 2 bytes
         OC::DAC::set_Vbias(new_bias_value);
         bias_state = new_bias_state;
+
+        OC::DAC::kOctaveZero = OCTAVE_BIAS[bias_state];
+        HS::octave_max = OCTAVE_MAX[bias_state];
+    }
+    int GetState() {
+        return bias_state;
+    }
+
+    void SetStateForApp(int app_index) {
+        /* TODO: something more dynamic
+        int new_state = VBiasManager::ASYM;
+        switch (app_index)
+        {
+        case 0: new_state = VBiasManager::ASYM; break;  // CopierMachine (or) ASR
+        case 1: new_state = VBiasManager::ASYM; break;  // Harrington 1200 (or) Triads
+        case 2: new_state = VBiasManager::ASYM; break;  // Automatonnetz (or) Vectors
+        case 3: new_state = VBiasManager::ASYM; break;  // Quantermain (or) 4x Quantizer
+        case 4: new_state = VBiasManager::ASYM; break;  // Meta-Q (or) 2x Quantizer
+        case 5: new_state = VBiasManager::BI; break;    // Quadraturia (or) Quadrature LFO
+        case 6: new_state = VBiasManager::BI; break;  // Low-rents (or) Lorenz
+        case 7: new_state = VBiasManager::UNI; break;   // Piqued (or) 4x EG
+        case 8: new_state = VBiasManager::ASYM; break;  // Sequins (or) 2x Sequencer
+        case 9: new_state = VBiasManager::UNI; break;   // Dialectic Ping Pong (or) Balls
+        case 10: new_state = VBiasManager::UNI; break;  // Viznutcracker sweet (or) Bytebeats
+        case 11: new_state = VBiasManager::ASYM; break; // Acid Curds (or) Chords
+        case 12: new_state = VBiasManager::UNI; break;  // References (or) Voltages
+        }
+        instance->ChangeBiasToState(new_state);
+        */
     }
 
     /*
