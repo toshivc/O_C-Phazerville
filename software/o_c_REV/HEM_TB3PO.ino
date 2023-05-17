@@ -378,6 +378,7 @@ class TB_3PO : public HemisphereApplet
         Pack(data, PackLocation {12,4}, density_encoder);
         Pack(data, PackLocation {16,16}, seed);
         Pack(data, PackLocation {32,8}, octave_offset);
+        Pack(data, PackLocation {40,5}, num_steps - 1);
         return data;
     }
 
@@ -388,6 +389,7 @@ class TB_3PO : public HemisphereApplet
       density_encoder = Unpack(data, PackLocation {12,4});
       seed = Unpack(data, PackLocation {16,16});
       octave_offset = Unpack(data, PackLocation {32,8});
+      num_steps = Unpack(data, PackLocation {40,5}) + 1;
 
       //const braids::Scale & quant_scale = OC::Scales::GetScale(scale);
       set_quantizer_scale(scale);
