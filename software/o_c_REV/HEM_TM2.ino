@@ -56,7 +56,7 @@ public:
     };
 
     enum OutputMode {
-        PITCH_SUM,
+        PITCH_BLEND,
         PITCH1,
         PITCH2,
         MOD1,
@@ -76,7 +76,7 @@ public:
         RANGE_MOD,
         TRANSPOSE1,
         TRANSPOSE2,
-        TRANSPOSE_BOTH,
+        BLEND_XFADE, // actually crossfade blend of both pitches
         INMODE_LAST
     };
 
@@ -129,7 +129,7 @@ public:
             // bi-polar transpose before quantize
             case TRANSPOSE1:
             case TRANSPOSE2:
-            case TRANSPOSE_BOTH:
+            case BLEND_XFADE:
                 if (update_cv) // S&H style transpose
                     trans_mod[cvmode[ch] - TRANSPOSE1] = MIDIQuantizer::NoteNumber(cv_data[ch], 0) - 60; // constrain to range_mod?
                 break;
@@ -166,7 +166,7 @@ public:
 
         ForEachChannel(ch) {
             switch (outmode[ch]) {
-            case PITCH_SUM: {
+            case PITCH_BLEND: {
               // this is the unique case where input CV crossfades between the two melodies
               int x = constrain(note_trans[2], -range_mod, range_mod);
               int y = range_mod;
@@ -175,10 +175,10 @@ public:
               break;
               }
             case PITCH1:
-              Output[ch] = slew(Output[ch], quantizer.Lookup(note + note_trans[0] + note_trans[2]));
+              Output[ch] = slew(Output[ch], quantizer.Lookup(note + note_trans[0]));
               break;
             case PITCH2:
-              Output[ch] = slew(Output[ch], quantizer.Lookup(note2 + note_trans[1] + note_trans[2]));
+              Output[ch] = slew(Output[ch], quantizer.Lookup(note2 + note_trans[1]));
               break;
             case MOD1: // 8-bit bi-polar proportioned CV
               Output[ch] = slew(Output[ch], Proportion( int(reg[0] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
@@ -350,7 +350,7 @@ private:
         gfxPrint(":");
 
         switch (outmode[ch]) {
-        case PITCH_SUM: gfxBitmap(24+ch*32, 35, 3, SUP_ONE);
+        case PITCH_BLEND: gfxBitmap(24+ch*32, 35, 3, SUP_ONE);
         case PITCH1:
         case PITCH2:
             gfxBitmap(15 + ch*32, 35, 8, NOTE_ICON);
@@ -397,7 +397,7 @@ private:
             gfxIcon(15 + ch*32, 35, BEND_ICON);
             gfxBitmap(24+ch*32, 35, 3, SUP_ONE);
             break;
-        case TRANSPOSE_BOTH:
+        case BLEND_XFADE:
             gfxBitmap(24+ch*32, 35, 3, SUP_ONE);
         case TRANSPOSE2:
             gfxIcon(15 + ch*32, 35, BEND_ICON);
