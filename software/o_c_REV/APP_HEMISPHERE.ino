@@ -380,7 +380,8 @@ public:
         if (!clock_setup) {
             // Select Mode
             if (hemisphere == select_mode) select_mode = -1; // Exit Select Mode if same button is pressed
-            else select_mode = hemisphere; // Otherwise, set Select Mode
+            else if (help_hemisphere < 0) // Otherwise, set Select Mode - UNLESS there's a help screen
+                select_mode = hemisphere;
         }
 
         if (click_tick)
