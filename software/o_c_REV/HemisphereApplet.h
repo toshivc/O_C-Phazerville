@@ -77,6 +77,7 @@ typedef int32_t simfloat;
 #define gfx_offset (hemisphere * 64) // Graphics offset, based on the side
 #define io_offset (hemisphere * 2) // Input/Output offset, based on the side
 
+#define HEMISPHERE_SIM_CLICK_TIME 1000
 #define HEMISPHERE_DOUBLE_CLICK_TIME 8000
 #define HEMISPHERE_PULSE_ANIMATION_TIME 500
 #define HEMISPHERE_PULSE_ANIMATION_TIME_LONG 1200

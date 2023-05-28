@@ -355,7 +355,7 @@ public:
                 // This is a double-click. Activate corresponding help screen or Clock Setup
                 if (hemisphere == first_click)
                     SetHelpScreen(hemisphere);
-                else // up + down simultaneous
+                else if (OC::CORE::ticks - click_tick < HEMISPHERE_SIM_CLICK_TIME) // dual press for clock setup uses shorter timing
                     clock_setup = 1;
 
                 // leave Select Mode, and reset the double-click timer
