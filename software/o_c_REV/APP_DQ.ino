@@ -1353,7 +1353,7 @@ void DQ_handleButtonEvent(const UI::Event &event) {
         DQ_rightButton();
         break;
     }
-  } else {
+  } else if (UI::EVENT_BUTTON_LONG_PRESS == event.type) {
     if (OC::CONTROL_BUTTON_L == event.control)
       DQ_leftButtonLong();
   }

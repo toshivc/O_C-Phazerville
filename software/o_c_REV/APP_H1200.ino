@@ -1085,11 +1085,9 @@ void H1200_handleButtonEvent(const UI::Event &event) {
         h1200_state.cursor.toggle_editing();
         break;
     }
-  } else {
-    if (OC::CONTROL_BUTTON_L == event.control) {
+  } else if (UI::EVENT_BUTTON_LONG_PRESS == event.type && OC::CONTROL_BUTTON_L == event.control) {
       h1200_settings.InitDefaults();
       h1200_state.manual_reset();
-    }
   }
 }
 

@@ -664,7 +664,7 @@ void HEMISPHERE_handleButtonEvent(const UI::Event &event) {
     case UI::EVENT_BUTTON_PRESS:
         if (event.control == OC::CONTROL_BUTTON_UP || event.control == OC::CONTROL_BUTTON_DOWN) {
             manager.DelegateSelectButtonPush(event);
-        } else {
+        } else if (event.control == OC::CONTROL_BUTTON_L || event.control == OC::CONTROL_BUTTON_R) {
             manager.DelegateEncoderPush(event);
         }
         break;

@@ -681,9 +681,6 @@ void Automatonnetz_handleAppEvent(OC::AppEvent event) {
   }
 }
 
-void Automatonnetz_rightButton() {
-}
-
 void Automatonnetz_handleButtonEvent(const UI::Event &event) {
   if (UI::EVENT_BUTTON_PRESS == event.type) {
     switch (event.control) {
@@ -703,12 +700,10 @@ void Automatonnetz_handleButtonEvent(const UI::Event &event) {
           automatonnetz_state.ui.grid_cursor.toggle_editing();
         break;
     }
-  } else {
-    if (OC::CONTROL_BUTTON_L == event.control) {
+  } else if (UI::EVENT_BUTTON_LONG_PRESS == event.type && OC::CONTROL_BUTTON_L == event.control) {
       automatonnetz_state.ClearGrid();
       // Forcing reset might make critical section even less necesary...
       automatonnetz_state.AddUserAction(USER_ACTION_RESET);
-    }
   }
 }
 

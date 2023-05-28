@@ -1359,7 +1359,7 @@ void QQ_handleButtonEvent(const UI::Event &event) {
         QQ_rightButton();
         break;
     }
-  } else {
+  } else if (UI::EVENT_BUTTON_LONG_PRESS == event.type) {
     if (OC::CONTROL_BUTTON_L == event.control)
       QQ_leftButtonLong();
   }

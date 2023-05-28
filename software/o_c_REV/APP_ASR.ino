@@ -867,7 +867,7 @@ void ASR_handleButtonEvent(const UI::Event &event) {
         ASR_rightButton();
         break;
     }
-  } else {
+  } else if (UI::EVENT_BUTTON_LONG_PRESS == event.type) {
     if (OC::CONTROL_BUTTON_L == event.control)
       ASR_leftButtonLong();
     else if (OC::CONTROL_BUTTON_DOWN == event.control)
