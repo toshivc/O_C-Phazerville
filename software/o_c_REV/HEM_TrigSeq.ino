@@ -131,7 +131,7 @@ private:
     }
 
     int Offset(int ch) {
-        int offset = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, end_step[ch]);
+        int offset = Proportion(DetentedIn(1), HEMISPHERE_MAX_INPUT_CV, end_step[ch]);
         if (offset < 0) offset += Length(ch);
         offset %= Length(ch);
         return offset;

@@ -118,7 +118,7 @@ private:
     int cursor; // 0=ch1 low, 1=ch1 hi, 2=ch2 low, 3=ch3 hi, 4=end_step
 
     int Offset() {
-        int offset = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, end_step);
+        int offset = Proportion(DetentedIn(1), HEMISPHERE_MAX_INPUT_CV, end_step);
         if (offset < 0) offset += Length();
         offset %= Length();
         return offset;

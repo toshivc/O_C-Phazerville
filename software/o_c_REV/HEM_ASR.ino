@@ -45,7 +45,7 @@ public:
                 int cv = In(0);
                 buffer_m->WriteValueToBuffer(cv, hemisphere);
             }
-            index_mod = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 32);
+            index_mod = Proportion(DetentedIn(1), HEMISPHERE_MAX_INPUT_CV, 32);
             ForEachChannel(ch)
             {
                 int cv = buffer_m->ReadNextValue(ch, hemisphere, index_mod);

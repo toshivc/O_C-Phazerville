@@ -81,7 +81,7 @@ public:
         }
 
         // Modulation output
-        int xy = (In(0) * In(1)) / HEMISPHERE_MAX_CV;
+        int xy = (In(0) * In(1)) / HEMISPHERE_MAX_INPUT_CV;
         Out(1, xy);
 
         // Handle imprint confirmation animation

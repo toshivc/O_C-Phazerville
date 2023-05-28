@@ -45,7 +45,7 @@ public:
         ForEachChannel(ch)
         {
         		if (!linked || ch == 0) {
-        		    cv_phase = Proportion(In(ch), HEMISPHERE_MAX_CV, 3599);
+        		    cv_phase = Proportion(In(ch), HEMISPHERE_MAX_INPUT_CV, 3599);
         		    	cv_phase = constrain(cv_phase, -3599, 3599);
         		}
         		last_phase[ch] = (phase[ch] * 10) + cv_phase;

@@ -97,8 +97,8 @@ public:
         int32_t bd_signal = 0;
         int32_t sd_signal = 0;
         int32_t ns_signal = 0;
-        cv_kick = Proportion(DetentedIn(CH_KICK), HEMISPHERE_MAX_CV, BNC_MAX_PARAM);
-        cv_snare = Proportion(DetentedIn(CH_SNARE), HEMISPHERE_MAX_CV, BNC_MAX_PARAM);
+        cv_kick = Proportion(DetentedIn(CH_KICK), HEMISPHERE_MAX_INPUT_CV, BNC_MAX_PARAM);
+        cv_snare = Proportion(DetentedIn(CH_SNARE), HEMISPHERE_MAX_INPUT_CV, BNC_MAX_PARAM);
 
         // Kick drum
         if (cv_mode_kick == CV_MODE_TONE) {

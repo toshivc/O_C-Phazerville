@@ -35,9 +35,9 @@ public:
         // Set division via CV
         ForEachChannel(ch)
         {
-            int input = DetentedIn(ch) - HEMISPHERE_CENTER_CV;
+            int input = DetentedIn(ch);
             if (input) {
-                div[ch] = Proportion(input, HEMISPHERE_MAX_CV / 2, HEM_CLOCKDIV_MAX);
+                div[ch] = Proportion(input, HEMISPHERE_MAX_INPUT_CV / 2, HEM_CLOCKDIV_MAX);
                 div[ch] = constrain(div[ch], -HEM_CLOCKDIV_MAX, HEM_CLOCKDIV_MAX);
                 if (div[ch] == 0 || div[ch] == -1) div[ch] = 1;
             }

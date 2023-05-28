@@ -44,11 +44,11 @@ public:
                 int segment = (input > signal[ch]) ? rise : fall;
                 simfloat remaining = input - signal[ch];
 
-                // The number of ticks it would take to get from 0 to HEMISPHERE_MAX_CV
+                // The number of ticks it would take to get from 0 to HEMISPHERE_MAX_INPUT_CV
                 int max_change = Proportion(segment, HEM_SLEW_MAX_VALUE, HEM_SLEW_MAX_TICKS);
 
                 // The number of ticks it would take to move the remaining amount at max_change
-                int ticks_to_remaining = Proportion(simfloat2int(remaining), HEMISPHERE_MAX_CV, max_change);
+                int ticks_to_remaining = Proportion(simfloat2int(remaining), HEMISPHERE_MAX_INPUT_CV, max_change);
                 if (ticks_to_remaining < 0) ticks_to_remaining = -ticks_to_remaining;
 
                 simfloat delta;

@@ -133,8 +133,8 @@ class TB_3PO : public HemisphereApplet
       {
         // -2.5v to +5v (HEMISPHERE_MAX_CV),  giving about -8 to +15 added to encoder density value
         // Note: DetentedIn is used to cut out noise near 0, even though it's being quantized to int below (primarily to make the cv icon work better)
-        int signal = constrain(DetentedIn(1), -HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV);  // Allow negative to go about as far as it will reach
-        density_cv = Proportion(abs(signal), HEMISPHERE_MAX_CV, 15); // Apply proportion uniformly to +- voltages as + for symmetry (Avoids rounding differences)
+        int signal = constrain(DetentedIn(1), -HEMISPHERE_3V_CV, HEMISPHERE_MAX_INPUT_CV);  // Allow negative to go about as far as it will reach
+        density_cv = Proportion(abs(signal), HEMISPHERE_MAX_INPUT_CV, 15); // Apply proportion uniformly to +- voltages as + for symmetry (Avoids rounding differences)
         if(signal <0)
         {
           density_cv *= -1;  // Restore negative sign if -v
@@ -207,7 +207,7 @@ class TB_3PO : public HemisphereApplet
         // Do nothing if the current step should be slid
         if(!step_is_slid(step))
         {
-          curr_gate_cv = 0;//HEMISPHERE_CENTER_CV;
+          curr_gate_cv = 0;
         }
       }
 

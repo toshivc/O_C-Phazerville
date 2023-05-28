@@ -39,8 +39,8 @@ public:
 
     void Controller() {
         if (!Gate(1)) { // Freeze if gated
-            int freq_cv = Proportion(In(0), HEMISPHERE_MAX_CV, 63);
-            int rho_cv = Proportion(In(1), HEMISPHERE_MAX_CV, 31);
+            int freq_cv = Proportion(In(0), HEMISPHERE_MAX_INPUT_CV, 63);
+            int rho_cv = Proportion(In(1), HEMISPHERE_MAX_INPUT_CV, 31);
 
             int32_t freq_h = SCALE8_16(constrain(freq + freq_cv, 0, 255));
             freq_h = USAT16(freq_h);

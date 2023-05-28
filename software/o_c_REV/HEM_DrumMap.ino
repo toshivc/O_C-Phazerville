@@ -43,8 +43,8 @@ public:
     }
 
     void Controller() {
-        cv1 = Proportion(DetentedIn(0), HEMISPHERE_MAX_CV, 255);
-        cv2 = Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 255);
+        cv1 = Proportion(DetentedIn(0), HEMISPHERE_MAX_INPUT_CV, 255);
+        cv2 = Proportion(DetentedIn(1), HEMISPHERE_MAX_INPUT_CV, 255);
 
         int _fill[2] = {fill[0], fill[1]};
         if (cv_mode == 0) {

@@ -45,7 +45,7 @@ public:
             // use the unconstrained signal for mixing
             prevSignal = signal;
 
-            signal = constrain(signal, -HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV);
+            signal = constrain(signal, -HEMISPHERE_MAX_CV, HEMISPHERE_MAX_CV);
             Out(ch, signal);
         }
     }

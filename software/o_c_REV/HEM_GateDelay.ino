@@ -42,7 +42,7 @@ public:
             ForEachChannel(ch)
             {
                 record(ch, Gate(ch));
-                int mod_time = Proportion(DetentedIn(ch), HEMISPHERE_MAX_CV, 1000) + time[ch];
+                int mod_time = Proportion(DetentedIn(ch), HEMISPHERE_MAX_INPUT_CV, 1000) + time[ch];
                 mod_time = constrain(mod_time, 0, 2000);
 
                 bool p = play(ch, mod_time);

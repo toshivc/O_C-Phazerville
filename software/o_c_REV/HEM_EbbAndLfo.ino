@@ -30,13 +30,13 @@ public:
             pitch_mod += In(ch);
             break;
         case SLOPE:
-            slope_mod += Proportion(DetentedIn(ch), HEMISPHERE_MAX_CV, 127);
+            slope_mod += Proportion(DetentedIn(ch), HEMISPHERE_MAX_INPUT_CV, 127);
             break;
         case SHAPE:
-            shape_mod += Proportion(DetentedIn(ch), HEMISPHERE_MAX_CV, 127);
+            shape_mod += Proportion(DetentedIn(ch), HEMISPHERE_MAX_INPUT_CV, 127);
             break;
         case FOLD:
-            fold_mod += Proportion(DetentedIn(ch), HEMISPHERE_MAX_CV, 127);
+            fold_mod += Proportion(DetentedIn(ch), HEMISPHERE_MAX_INPUT_CV, 127);
             break;
         }
     }

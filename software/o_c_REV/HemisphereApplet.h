@@ -38,16 +38,20 @@
 #define PULSE_VOLTAGE 8
 #define HEMISPHERE_MAX_CV 15360
 #define HEMISPHERE_CENTER_CV 7680 // 5V
+#define HEMISPHERE_MIN_CV 0
 #elif defined(VOR)
 #define PULSE_VOLTAGE 8
 #define HEMISPHERE_MAX_CV (HS::octave_max * 12 << 7)
 #define HEMISPHERE_CENTER_CV 0
+#define HEMISPHERE_MIN_CV (HEMISPHERE_MAX_CV - 15360)
 #else
 #define PULSE_VOLTAGE 5
-#define HEMISPHERE_MAX_CV 7680
+#define HEMISPHERE_MAX_CV 9216 // 6V
 #define HEMISPHERE_CENTER_CV 0
+#define HEMISPHERE_MIN_CV -4608 // -3V
 #endif
-#define HEMISPHERE_3V_CV (HEMISPHERE_CENTER_CV + 4608)
+#define HEMISPHERE_3V_CV 4608
+#define HEMISPHERE_MAX_INPUT_CV 9216 // 6V
 #define HEMISPHERE_CENTER_DETENT 80
 #define HEMISPHERE_CLOCK_TICKS 50
 #define HEMISPHERE_CURSOR_TICKS 12000
@@ -530,7 +534,7 @@ protected:
      *              HEMISPHERE_MAX_CV   max_pixels
      */
     int ProportionCV(int cv_value, int max_pixels) {
-        int prop = constrain(Proportion(cv_value, HEMISPHERE_MAX_CV, max_pixels), 0, max_pixels);
+        int prop = constrain(Proportion(cv_value, HEMISPHERE_MAX_INPUT_CV, max_pixels), 0, max_pixels);
         return prop;
     }
 

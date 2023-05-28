@@ -69,8 +69,8 @@ public:
             default:
                 break;
         }
-        int rangeCv = Proportion(In(0), HEMISPHERE_MAX_CV, MAX_RANGE);
-        int stepCv = Proportion(In(1), HEMISPHERE_MAX_CV, MAX_STEP);
+        int rangeCv = Proportion(In(0), HEMISPHERE_MAX_INPUT_CV, MAX_RANGE);
+        int stepCv = Proportion(In(1), HEMISPHERE_MAX_INPUT_CV, MAX_STEP);
         
         ForEachChannel(ch) {
             // OUTPUT
@@ -88,7 +88,7 @@ public:
             }
             currentOut[ch] = alpha*currentOut[ch] + (1-alpha)*(float)currentVal[ch];
 
-            Out(ch, constrain((int)currentOut[ch], -HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV));
+            Out(ch, constrain((int)currentOut[ch], -HEMISPHERE_MAX_CV, HEMISPHERE_MAX_CV));
         }
     }
 

@@ -54,7 +54,7 @@ public:
             number = constrain(number, 1, HEM_BURST_NUMBER_MAX);
             last_number_cv_tick = OC::CORE::ticks;
         }
-        int spacing_mod = clocked ? 0 : Proportion(DetentedIn(1), HEMISPHERE_MAX_CV, 500);
+        int spacing_mod = clocked ? 0 : Proportion(DetentedIn(1), HEMISPHERE_MAX_INPUT_CV, 500);
 
         // Get timing information
         if (Clock(0)) {

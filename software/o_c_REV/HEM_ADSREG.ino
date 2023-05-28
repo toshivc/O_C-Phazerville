@@ -256,7 +256,7 @@ private:
 
     int get_modification_with_input(int in) {
         int mod = 0;
-        mod = Proportion(DetentedIn(in), HEMISPHERE_MAX_CV, HEM_EG_MAX_VALUE / 2);
+        mod = Proportion(DetentedIn(in), HEMISPHERE_MAX_INPUT_CV, HEM_EG_MAX_VALUE / 2);
         return mod;
     }
 };

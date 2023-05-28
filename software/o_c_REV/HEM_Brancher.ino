@@ -33,7 +33,7 @@ public:
     void Controller() {
         // handles physical and logical clock
         if (Clock(0)) {
-            int prob = p + Proportion(DetentedIn(0), HEMISPHERE_MAX_CV, 100);
+            int prob = p + Proportion(DetentedIn(0), HEMISPHERE_MAX_INPUT_CV, 100);
             choice = (random(1, 100) <= prob) ? 0 : 1;
 
             // will be true only for logical clocks
