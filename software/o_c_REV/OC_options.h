@@ -25,13 +25,10 @@
 //#define DAC8564
 
 
-// Phazerville Suite includes basic support for the 10V OC Plus and VOR
-//
-// The VOR flag is set in platformio.ini. The other one is here if you need it. -NJM
+// Phazerville Suite includes full support for the Plum Audio hardware variants with VOR
+// The VOR flag is set in platformio.ini.
 /* ------------ uncomment for use with Plum Audio VOR anabled versions (OCP, 1uO_c v2, 4Robots) ---------------------------------------------------------  */
 //#define VOR
-/* ------------ uncomment for use with Plum Audio 1uO_c 4Robots (To use Up button long press to change VOR instead activate screensaver) ----------------  */
-//#define VOR_NO_RANGE_BUTTON
 
 // idk what this means so I'm keeping it -NJM
 #if defined(VOR)

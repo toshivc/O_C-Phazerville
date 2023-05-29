@@ -33,19 +33,17 @@ enum UiControl {
   CONTROL_BUTTON_M    = 0x10,
   CONTROL_ENCODER_L   = 0x20,
   CONTROL_ENCODER_R   = 0x40,
+
+  CONTROL_LAST = 6,
+  CONTROL_BUTTON_LAST = 5,
 #else
   CONTROL_BUTTON_MASK = 0xf,
   CONTROL_ENCODER_L   = 0x10,
   CONTROL_ENCODER_R   = 0x20,
-#endif
 
-  #if defined(VOR) && !defined(VOR_NO_RANGE_BUTTON)
-  CONTROL_LAST = 6,
-  CONTROL_BUTTON_LAST = 5,
-  #else
   CONTROL_LAST = 5,
   CONTROL_BUTTON_LAST = 4,
-  #endif
+#endif
 };
 
 static inline uint16_t control_mask(unsigned i) {

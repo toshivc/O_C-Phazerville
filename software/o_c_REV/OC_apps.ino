@@ -373,6 +373,11 @@ void draw_app_menu(const menu::ScreenCursor<5> &cursor) {
     item.DrawCustom();
   }
 
+#ifdef VOR
+  VBiasManager *vbias_m = vbias_m->get();
+  vbias_m->DrawPopupPerhaps();
+#endif
+
   GRAPHICS_END_FRAME();
 }
 
@@ -419,6 +424,15 @@ void Ui::AppSettings() {
             ui.DebugStats();
         break;
       case CONTROL_BUTTON_UP:
+#ifdef VOR
+        // VBias menu for units without Range button
+        if (UI::EVENT_BUTTON_LONG_PRESS == event.type || UI::EVENT_BUTTON_DOWN == event.type) {
+          VBiasManager *vbias_m = vbias_m->get();
+          vbias_m->AdvanceBias();
+        }
+#endif
+        break;
+      case CONTROL_BUTTON_DOWN:
         if (UI::EVENT_BUTTON_PRESS == event.type) {
             bool enabled = !global_settings.encoders_enable_acceleration;
             SERIAL_PRINTLN("Encoder acceleration: %s", enabled ? "enabled" : "disabled");
