@@ -57,17 +57,16 @@ void DAC::Init(CalibrationData *calibration_data) {
   restore_scaling(0x0);
 
   // set up DAC pins 
-#ifdef VOR
   OC::pinMode(DAC_CS, OUTPUT);
-  //OC::pinMode(DAC_RST,OUTPUT);
 
-  // set Vbias, using onboard DAC:
+  // set Vbias, using onboard DAC - does nothing on non-VOR hardware
   init_Vbias();
+  set_Vbias(2760); // default to Asymmetric
   delay(10);
-#else
-  pinMode(DAC_CS, OUTPUT);
-  pinMode(DAC_RST,OUTPUT);
   
+#ifndef VOR
+  // VOR button uses the same pin as DAC_RST
+  OC::pinMode(DAC_RST,OUTPUT);
   #ifdef DAC8564 // A0 = 0, A1 = 0
     digitalWrite(DAC_RST, LOW); 
   #else  // default to DAC8565 - pull RST high 
@@ -207,7 +206,6 @@ uint32_t DAC::store_scaling() {
   return _scaling;
 }
 
-#ifdef VOR
 /*static*/ 
 void DAC::init_Vbias() {
   /* using MK20 DAC0 for Vbias*/
@@ -219,7 +217,6 @@ void DAC::init_Vbias() {
 void DAC::set_Vbias(uint32_t data) {
   *(volatile int16_t *)&(DAC0_DAT0L) = data;
 }
-#endif
 
 /*static*/
 DAC::CalibrationData *DAC::calibration_data_ = nullptr;
