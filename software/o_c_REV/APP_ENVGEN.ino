@@ -450,11 +450,7 @@ public:
     CONSTRAIN(s[CV_MAPPING_EUCLIDEAN_FILL], 0, 32);
     CONSTRAIN(s[CV_MAPPING_EUCLIDEAN_OFFSET], 0, 32);
     CONSTRAIN(s[CV_MAPPING_DELAY_MSEC], 0, 65535);
- #ifdef VOR
-    CONSTRAIN(s[CV_MAPPING_AMPLITUDE], 0, 62850);
- #else 
     CONSTRAIN(s[CV_MAPPING_AMPLITUDE], 0, 65535);
- #endif
     CONSTRAIN(s[CV_MAPPING_MAX_LOOPS], 0, 65535);
 
     EnvelopeType type = get_type();
@@ -573,12 +569,16 @@ public:
       gate_state |= peaks::CONTROL_GATE_FALLING;
     gate_raised_ = gate_raised;
 
-    // TODO Scale range or offset?
-    uint32_t value ;
+    // Scale range and offset
+    uint32_t value = env_.ProcessSingleSample(gate_state); // 0 to 32767
+    uint32_t max_val = OC::DAC::get_octave_offset(dac_channel, OCTAVES - OC::DAC::kOctaveZero);
+    uint32_t range = max_val - OC::DAC::get_zero_offset(dac_channel);
+    value = value * range / 32767;
+
     if (!is_inverted()) 
-      value = OC::DAC::get_zero_offset(dac_channel) + env_.ProcessSingleSample(gate_state);
+      value += OC::DAC::get_zero_offset(dac_channel);
     else
-      value = OC::DAC::get_zero_offset(dac_channel) + 32767 - env_.ProcessSingleSample(gate_state);
+      value = max_val - value;
 
       OC::DAC::set<dac_channel>(value);   
   }
