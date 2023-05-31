@@ -55,12 +55,12 @@ class TB_3PO : public HemisphereApplet
       
       // Init the quantizer for selecting pitches / CVs from
       scale = 29;  // GUNA scale sounds cool   //OC::Scales::SCALE_SEMI; // semi sounds pretty bunk
-      quantizer.Init();
+      quantizer = GetQuantizer(0);
       set_quantizer_scale(scale);
 
       // This quantizer is for displaying a keyboard graphic, mapping the current scale to semitones
-      display_semi_quantizer.Init();
-      display_semi_quantizer.Configure(OC::Scales::GetScale(OC::Scales::SCALE_SEMI), 0xffff);
+      display_semi_quantizer = GetQuantizer(1);
+      display_semi_quantizer->Configure(OC::Scales::GetScale(OC::Scales::SCALE_SEMI), 0xffff);
       
       density = 12;
       density_encoder_display = 0;
@@ -118,15 +118,15 @@ class TB_3PO : public HemisphereApplet
         //transpose_note_in = In(0) / 128; // 128 ADC steps per semitone
 
         // This will accuarately get notes from an imperfect cv keyboard in semitones
-        //transpose_cv = display_semi_quantizer.Process(In(0), 0, 0);  // Use root == 0 to start at c
-        //transpose_note_in = display_semi_quantizer.GetLatestNoteNumber() - 64;
+        //transpose_cv = display_semi_quantizer->Process(In(0), 0, 0);  // Use root == 0 to start at c
+        //transpose_note_in = display_semi_quantizer->GetLatestNoteNumber() - 64;
         
         // Quantize the transpose CV to the same scale as the sequence, always based on c.
         // This allows a CV keyboard or sequencer to work reliably to transpose (e.g. every c is another octave) regardless of scale.
         // However, the transposition is limited to only in-scale notes so arpeggiations via LFOs, etc are still easily done.
         // (This CV is summed to the sequence pitch CV directly before output, rather than affecting its note indices.)
-        transpose_cv = quantizer.Process(In(0), 0, 0);  // Use root == 0 to start at c
-        //transpose_note_in = quantizer.GetLatestNoteNumber() - 64;  // For debug readout!
+        transpose_cv = quantizer->Process(In(0), 0, 0);  // Use root == 0 to start at c
+        //transpose_note_in = quantizer->GetLatestNoteNumber() - 64;  // For debug readout!
        }
 
       // Offset density from its encoder-set value with cv2 (Wiggling can build up & break down patterns nicely, especially if seed is locked)
@@ -420,8 +420,8 @@ class TB_3PO : public HemisphereApplet
   private:
     int cursor = 0;
 
-    braids::Quantizer quantizer;  // Helper for note index --> pitch cv
-    braids::Quantizer display_semi_quantizer;  // Quantizer to interpret the current note for display on a keyboard
+    braids::Quantizer* quantizer;  // Helper for note index --> pitch cv
+    braids::Quantizer* display_semi_quantizer;  // Quantizer to interpret the current note for display on a keyboard
     
   
     // User settings
@@ -512,22 +512,22 @@ class TB_3PO : public HemisphereApplet
       int out_note = constrain(quant_note, 0, 127);
 
       // New: Transpose post-quantize
-      int pitch_cv = quantizer.Lookup(out_note) + transpose_cv;
+      int pitch_cv = quantizer->Lookup(out_note) + transpose_cv;
       return pitch_cv;
 
       // Original: Output quantized after transposition added
-      //return quantizer.Lookup( out_note );
+      //return quantizer->Lookup( out_note );
       
-      //return quantizer.Lookup( 64 );  // Test: note 64 is definitely 0v=c4 if output directly, on ALL scales
+      //return quantizer->Lookup( 64 );  // Test: note 64 is definitely 0v=c4 if output directly, on ALL scales
     }
 
     int get_semitone_for_step(int step_num)
     {
       // Don't add in octaves-- use the current quantizer limited to the base octave
       int quant_note = 64 + notes[step_num] + root;// + transpose_note_in;
-      int32_t cv_note = quantizer.Lookup( constrain(quant_note, 0, 127));
-      display_semi_quantizer.Process(cv_note, 0, 0);  // Use root == 0 to start at c
-      return display_semi_quantizer.GetLatestNoteNumber() % 12;
+      int32_t cv_note = quantizer->Lookup( constrain(quant_note, 0, 127));
+      display_semi_quantizer->Process(cv_note, 0, 0);  // Use root == 0 to start at c
+      return display_semi_quantizer->GetLatestNoteNumber() % 12;
     } 
 
     void reseed()
@@ -771,7 +771,7 @@ class TB_3PO : public HemisphereApplet
     void set_quantizer_scale(int new_scale)
     {
       const braids::Scale & quant_scale = OC::Scales::GetScale(new_scale);
-      quantizer.Configure(quant_scale, 0xffff);
+      quantizer->Configure(quant_scale, 0xffff);
       scale_size = quant_scale.num_notes;  // Track this scale size for octaves and display
     }
   

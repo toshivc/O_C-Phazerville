@@ -29,8 +29,8 @@ public:
 
   void Start() {
     scale = 5;
-    root_quantizer.Init();
-    chord_quantizer.Init();
+    root_quantizer = GetQuantizer(0);
+    chord_quantizer = GetQuantizer(1);
     continuous[0] = 1;
     continuous[1] = 1;
     set_scale(scale);
@@ -48,7 +48,7 @@ public:
     if (continuous[0] || EndOfADCLag(0)) {
       chord_root_raw = In(0);
       int32_t new_root_pitch =
-          root_quantizer.Process(chord_root_raw, root << 7, 0);
+          root_quantizer->Process(chord_root_raw, root << 7, 0);
       if (new_root_pitch != chord_root_pitch) {
         update_chord_quantizer();
         chord_root_pitch = new_root_pitch;
@@ -58,7 +58,7 @@ public:
 
     if (continuous[1] || EndOfADCLag(1)) {
       harm_pitch =
-          chord_quantizer.Process(In(1) + chord_root_pitch, root << 7, 0);
+          chord_quantizer->Process(In(1) + chord_root_pitch, root << 7, 0);
       Out(1, harm_pitch);
     }
   }
@@ -146,8 +146,8 @@ protected:
   }
 
 private:
-  braids::Quantizer root_quantizer;
-  braids::Quantizer chord_quantizer;
+  braids::Quantizer* root_quantizer;
+  braids::Quantizer* chord_quantizer;
 
   int scale; // SEMI
   int16_t root;
@@ -166,11 +166,11 @@ private:
 
   void update_chord_quantizer() {
     size_t num_notes = active_scale.num_notes;
-    chord_root_pitch = root_quantizer.Process(chord_root_raw, root, 0);
+    chord_root_pitch = root_quantizer->Process(chord_root_raw, root, 0);
     size_t chord_root = note_ix(chord_root_pitch);
     uint16_t mask = rotl32(chord_mask, num_notes, chord_root);
-    chord_quantizer.Configure(active_scale, mask);
-    chord_quantizer.Requantize();
+    chord_quantizer->Configure(active_scale, mask);
+    chord_quantizer->Requantize();
   }
 
   size_t note_ix(int pitch) {
@@ -192,7 +192,7 @@ private:
     else if (value >= OC::Scales::NUM_SCALES) scale = 0;
     else scale = value;
     active_scale = OC::Scales::GetScale(scale);
-    root_quantizer.Configure(active_scale);
+    root_quantizer->Configure(active_scale);
   }
 };
 

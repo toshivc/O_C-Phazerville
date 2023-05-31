@@ -89,6 +89,7 @@ typedef int32_t simfloat;
 }
 
 #include "hemisphere_config.h"
+#include "braids_quantizer.h"
 
 namespace HS {
 
@@ -109,6 +110,8 @@ Applet available_applets[] = HEMISPHERE_APPLETS;
 Applet clock_setup_applet = DECLARE_APPLET(9999, 0x01, ClockSetup);
 
 int octave_max = 5;
+
+braids::Quantizer quantizer[4];
 }
 
 // Specifies where data goes in flash storage for each selcted applet, and how big it is
@@ -401,6 +404,10 @@ public:
     int SmoothedIn(int ch) {
         ADC_CHANNEL channel = (ADC_CHANNEL)(ch + io_offset);
         return OC::ADC::value(channel);
+    }
+
+    braids::Quantizer* GetQuantizer(int ch) {
+        return &HS::quantizer[io_offset + ch];
     }
 
     void Out(int ch, int value, int octave = 0) {

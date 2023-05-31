@@ -172,6 +172,10 @@ public:
         help_hemisphere = -1;
         clock_setup = 0;
 
+        for (int i = 0; i < 4; ++i) {
+            HS::quantizer[i].Init();
+        }
+
         SetApplet(0, get_applet_index_by_id(18)); // DualTM
         SetApplet(1, get_applet_index_by_id(15)); // EuclidX
     }

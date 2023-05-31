@@ -36,8 +36,8 @@ public:
         {
             mask[scale] = 0xffff;
         }
-        quantizer.Init();
-        quantizer.Configure(OC::Scales::GetScale(5), mask[0]);
+        quantizer = GetQuantizer(0);
+        quantizer->Configure(OC::Scales::GetScale(5), mask[0]);
         last_scale = 0;
         adc_lag_countdown = 0;
     }
@@ -50,11 +50,11 @@ public:
         if (EndOfADCLag()) {
             uint8_t scale = Gate(1);
             if (scale != last_scale) {
-                quantizer.Configure(OC::Scales::GetScale(5), mask[scale]);
+                quantizer->Configure(OC::Scales::GetScale(5), mask[scale]);
                 last_scale = scale;
             }
             int32_t pitch = In(0);
-            int32_t quantized = quantizer.Process(pitch, 0, 0);
+            int32_t quantized = quantizer->Process(pitch, 0, 0);
             Out(0, quantized);
         }
     }
@@ -71,7 +71,7 @@ public:
 
         // Toggle the mask bit at the cursor position
         mask[scale] ^= (0x01 << bit);
-        if (scale == last_scale) quantizer.Configure(OC::Scales::GetScale(5), mask[scale]);
+        if (scale == last_scale) quantizer->Configure(OC::Scales::GetScale(5), mask[scale]);
     }
 
     void OnEncoderMove(int direction) {
@@ -92,7 +92,7 @@ public:
         mask[1] = Unpack(data, PackLocation {12,12});
 
         last_scale = 0;
-        quantizer.Configure(OC::Scales::GetScale(5), mask[last_scale]);
+        quantizer->Configure(OC::Scales::GetScale(5), mask[last_scale]);
     }
 
 protected:
@@ -106,7 +106,7 @@ protected:
     }
     
 private:
-    braids::Quantizer quantizer;
+    braids::Quantizer* quantizer;
     uint16_t mask[2];
     uint8_t cursor; // 0-11=Scale 1; 12-23=Scale 2
     uint8_t last_scale; // The most-recently-used scale (used to set the mask when necessary)

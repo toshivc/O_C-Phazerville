@@ -167,9 +167,9 @@ public:
 	
     void ClearPreset() {
         for (int ch = 0; ch < NR_OF_CHANNELS; ++ch) {
-            quantizer[ch].Init();
+            HS::quantizer[ch].Init();
             channel[ch].scale = OC::Scales::SCALE_SEMI;
-            quantizer[ch].Configure(OC::Scales::GetScale(channel[ch].scale), 0xffff);
+            HS::quantizer[ch].Configure(OC::Scales::GetScale(channel[ch].scale), 0xffff);
 
             channel[ch].scale_factor = 0;
             channel[ch].offset = 0;
@@ -183,8 +183,8 @@ public:
         bool success = cal8_presets[index].load_preset(channel);
         if (success) {
             for (int ch = 0; ch < NR_OF_CHANNELS; ++ch) {
-                quantizer[ch].Configure(OC::Scales::GetScale(channel[ch].scale), 0xffff);
-                quantizer[ch].Requantize();
+                HS::quantizer[ch].Configure(OC::Scales::GetScale(channel[ch].scale), 0xffff);
+                HS::quantizer[ch].Requantize();
             }
             preset_modified = 0;
         }
@@ -247,7 +247,7 @@ public:
             if (c.clocked_mode != SAMPLE_AND_HOLD || clocked) {
                 // CV value
                 int pitch = In(ch);
-                int quantized = quantizer[ch].Process(pitch, c.root_note * 128, c.transpose_active);
+                int quantized = HS::quantizer[ch].Process(pitch, c.root_note * 128, c.transpose_active);
                 c.last_note = quantized;
             }
 
@@ -412,7 +412,7 @@ public:
         preset_modified = 1;
         if (scale_edit) {
             channel[sel_chan].root_note = constrain(channel[sel_chan].root_note + direction, 0, 11);
-            quantizer[sel_chan].Requantize();
+            HS::quantizer[sel_chan].Requantize();
             return;
         }
 
@@ -445,8 +445,8 @@ public:
             if (s_ < 0) s_ = OC::Scales::NUM_SCALES - 1;
 
             channel[sel_chan].scale = s_;
-            quantizer[sel_chan].Configure(OC::Scales::GetScale(s_), 0xffff);
-            quantizer[sel_chan].Requantize();
+            HS::quantizer[sel_chan].Configure(OC::Scales::GetScale(s_), 0xffff);
+            HS::quantizer[sel_chan].Requantize();
             return;
         }
 
@@ -474,7 +474,6 @@ private:
     int trigger_flash[NR_OF_CHANNELS];
 
     SegmentDisplay segment;
-    braids::Quantizer quantizer[NR_OF_CHANNELS];
     Cal8ChannelConfig channel[NR_OF_CHANNELS];
 
     ClockManager *clock_m = clock_m->get();

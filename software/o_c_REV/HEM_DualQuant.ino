@@ -35,9 +35,9 @@ public:
         cursor = 0;
         ForEachChannel(ch)
         {
-            quantizer[ch].Init();
             scale[ch] = ch + 5;
-            quantizer[ch].Configure(OC::Scales::GetScale(scale[ch]), 0xffff);
+            quantizer[ch] = GetQuantizer(ch);
+            quantizer[ch]->Configure(OC::Scales::GetScale(scale[ch]), 0xffff);
             last_note[ch] = 0;
             continuous[ch] = 1;
         }
@@ -53,7 +53,7 @@ public:
 
             if (continuous[ch] || EndOfADCLag(ch)) {
                 int32_t pitch = In(ch);
-                int32_t quantized = quantizer[ch].Process(pitch, root[ch] << 7, 0);
+                int32_t quantized = quantizer[ch]->Process(pitch, root[ch] << 7, 0);
                 Out(ch, quantized);
                 last_note[ch] = quantized;
             }
@@ -81,7 +81,7 @@ public:
             scale[ch] += direction;
             if (scale[ch] >= OC::Scales::NUM_SCALES) scale[ch] = 0;
             if (scale[ch] < 0) scale[ch] = OC::Scales::NUM_SCALES - 1;
-            quantizer[ch].Configure(OC::Scales::GetScale(scale[ch]), 0xffff);
+            quantizer[ch]->Configure(OC::Scales::GetScale(scale[ch]), 0xffff);
             continuous[ch] = 1; // Re-enable continuous mode when scale is changed
         } else {
             // Root selection
@@ -107,7 +107,7 @@ public:
         ForEachChannel(ch)
         {
             root[0] = constrain(root[0], 0, 11);
-            quantizer[ch].Configure(OC::Scales::GetScale(scale[ch]), 0xffff);
+            quantizer[ch]->Configure(OC::Scales::GetScale(scale[ch]), 0xffff);
         }
     }
 
@@ -121,7 +121,7 @@ protected:
     }
     
 private:
-    braids::Quantizer quantizer[2];
+    braids::Quantizer* quantizer[2];
     int last_note[2]; // Last quantized note
     bool continuous[2]; // Each channel starts as continuous and becomes clocked when a clock is received
     int cursor;

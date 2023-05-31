@@ -32,7 +32,10 @@ public:
     void Start() {
         scale = OC::Scales::SCALE_SEMI;
         buffer_m->SetIndex(1);
-        quantizer.Configure(OC::Scales::GetScale(scale), 0xffff); // Semi-tone
+        ForEachChannel(ch) {
+            quantizer[ch] = GetQuantizer(ch);
+            quantizer[ch]->Configure(OC::Scales::GetScale(scale), 0xffff); // Semi-tone
+        }
     }
 
     void Controller() {
@@ -49,7 +52,7 @@ public:
             ForEachChannel(ch)
             {
                 int cv = buffer_m->ReadNextValue(ch, hemisphere, index_mod);
-                int quantized = quantizer.Process(cv, 0, 0);
+                int quantized = quantizer[ch]->Process(cv, 0, 0);
                 Out(ch, quantized);
             }
             buffer_m->Advance();
@@ -80,7 +83,8 @@ public:
             scale += direction;
             if (scale >= OC::Scales::NUM_SCALES) scale = 0;
             if (scale < 0) scale = OC::Scales::NUM_SCALES - 1;
-            quantizer.Configure(OC::Scales::GetScale(scale), 0xffff);
+            ForEachChannel(ch)
+                quantizer[ch]->Configure(OC::Scales::GetScale(scale), 0xffff);
         }
     }
         
@@ -110,7 +114,7 @@ protected:
 private:
     int cursor;
     RingBufferManager *buffer_m = buffer_m->get();
-    braids::Quantizer quantizer;
+    braids::Quantizer* quantizer[2];
     int scale;
     int index_mod; // Effect of modulation
     
