@@ -5,20 +5,23 @@
 
 Using [Benisphere](https://github.com/benirose/O_C-BenisphereSuite) as a starting point, this branch takes the Hemisphere Suite in new directions, with several new applets and enhancements to existing ones. I've merged bleeding-edge features from other clever developers, with the goal of cramming as much functionality and flexibility into the nifty dual-applet design as possible!
 
-I've also managed to squeeze in several stock O&C firmware apps: **Quantermain, Piqued, Acid Curds, Harrington 1200, Sequins** & **Quadraturia** are all here! Check the [Wiki](https://github.com/djphazer/O_C-BenisphereSuite/wiki) for more info.
+I've also included all of the stock O&C firmware apps, although they don't all fit in one build. I provide 3 different builds with various combinations of apps, listed in the [Release Notes](https://github.com/djphazer/O_C-BenisphereSuite/releases).
+
+Check the [Wiki](https://github.com/djphazer/O_C-BenisphereSuite/wiki) for more info.
 
 ### Notable Features in this branch:
 
-* A new App called [**Calibr8or**](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Calibr8or)
-  - quad performance quantizer + pitch CV fine-tuning tool, 4 preset banks
+* 4 Preset banks for Hemisphere (long-press DOWN button)
+* Modal-editing style navigation (push to toggle editing)
 * Expanded internal clock
   - Note: press both UP+DOWN buttons quickly to access the [**Clock Setup**](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Clock-Setup) screen
   - Syncs to external clock on TR1, configurable PPQN
   - MIDI Clock out via USB
   - Independent multipliers for each internal trigger
   - Manual triggers (convenient for jogging or resetting a sequencer, testing)
-* Modal-editing style navigation (push to toggle editing)
-* **DualTM** - ShiftReg has been upgraded to two concurrent 32-bit registers governed by the same length/prob/scale/range settings
+* A new App called [**Calibr8or**](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Calibr8or)
+  - quad performance quantizer + pitch CV fine-tuning tool, 4 preset banks
+* **[DualTM](https://github.com/djphazer/O_C-BenisphereSuite/wiki/DualTM)** - ShiftReg has been upgraded to two concurrent 32-bit registers governed by the same length/prob/scale/range settings
   - outputs assignable to Pitch, Mod, Trig, Gate from either register. Assignable CV inputs. Massive modulation potential!
 * **EbbAndLfo** (via [qiemem](https://github.com/qiemem/O_C-HemisphereSuite/tree/trig-and-tides))
   - mini implementation of MI Tides, with v/oct tracking
@@ -35,25 +38,29 @@ Check the [Releases](https://github.com/djphazer/O_C-BenisphereSuite/releases) s
 
 ### How do I build it?
 
-Building the code is fairly simple using Platform IO, a Python-based build toolchain, available as either a [standalone CLI](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html):
+I've abandoned the old Arduino IDE in favor of Platform IO, a Python-based build toolchain, available as either a [standalone CLI](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html):
 ```
 wget https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py -O get-platformio.py
 python3 get-platformio.py
 ```
 ...or as a [a full-featured IDE](https://platformio.org/install/ide), as well as a plugin for VSCode and other existing IDEs.
 
-The project lives within the `software/o_c_REV` directory. From there, you can Build and Upload via USB to your module:
+The project lives within the `software/o_c_REV` directory. From there, you can Build the desired configuration and Upload via USB to your module:
 ```
-pio run -e oc_prod -t upload
+pio run -e main -t upload
 ```
-Alternate build environment configurations exist in `platformio.ini` for VOR, Buchla, etc. To build all the defaults, simply use `pio run`
+Alternate build environment configurations exist in `platformio.ini` for VOR, Buchla, flipped screen, etc. To build all the defaults consecutively, simply use `pio run`
 
 ### Credits
 
-Shoutout to Logarhythm for the incredible **TB-3PO** sequencer.
-To herrkami and Beni for their work on **BugCrack**.
-Beni also gets massive props for **DrumMap** and the **ProbDiv / ProbMelo** applets.
-And of course thank you to Chysn for the fantastic framework from which we've all drawn inspiration.
+Many minds before me have made this project possible. Attribution is present in the git commit log and within individual files.
+Shoutouts:
+* Logarhythm1 for the incredible **TB-3PO** sequencer.
+* herrkami and Beni Rose for their work on **BugCrack**.
+* Ben also gets massive props for **DrumMap** and the **ProbDiv / ProbMelo** applets.
+* qiemem (Bryan Head) for the **Ebb&LFO** applet and its _tideslite_ backend
+
+And, of course, thank you to Chysn for the clever applet framework from which we've all drawn inspiration.
 
 This is a fork of [Benisphere Suite](https://github.com/benirose/O_C-BenisphereSuite) which is a fork of [Hemisphere Suite](https://github.com/Chysn/O_C-HemisphereSuite) by Jason Justian (aka chysn).
 
