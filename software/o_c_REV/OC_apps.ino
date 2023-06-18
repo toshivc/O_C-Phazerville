@@ -79,6 +79,9 @@ OC::App available_apps[] = {
   #ifdef ENABLE_APP_CHORDS
   DECLARE_APP('A','C', "Acid Curds", CHORDS),
   #endif
+  #ifdef ENABLE_APP_FPART
+  DECLARE_APP('F','P', "4 Parts", FPART),
+  #endif
   #ifdef ENABLE_APP_MIDI
   DECLARE_APP('M','I', "Captain MIDI", MIDI),
   #endif
