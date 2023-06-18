@@ -62,7 +62,7 @@ class ClockManager {
     int clock_ppqn = 4; // external clock multiple
     bool cycle = 0; // Alternates for each tock, for display purposes
 
-    bool boop[4]; // Manual triggers
+    bool boop[4] = {0,0,0,0}; // Manual triggers
 
     ClockManager() {
         SetTempoBPM(120);
