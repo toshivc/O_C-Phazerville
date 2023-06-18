@@ -446,6 +446,7 @@ void Ui::AppSettings() {
     }
 
     draw_app_menu(cursor);
+    delay(2); // VOR calibration hack
   }
 
   event_queue_.Flush();

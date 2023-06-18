@@ -550,6 +550,10 @@ void OC::Ui::Calibrate() {
       case CALIBRATE_OCTAVE:
         calibration_state.encoder_value =
             OC::calibration_data.dac.calibrated_octaves[step_to_channel(next_step->step)][next_step->index + DAC::kOctaveZero];
+          #ifdef VOR
+          /* set 0V @ unipolar range */
+          DAC::set_Vbias(DAC::VBiasUnipolar);
+          #endif
         break;
 
       #ifdef VOR
@@ -563,6 +567,9 @@ void OC::Ui::Calibrate() {
       
       case CALIBRATE_ADC_OFFSET:
         calibration_state.encoder_value = OC::calibration_data.adc.offset[next_step->index];
+          #ifdef VOR
+          DAC::set_Vbias(DAC::VBiasUnipolar);
+          #endif
         break;
       case CALIBRATE_DISPLAY:
         calibration_state.encoder_value = OC::calibration_data.display_offset;
@@ -597,6 +604,7 @@ void OC::Ui::Calibrate() {
 
     calibration_update(calibration_state);
     calibration_draw(calibration_state);
+    delay(2); // VOR calibration hack
   }
 
   if (calibration_state.encoder_value) {
@@ -731,10 +739,6 @@ void calibration_update(CalibrationState &state) {
       OC::calibration_data.dac.calibrated_octaves[step_to_channel(step->step)][step->index + DAC::kOctaveZero] =
         state.encoder_value;
       DAC::set_all_octave(step->index);
-      #ifdef VOR
-      /* set 0V @ unipolar range */
-      DAC::set_Vbias(DAC::VBiasUnipolar);
-      #endif
       break;
     #ifdef VOR
     case CALIBRATE_VBIAS_BIPOLAR:
@@ -753,10 +757,6 @@ void calibration_update(CalibrationState &state) {
     case CALIBRATE_ADC_OFFSET:
       OC::calibration_data.adc.offset[step->index] = state.encoder_value;
       DAC::set_all_octave(0);
-      #ifdef VOR
-      /* set 0V @ unipolar range */
-      DAC::set_Vbias(DAC::VBiasUnipolar);
-      #endif
       break;
     case CALIBRATE_ADC_1V:
       DAC::set_all_octave(1);
