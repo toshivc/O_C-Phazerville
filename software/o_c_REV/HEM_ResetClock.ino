@@ -61,7 +61,6 @@ public:
     void View() {
         gfxHeader(applet_name());
         DrawInterface();
-        DrawIndicator();
     }
 
     void OnButtonPress() {
@@ -138,18 +137,22 @@ private:
         gfxPrint(12 + pad(10, length), 15, length);
 
         // Offset
-        gfxBitmap(32, 15, 8, ROTATE_R_ICON);
+        gfxIcon(32, 15, ROTATE_R_ICON);
         gfxPrint(40 + pad(10, offset), 15, offset);
     
         // Spacing
-        gfxBitmap(1, 25, 8, CLOCK_ICON);
-        gfxPrint(12 + pad(10, spacing), 25, spacing);
+        gfxIcon(1, 25, CLOCK_ICON);
+        gfxPrint(12 + pad(100, spacing), 25, spacing);
         gfxPrint("ms");
+
+        DrawIndicator();
     
-        if (cursor == 0) gfxCursor(13, 23, 12); // length
-        if (cursor == 1) gfxCursor(41, 23, 12); // offset
-        if (cursor == 2) gfxCursor(13, 33, 12); // spacing
-        if (cursor == 3) gfxCursor(0, 62, 64); // position
+        switch (cursor) {
+        case 0: gfxCursor(13, 23, 12); break; // length
+        case 1: gfxCursor(41, 23, 12); break; // offset
+        case 2: gfxCursor(13, 33, 18); break; // spacing
+        case 3: gfxCursor(0, 62, 64, 17); break; // position
+        }
     }
 
     void DrawIndicator() {
