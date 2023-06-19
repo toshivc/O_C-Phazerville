@@ -51,12 +51,6 @@ public:
     // COMPUTE
     int s = constrain(slope_mod * 65535 / 127, 0, 65535);
     ProcessSample(s, shape_mod * 65535 / 127, fold_mod * 32767 / 127, phase, sample);
-    if (phase < phase_increment) {
-      eoa_reached = false;
-    } else {
-      eoa_reached = eoa_reached || (sample.flags & FLAG_EOA);
-    }
-
 
     ForEachChannel(ch) {
       switch (output(ch)) {
@@ -67,10 +61,10 @@ public:
         Out(ch, Proportion(sample.bipolar, 32767, HEMISPHERE_MAX_CV / 2));
         break;
       case EOA:
-        GateOut(ch, eoa_reached);
+        GateOut(ch, sample.flags & FLAG_EOA);
         break;
       case EOR:
-        GateOut(ch, !eoa_reached);
+        GateOut(ch, sample.flags & FLAG_EOR);
         break;
       }
     }
@@ -221,7 +215,7 @@ protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "1=Clock 2=Reset";
-        help[HEMISPHERE_HELP_CVS]      = "1=V/Oct 2=Slope";
+        help[HEMISPHERE_HELP_CVS]      = "1,2=Assignable";
         help[HEMISPHERE_HELP_OUTS]     = "A=OutA  B=OutB";
         help[HEMISPHERE_HELP_ENCODER]  = "Select/Edit params";
         //                               "------------------" <-- Size Guide
@@ -263,7 +257,6 @@ private:
   uint8_t cv = 0b0001; // Freq on 1, shape on 2
   TidesLiteSample disp_sample;
   TidesLiteSample sample;
-  bool eoa_reached = false;
 
   int knob_accel = 1 << 8;
 
