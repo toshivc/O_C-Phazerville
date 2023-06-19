@@ -102,27 +102,39 @@ public:
         return bias_state;
     }
 
-    void SetStateForApp(int app_index) {
-        /* TODO: something more dynamic
-        int new_state = VBiasManager::ASYM;
-        switch (app_index)
+    // Vbias auto-config helper
+    // Cross-reference OC_apps.ino for app IDs
+    void SetStateForApp(OC::App *app) {
+        int new_state = VBiasManager::ASYM; // default case
+        
+        switch (app->id)
         {
-        case 0: new_state = VBiasManager::ASYM; break;  // CopierMachine (or) ASR
-        case 1: new_state = VBiasManager::ASYM; break;  // Harrington 1200 (or) Triads
-        case 2: new_state = VBiasManager::ASYM; break;  // Automatonnetz (or) Vectors
-        case 3: new_state = VBiasManager::ASYM; break;  // Quantermain (or) 4x Quantizer
-        case 4: new_state = VBiasManager::ASYM; break;  // Meta-Q (or) 2x Quantizer
-        case 5: new_state = VBiasManager::BI; break;    // Quadraturia (or) Quadrature LFO
-        case 6: new_state = VBiasManager::BI; break;  // Low-rents (or) Lorenz
-        case 7: new_state = VBiasManager::UNI; break;   // Piqued (or) 4x EG
-        case 8: new_state = VBiasManager::ASYM; break;  // Sequins (or) 2x Sequencer
-        case 9: new_state = VBiasManager::UNI; break;   // Dialectic Ping Pong (or) Balls
-        case 10: new_state = VBiasManager::UNI; break;  // Viznutcracker sweet (or) Bytebeats
-        case 11: new_state = VBiasManager::ASYM; break; // Acid Curds (or) Chords
-        case 12: new_state = VBiasManager::UNI; break;  // References (or) Voltages
+        /* Default cases can be omitted
+        case TWOCC<'C','8'>::value: // Calibr8or
+        case TWOCC<'A','S'>::value: // CopierMachine (or) ASR
+        case TWOCC<'H','A'>::value: // Harrington 1200 (or) Triads
+        case TWOCC<'A','T'>::value: // Automatonnetz (or) Vectors
+        case TWOCC<'Q','Q'>::value: // Quantermain (or) 4x Quantizer
+        case TWOCC<'M','!'>::value: // Meta-Q (or) 2x Quantizer
+        case TWOCC<'S','Q'>::value: // Sequins (or) 2x Sequencer
+        case TWOCC<'A','C'>::value: // Acid Curds (or) Chords
+            new_state = VBiasManager::ASYM;
+            break;
+        */
+        // Bi-polar +/-5V
+        case TWOCC<'H','S'>::value: // Hemisphere
+        case TWOCC<'P','L'>::value: // Quadraturia (or) Quadrature LFO
+        case TWOCC<'L','R'>::value: // Low-rents (or) Lorenz
+            new_state = VBiasManager::BI;
+            break;
+        // Uni-polar 0-10V
+        case TWOCC<'E','G'>::value: // Piqued (or) 4x EG
+        case TWOCC<'B','B'>::value: // Dialectic Ping Pong (or) Balls
+        case TWOCC<'B','Y'>::value: // Viznutcracker sweet (or) Bytebeats
+            new_state = VBiasManager::UNI;
+            break;
         }
         instance->ChangeBiasToState(new_state);
-        */
     }
 
     /*

@@ -251,6 +251,10 @@ namespace apps {
 void set_current_app(int index) {
   current_app = &available_apps[index];
   global_settings.current_app_id = current_app->id;
+  #ifdef VOR
+  VBiasManager *vbias_m = vbias_m->get();
+  vbias_m->SetStateForApp(current_app);
+  #endif
 }
 
 App *current_app = &available_apps[DEFAULT_APP_INDEX];
