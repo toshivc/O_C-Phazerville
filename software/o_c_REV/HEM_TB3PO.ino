@@ -58,10 +58,6 @@ class TB_3PO : public HemisphereApplet
       quantizer = GetQuantizer(0);
       set_quantizer_scale(scale);
 
-      // This quantizer is for displaying a keyboard graphic, mapping the current scale to semitones
-      display_semi_quantizer = GetQuantizer(1);
-      display_semi_quantizer->Configure(OC::Scales::GetScale(OC::Scales::SCALE_SEMI), 0xffff);
-      
       density = 12;
       density_encoder_display = 0;
 
@@ -117,10 +113,6 @@ class TB_3PO : public HemisphereApplet
         // Note: This appears to frequently result in coming up short on some notes when using a cv keyboard (e.g. c# might be c) (prefer interpreting this via a windowed quantizer?)
         //transpose_note_in = In(0) / 128; // 128 ADC steps per semitone
 
-        // This will accuarately get notes from an imperfect cv keyboard in semitones
-        //transpose_cv = display_semi_quantizer->Process(In(0), 0, 0);  // Use root == 0 to start at c
-        //transpose_note_in = display_semi_quantizer->GetLatestNoteNumber() - 64;
-        
         // Quantize the transpose CV to the same scale as the sequence, always based on c.
         // This allows a CV keyboard or sequencer to work reliably to transpose (e.g. every c is another octave) regardless of scale.
         // However, the transposition is limited to only in-scale notes so arpeggiations via LFOs, etc are still easily done.
@@ -421,11 +413,9 @@ class TB_3PO : public HemisphereApplet
     int cursor = 0;
 
     braids::Quantizer* quantizer;  // Helper for note index --> pitch cv
-    braids::Quantizer* display_semi_quantizer;  // Quantizer to interpret the current note for display on a keyboard
-    
-  
+
     // User settings
-    
+
     // Bool
     int manual_reset_flag = 0;  // Manual trigger to reset/regen
 
@@ -526,8 +516,7 @@ class TB_3PO : public HemisphereApplet
       // Don't add in octaves-- use the current quantizer limited to the base octave
       int quant_note = 64 + notes[step_num] + root;// + transpose_note_in;
       int32_t cv_note = quantizer->Lookup( constrain(quant_note, 0, 127));
-      display_semi_quantizer->Process(cv_note, 0, 0);  // Use root == 0 to start at c
-      return display_semi_quantizer->GetLatestNoteNumber() % 12;
+      return MIDIQuantizer::NoteNumber(cv_note) % 12;
     } 
 
     void reseed()
