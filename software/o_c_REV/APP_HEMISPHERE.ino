@@ -353,30 +353,44 @@ public:
             return;
         }
 
+        if (clock_setup && !down) {
+            clock_setup = 0; // Turn off clock setup with any single-click button release
+            return;
+        }
+
         // -- button down
         if (down) {
+            if (event.mask == (OC::CONTROL_BUTTON_UP | OC::CONTROL_BUTTON_DOWN)) // dual press for Clock Setup
+            {
+                clock_setup = 1;
+                SetHelpScreen(-1);
+                select_mode = -1;
+                OC::ui.SetButtonIgnoreMask();
+                return;
+            }
+
             if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME) {
-                // This is a double-click. Activate corresponding help screen or Clock Setup
+                // This is a double-click on one button. Activate corresponding help screen and deactivate select mode.
                 if (hemisphere == first_click)
                     SetHelpScreen(hemisphere);
-                else if (OC::CORE::ticks - click_tick < HEMISPHERE_SIM_CLICK_TIME) // dual press for clock setup uses shorter timing
-                    clock_setup = 1;
 
-                // leave Select Mode, and reset the double-click timer
-                select_mode = -1;
+                // reset double-click timer either way
                 click_tick = 0;
-            } else {
-                // If a help screen is already selected, and the button is for
-                // the opposite one, go to the other help screen
-                if (help_hemisphere > -1) {
-                    if (help_hemisphere != hemisphere) SetHelpScreen(hemisphere);
-                    else SetHelpScreen(-1); // Leave help screen if corresponding button is clicked
-                }
-
-                // mark this single click
-                click_tick = OC::CORE::ticks;
-                first_click = hemisphere;
+                return;
             }
+
+            // -- Single click
+            // If a help screen is already selected, and the button is for
+            // the opposite one, go to the other help screen
+            if (help_hemisphere > -1) {
+                if (help_hemisphere != hemisphere) SetHelpScreen(hemisphere);
+                else SetHelpScreen(-1); // Exit help screen if same button is clicked
+                OC::ui.SetButtonIgnoreMask(); // ignore release
+            }
+
+            // mark this single click
+            click_tick = OC::CORE::ticks;
+            first_click = hemisphere;
             return;
         }
 
@@ -387,9 +401,6 @@ public:
             else if (help_hemisphere < 0) // Otherwise, set Select Mode - UNLESS there's a help screen
                 select_mode = hemisphere;
         }
-
-        if (click_tick)
-            clock_setup = 0; // Turn off clock setup with any single-click button release
     }
 
     void DelegateEncoderMovement(const UI::Event &event) {
