@@ -126,13 +126,17 @@ UiMode Ui::DispatchEvents(App *app) {
         break;
       case UI::EVENT_BUTTON_DOWN:
 #ifdef VOR
-        if (OC::CONTROL_BUTTON_M == event.control) {
+        // dual encoder press
+        if ( ((OC::CONTROL_BUTTON_L | OC::CONTROL_BUTTON_R) == event.mask)
+                || (OC::CONTROL_BUTTON_M == event.control) )
+        {
             VBiasManager *vbias_m = vbias_m->get();
             vbias_m->AdvanceBias();
-        } else app->HandleButtonEvent(event);
-#else
-        app->HandleButtonEvent(event);
+            SetButtonIgnoreMask(); // ignore release and long-press
+        }
+        else
 #endif
+            app->HandleButtonEvent(event);
         break;
       case UI::EVENT_BUTTON_LONG_PRESS:
         if (OC::CONTROL_BUTTON_UP == event.control) {
