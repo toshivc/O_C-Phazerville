@@ -59,10 +59,13 @@
 #define HEMISPHERE_CHANGE_THRESHOLD 32
 
 // Codes for help system sections
-#define HEMISPHERE_HELP_DIGITALS 0
-#define HEMISPHERE_HELP_CVS 1
-#define HEMISPHERE_HELP_OUTS 2
-#define HEMISPHERE_HELP_ENCODER 3
+enum HEM_HELP_SECTIONS {
+HEMISPHERE_HELP_DIGITALS = 0,
+HEMISPHERE_HELP_CVS = 1,
+HEMISPHERE_HELP_OUTS = 2,
+HEMISPHERE_HELP_ENCODER = 3
+};
+const char * HEM_HELP_SECTION_NAMES[4] = {"Dig", "CV", "Out", "Enc"};
 
 // Simulated fixed floats by multiplying and dividing by powers of 2
 #ifndef int2simfloat
@@ -230,14 +233,12 @@ public:
     void DrawHelpScreen() {
         gfxHeader(applet_name());
         SetHelp();
+
         for (int section = 0; section < 4; section++)
         {
             int y = section * 12 + 16;
             graphics.setPrintPos(0, y);
-            if (section == HEMISPHERE_HELP_DIGITALS) graphics.print("Dig");
-            if (section == HEMISPHERE_HELP_CVS) graphics.print("CV");
-            if (section == HEMISPHERE_HELP_OUTS) graphics.print("Out");
-            if (section == HEMISPHERE_HELP_ENCODER) graphics.print("Enc");
+            graphics.print( HEM_HELP_SECTION_NAMES[section] );
             graphics.invertRect(0, y - 1, 19, 9);
 
             graphics.setPrintPos(20, y);
