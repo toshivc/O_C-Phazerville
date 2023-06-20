@@ -99,10 +99,11 @@ public:
 
 protected:
     void SetHelp() {
-        if (hemisphere == 1) {
 #ifdef FLIP_180
+        if (hemisphere == 0) {
             help[HEMISPHERE_HELP_DIGITALS] = "1=Input";
 #else
+        if (hemisphere == 1) {
             help[HEMISPHERE_HELP_DIGITALS] = "2=Input";
 #endif
             help[HEMISPHERE_HELP_CVS]      = "";
