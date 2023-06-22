@@ -52,11 +52,7 @@ struct CalibrationData {
 #endif
 
   EncoderConfig encoder_config() const {
-#ifdef FLIP_180
-    return static_cast<EncoderConfig>(~flags & CALIBRATION_FLAG_ENCODER_MASK);
-#else
-    return static_cast<EncoderConfig>(flags & CALIBRATION_FLAG_ENCODER_MASK);
-#endif
+  	return static_cast<EncoderConfig>(flags & CALIBRATION_FLAG_ENCODER_MASK);
   }
 
   EncoderConfig next_encoder_config() {
