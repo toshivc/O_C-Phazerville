@@ -569,18 +569,23 @@ public:
       gate_state |= peaks::CONTROL_GATE_FALLING;
     gate_raised_ = gate_raised;
 
-    // Scale range and offset
     uint32_t value = env_.ProcessSingleSample(gate_state); // 0 to 32767
-    uint32_t max_val = OC::DAC::get_octave_offset(dac_channel, OCTAVES - OC::DAC::kOctaveZero);
-    uint32_t range = max_val - OC::DAC::get_zero_offset(dac_channel);
-    value = value * range / 32767;
+    if (is_inverted()) value = 32767 - value;
+    const int max_val = OC::DAC::MAX_VALUE;
 
-    if (!is_inverted()) 
-      value += OC::DAC::get_zero_offset(dac_channel);
-    else
-      value = max_val - value;
+    // Scale range and offset
+#ifdef VOR
+    // Full range for Plum Audio
+    const uint32_t offset = OC::DAC::get_octave_offset(dac_channel, -OC::DAC::kOctaveZero);
+#else
+    // Regular O_C settles to 0V
+    const uint32_t offset = OC::DAC::get_zero_offset(dac_channel);
+#endif
 
-      OC::DAC::set<dac_channel>(value);   
+    // scale value
+    value = offset + (value * (max_val - offset) / 32767);
+
+    OC::DAC::set<dac_channel>(value);
   }
 
   uint16_t RenderPreview(int16_t *values, uint16_t *segment_start_points, uint16_t *loop_points, uint16_t &current_phase) const {
