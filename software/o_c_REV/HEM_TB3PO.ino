@@ -68,8 +68,6 @@ class TB_3PO: public HemisphereApplet {
     slide_start_cv = 0;
     slide_end_cv = 0;
 
-    //transpose_note_in = 0;    
-
     lock_seed = 0;
     reseed();
     regenerate_all();
@@ -77,7 +75,7 @@ class TB_3PO: public HemisphereApplet {
   }
 
   void Controller() {
-    int this_tick = OC::CORE::ticks;
+    const int this_tick = OC::CORE::ticks;
 
     if (Clock(1) || manual_reset_flag) {
       manual_reset_flag = 0;
@@ -95,14 +93,8 @@ class TB_3PO: public HemisphereApplet {
       transpose_cv = quantizer->Process(In(0), 0, 0); // Use root == 0 to start at c
     }
 
-    {
-      int signal = constrain(DetentedIn(1), -HEMISPHERE_3V_CV, HEMISPHERE_MAX_INPUT_CV); // Allow negative to go about as far as it will reach
-      density_cv = Proportion(abs(signal), HEMISPHERE_MAX_INPUT_CV, 15); // Apply proportion uniformly to +- voltages as + for symmetry (Avoids rounding differences)
-      if (signal < 0) {
-        density_cv *= -1; // Restore negative sign if -v
-      }
-      density = static_cast < uint8_t > (constrain(density_encoder + density_cv, 0, 14));
-    }
+    density_cv = Proportion(DetentedIn(1), HEMISPHERE_MAX_INPUT_CV, 15);
+    density = static_cast<uint8_t>(constrain(density_encoder + density_cv, 0, 14));
 
     if (Clock(0)) {
       cycle_time = ClockCycleTicks(0); // Track latest interval of clock 0 for gate timings
@@ -202,7 +194,7 @@ class TB_3PO: public HemisphereApplet {
     case 0:
       lock_seed += direction;
 
-      manual_reset_flag = (lock_seed > 1 || lock_seed < 0) ? 1 : 0;
+      manual_reset_flag = (lock_seed > 1 || lock_seed < 0);
 
       lock_seed = constrain(lock_seed, 0, 1);
       break;
@@ -298,7 +290,8 @@ class TB_3PO: public HemisphereApplet {
     step = 0;
   }
 
-  protected: void SetHelp() {
+protected:
+  void SetHelp() {
     //                               "------------------" <-- Size Guide
     help[HEMISPHERE_HELP_DIGITALS] = "1=Clock 2=Regen";
     help[HEMISPHERE_HELP_CVS]      = "1=Transp 2=Density";
@@ -307,14 +300,14 @@ class TB_3PO: public HemisphereApplet {
     //                               "------------------" <-- Size Guide
   }
 
-  private: int cursor = 0;
-
-  braids::Quantizer * quantizer; // Helper for note index --> pitch cv
+private:
+  int cursor = 0;
+  braids::Quantizer * quantizer;
 
   // User settings
 
   // Bool
-  int manual_reset_flag = 0; // Manual trigger to reset/regen
+  bool manual_reset_flag = 0; // Manual trigger to reset/regen
 
   // bool 
   int lock_seed; // If 1, the seed won't randomize (and manual editing is enabled)
@@ -341,7 +334,6 @@ class TB_3PO: public HemisphereApplet {
   // Playback
   uint8_t step = 0; // Current sequencer step
 
-  //int transpose_note_in;      // Current transposition from cv in (initially a cv value)  TEMP: REMOVE
   int32_t transpose_cv; // Quantized transpose in cv
 
   // Generated sequence data
@@ -356,7 +348,6 @@ class TB_3PO: public HemisphereApplet {
   uint8_t current_pattern_scale_size; // Track what size scale was used to render the current pattern (for change detection)
 
   // For gate timing as ~32nd notes at tempo, detect clock rate like a clock multiplier
-  //int timing_count;
   int gate_off_clock; // Scheduled cycle at which the gate should be turned off (when applicable)
   int cycle_time; // Cycle time between the last two clock inputs
 
@@ -370,16 +361,12 @@ class TB_3PO: public HemisphereApplet {
 
   // Display
   int curr_step_semitone = 0; // The pitch converted to nearest semitone, for showing as an index onto the keyboard
-
   uint8_t rand_apply_anim = 0; // Countdown to animate icons for when regenerate occurs
 
   uint8_t regenerate_phase = 0; // Split up random generation over multiple frames
 
   // Get the cv value to use for a given step including root + transpose values
   int get_pitch_for_step(int step_num) {
-    // Original: Transpose pre-quantize
-    //int quant_note = 64 + int(notes[step_num]) +  int(root) + int(transpose_note_in);
-
     int quant_note = 64 + int(notes[step_num]) + int(root);
 
     // Apply the manual octave offset
@@ -392,11 +379,9 @@ class TB_3PO: public HemisphereApplet {
       quant_note -= scale_size;
     }
 
-    int out_note = constrain(quant_note, 0, 127);
+    quant_note = constrain(quant_note, 0, 127);
 
-    // New: Transpose post-quantize
-    int pitch_cv = quantizer->Lookup(out_note) + transpose_cv;
-    return pitch_cv;
+    return quantizer->Lookup(quant_note) + transpose_cv;
     //return quantizer->Lookup( 64 );  // Test: note 64 is definitely 0v=c4 if output directly, on ALL scales
   }
 
@@ -611,9 +596,8 @@ class TB_3PO: public HemisphereApplet {
     }
 
     // Heart represents the seed/favorite
-    gfxBitmap(4, heart_y, 8, FAVORITE_ICON);
-
-    gfxBitmap(15, (lock_seed ? 15 : die_y), 8, (lock_seed ? LOCK_ICON : RANDOM_ICON));
+    gfxIcon(4, heart_y, FAVORITE_ICON);
+    gfxIcon(15, (lock_seed ? 15 : die_y), (lock_seed ? LOCK_ICON : RANDOM_ICON));
 
     // Show the 16-bit seed as 4 hex digits
     int disp_seed = seed; //0xABCD // test display accuracy
@@ -636,7 +620,6 @@ class TB_3PO: public HemisphereApplet {
     int gate_dens = get_on_off_density();
     int pitch_dens = get_pitch_change_density();
 
-    //gfxLine(9,36, 29, 36, true); // dotted line
     int xd = 5 + 7 - gate_dens;
     int yd = (64 * pitch_dens) / 256; // Multiply for better fidelity
     gfxBitmap(12 - xd, 27 + yd, 8, NOTE4_ICON);
@@ -702,12 +685,11 @@ class TB_3PO: public HemisphereApplet {
 
     // Draw a TB-303 style octave of a piano keyboard, indicating the playing pitch 
     int x = 1;
-    int y = 61;
-    int keyPatt = 0x054A; // keys encoded as 0=white 1=black, starting at c, backwards:  b  0 0101 0100 1010
+    int y;
+    const int keyPatt = 0x054A; // keys encoded as 0=white 1=black, starting at c, backwards:  b  0 0101 0100 1010
     for (int i = 0; i < 12; ++i) {
       // Black key?
-      y = (keyPatt & 0x1) ? 56 : 61;
-      keyPatt >>= 1;
+      y = ((keyPatt >> i) & 0x1) ? 56 : 61;
 
       // Two white keys in a row E and F
       if (i == 5) x += 3;
