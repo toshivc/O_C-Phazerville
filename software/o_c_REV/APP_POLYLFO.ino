@@ -34,6 +34,8 @@
 #include "util/util_settings.h"
 #include "frames_poly_lfo.h"
 
+#include "VBiasManager.h"
+
 enum POLYLFO_SETTINGS {
   POLYLFO_SETTING_COARSE,
   POLYLFO_SETTING_FINE,
@@ -56,6 +58,9 @@ enum POLYLFO_SETTINGS {
   POLYLFO_SETTING_D_AM_BY_C,
   POLYLFO_SETTING_CV4,
   POLYLFO_SETTING_TR4_MULT,
+#ifdef VOR
+  POLYLFO_SETTING_VBIAS,
+#endif
   POLYLFO_SETTING_LAST
 };
 
@@ -146,6 +151,22 @@ public:
     return values_[POLYLFO_SETTING_TR4_MULT];
   }
 
+#ifdef VOR
+  void saveVbias() {
+    VBiasManager *v = v->get();
+    values_[POLYLFO_SETTING_VBIAS] = v->GetState();
+  }
+  void restoreVbias() {
+    if (values_[POLYLFO_SETTING_VBIAS] <= 2)
+    {
+        VBiasManager *v = v->get();
+        VBiasManager::VState bias_state = (VBiasManager::VState)values_[POLYLFO_SETTING_VBIAS];
+        v->SetState( bias_state );
+        //v->DrawPopupPerhaps();
+    }
+  }
+#endif
+
   void Init();
 
   void freeze() {
@@ -232,7 +253,10 @@ SETTINGS_DECLARE(PolyLfo, POLYLFO_SETTING_LAST) {
   { 0, 0, 127, "C AM by B", NULL, settings::STORAGE_TYPE_U8 },
   { 0, 0, 127, "D AM by C", NULL, settings::STORAGE_TYPE_U8 }, 
   { 0, 0, 6, "CV4: DEST", cv4_destinations, settings::STORAGE_TYPE_U8 },
-  { 3, 0, 5, "TR4: MULT", tr4_multiplier, settings::STORAGE_TYPE_U8 }, 
+  { 3, 0, 5, "TR4: MULT", tr4_multiplier, settings::STORAGE_TYPE_U4 }, 
+#ifdef VOR
+  { 0, 0, 2, "VBias", OC::Strings::VOR_offsets, settings::STORAGE_TYPE_U4 }, 
+#endif
  };
 
 PolyLfo poly_lfo;
@@ -351,7 +375,7 @@ void FASTRUN POLYLFO_isr() {
 void POLYLFO_init() {
 
   poly_lfo_state.left_edit_mode = POLYLFO_SETTING_COARSE;
-  poly_lfo_state.cursor.Init(POLYLFO_SETTING_TAP_TEMPO, POLYLFO_SETTING_LAST - 1);
+  poly_lfo_state.cursor.Init(POLYLFO_SETTING_TAP_TEMPO, POLYLFO_SETTING_TR4_MULT);
   poly_lfo.Init();
 }
 
@@ -424,8 +448,14 @@ void POLYLFO_handleAppEvent(OC::AppEvent event) {
   switch (event) {
     case OC::APP_EVENT_RESUME:
       poly_lfo_state.cursor.set_editing(false);
+#ifdef VOR
+      poly_lfo.restoreVbias();
+#endif
       break;
     case OC::APP_EVENT_SUSPEND:
+#ifdef VOR
+      poly_lfo.saveVbias();
+#endif
     case OC::APP_EVENT_SCREENSAVER_ON:
     case OC::APP_EVENT_SCREENSAVER_OFF:
       break;

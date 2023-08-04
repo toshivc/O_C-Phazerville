@@ -49,9 +49,16 @@ class VBiasManager {
     }
 
 public:
+    enum VState {
+        BI = 0,
+        ASYM,
+        UNI,
+    };
+    /*
     static const int BI = 0;
     static const int ASYM = 1;
     static const int UNI = 2;
+    */
     const int OCTAVE_BIAS[3] = {5, 3, 0};
     const int OCTAVE_MAX[3] = {5, 7, 10};
 
@@ -68,7 +75,7 @@ public:
         // This is so that the first button press shows the popup without changing anything.
         if (OC::CORE::ticks - last_advance_tick < BIAS_EDITOR_TIMEOUT) {
             if (++bias_state > 2) bias_state = 0;
-            instance->ChangeBiasToState(bias_state);
+            instance->SetState(VBiasManager::VState(bias_state));
         }
         last_advance_tick = OC::CORE::ticks;
     }
@@ -88,7 +95,7 @@ public:
      * #endif
      *
      */
-    void ChangeBiasToState(int new_bias_state) {
+    void SetState(VState new_bias_state) {
         int new_bias_value = OC::calibration_data.v_bias & 0xFFFF; // Bipolar = lower 2 bytes
         if (new_bias_state == VBiasManager::UNI) new_bias_value = OC::DAC::VBiasUnipolar;
         if (new_bias_state == VBiasManager::ASYM) new_bias_value = (OC::calibration_data.v_bias >> 16); // asym. = upper 2 bytes
@@ -105,7 +112,7 @@ public:
     // Vbias auto-config helper
     // Cross-reference OC_apps.ino for app IDs
     void SetStateForApp(OC::App *app) {
-        int new_state = VBiasManager::ASYM; // default case
+        VState new_state = VBiasManager::ASYM; // default case
         
         switch (app->id)
         {
@@ -123,7 +130,6 @@ public:
         */
         // Bi-polar +/-5V
         case TWOCC<'H','S'>::value: // Hemisphere
-        case TWOCC<'P','L'>::value: // Quadraturia (or) Quadrature LFO
         case TWOCC<'L','R'>::value: // Low-rents (or) Lorenz
             new_state = VBiasManager::BI;
             break;
@@ -133,8 +139,10 @@ public:
         case TWOCC<'B','Y'>::value: // Viznutcracker sweet (or) Bytebeats
             new_state = VBiasManager::UNI;
             break;
+        case TWOCC<'P','L'>::value: // Quadraturia (or) Quadrature LFO
+            return; // cancel, it has its own VBias setting
         }
-        instance->ChangeBiasToState(new_state);
+        instance->SetState(new_state);
     }
 
     /*

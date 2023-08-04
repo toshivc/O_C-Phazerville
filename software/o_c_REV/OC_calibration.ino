@@ -457,7 +457,7 @@ void OC::Ui::Calibrate() {
   #ifdef VOR
   {
     VBiasManager *vb = vb->get();
-    vb->ChangeBiasToState(VBiasManager::UNI);
+    vb->SetState(VBiasManager::UNI);
   }
   #endif
 

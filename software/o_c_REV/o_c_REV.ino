@@ -143,13 +143,13 @@ void setup() {
   }
   OC::ui.set_screensaver_timeout(OC::calibration_data.screensaver_timeout);
 
-  // initialize apps
-  OC::apps::Init(reset_settings);
-
 #ifdef VOR
   VBiasManager *vbias_m = vbias_m->get();
-  vbias_m->ChangeBiasToState(VBiasManager::BI);
+  vbias_m->SetState(VBiasManager::BI);
 #endif
+
+  // initialize apps
+  OC::apps::Init(reset_settings);
 }
 
 /*  ---------    main loop  --------  */
