@@ -256,7 +256,10 @@ public:
         bool reset = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
 
         // Paused means wait for clock-sync to start
-        if (clock_m->IsPaused() && clock_sync) clock_m->Start();
+        if (clock_m->IsPaused() && clock_sync) {
+            clock_m->Start();
+            usbMIDI.sendRealTime(usbMIDI.Start);
+        }
         // TODO: automatically stop...
 
         // Advance internal clock, sync to external clock / reset
