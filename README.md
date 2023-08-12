@@ -3,34 +3,25 @@
 
 ## Phazerville Suite - an active o_C firmware fork
 
-Using [Benisphere](https://github.com/benirose/O_C-BenisphereSuite) as a starting point, this branch takes the Hemisphere Suite in new directions, with several new applets and enhancements to existing ones. I've merged bleeding-edge features from other clever developers, with the goal of cramming as much functionality and flexibility into the nifty dual-applet design as possible!
+Using [**Benisphere**](https://github.com/benirose/O_C-BenisphereSuite) as a starting point, this branch takes the **Hemisphere Suite** in new directions, with several new applets and enhancements to existing ones. I've merged bleeding-edge features from other clever developers, with the goal of cramming as much functionality and flexibility into the nifty dual-applet design as possible!
 
-I've also included all of the stock O&C firmware apps, although they don't all fit in one build. I provide 3 different builds with various combinations of apps, listed in the [Release Notes](https://github.com/djphazer/O_C-BenisphereSuite/releases).
+I've also included **all of the stock O&C firmware apps**, although they don't all fit in one build. I provide **3 different builds** with various combinations of apps, listed in the [**Release Notes**](https://github.com/djphazer/O_C-BenisphereSuite/releases).
 
 Check the [Wiki](https://github.com/djphazer/O_C-BenisphereSuite/wiki) for more info.
 
 ### Notable Features in this branch:
 
-* 4 Preset banks for Hemisphere (long-press DOWN button)
-* Modal-editing style navigation (push to toggle editing)
-* Expanded internal clock
-  - Note: press both UP+DOWN buttons quickly to access the [**Clock Setup**](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Clock-Setup) screen
-  - Syncs to external clock on TR1, configurable PPQN
-  - MIDI Clock out via USB
-  - Independent multipliers for each internal trigger
-  - Manual triggers (convenient for jogging or resetting a sequencer, testing)
+* 4 Presets in the new [**Hemisphere Config**](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Hemisphere-Config)
+* Modal-editing style cursor navigation
+* Expanded internal [**Clock Setup**](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Clock-Setup)
 * A new App called [**Calibr8or**](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Calibr8or)
-  - quad performance quantizer + pitch CV fine-tuning tool, 4 preset banks
-* **[DualTM](https://github.com/djphazer/O_C-BenisphereSuite/wiki/DualTM)** - ShiftReg has been upgraded to two concurrent 32-bit registers governed by the same length/prob/scale/range settings
-  - outputs assignable to Pitch, Mod, Trig, Gate from either register. Assignable CV inputs. Massive modulation potential!
-* **EbbAndLfo** (via [qiemem](https://github.com/qiemem/O_C-HemisphereSuite/tree/trig-and-tides))
-  - mini implementation of MI Tides, with v/oct tracking
-* **EuclidX** - AnnularFusion got a makeover, now includes padding, configurable CV input modulation
-  - (credit to [qiemem](https://github.com/qiemem/O_C-HemisphereSuite/tree/expanded-clock-div) and [adegani](https://github.com/adegani/O_C-HemisphereSuite))
-* LoFi Tape has been transformed into **LoFi Echo** - a crazy bitcrushing digital delay line
-  - (credit to [armandvedel](https://github.com/armandvedel/O_C-HemisphereSuite_log) for the initial idea)
+* **[DualTM](https://github.com/djphazer/O_C-BenisphereSuite/wiki/DualTM)** - two 32-bit shift registers. Assignable I/O.
+* **[EbbAndLfo](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Ebb-&-LFO)** (via [qiemem](https://github.com/qiemem/O_C-HemisphereSuite/tree/trig-and-tides)) - mini implementation of MI Tides, with v/oct tracking
+* **[EuclidX](https://github.com/djphazer/O_C-BenisphereSuite/wiki/EuclidX)** - AnnularFusion got a makeover, now includes padding, configurable CV input modulation - (credit to [qiemem](https://github.com/qiemem/O_C-HemisphereSuite/tree/expanded-clock-div) and [adegani](https://github.com/adegani/O_C-HemisphereSuite))
+* LoFi Tape has been transformed into **LoFi Echo** - a crazy bitcrushing digital delay line - (credit to [armandvedel](https://github.com/armandvedel/O_C-HemisphereSuite_log) for the initial idea)
 * Sequence5 -> **SequenceX** (8 steps max) (from [logarhythm](https://github.com/Logarhythm1/O_C-HemisphereSuite))
-* lots of other small tweaks + experimental applets
+
+Plus lots of other small tweaks + experimental applets.
 
 ### How do I try it?
 
@@ -45,13 +36,13 @@ python3 get-platformio.py
 ```
 ...or as a [a full-featured IDE](https://platformio.org/install/ide), as well as a plugin for VSCode and other existing IDEs.
 
-The project lives within the `software/o_c_REV` directory. From there, you can Build the desired configuration and Upload via USB to your module:
+This project lives within the `software/o_c_REV` directory. From there, you can Build the desired configuration and Upload via USB to your module:
 ```
 pio run -e main -t upload
 ```
 Alternate build environment configurations exist in `platformio.ini` for VOR, Buchla, flipped screen, etc. To build all the defaults consecutively, simply use `pio run`
 
-### Credits
+## Credits
 
 Many minds before me have made this project possible. Attribution is present in the git commit log and within individual files.
 Shoutouts:
