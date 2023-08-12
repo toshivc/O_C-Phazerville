@@ -7,7 +7,7 @@ Using [**Benisphere**](https://github.com/benirose/O_C-BenisphereSuite) as a sta
 
 I've also included **all of the stock O&C firmware apps**, although they don't all fit in one build. I provide **3 different builds** with various combinations of apps, listed in the [**Release Notes**](https://github.com/djphazer/O_C-BenisphereSuite/releases).
 
-Check the [Wiki](https://github.com/djphazer/O_C-BenisphereSuite/wiki) for more info.
+Watch SynthDad's [**video overview**](https://www.youtube.com/watch?v=XRGlAmz3AKM) or check the [**Wiki**](https://github.com/djphazer/O_C-BenisphereSuite/wiki) for more info. 
 
 ### Notable Features in this branch:
 
