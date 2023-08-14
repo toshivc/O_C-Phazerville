@@ -30,20 +30,18 @@ public:
             pitch_mod += In(ch);
             break;
         case SLOPE:
-            slope_mod += Proportion(DetentedIn(ch), HEMISPHERE_MAX_INPUT_CV, 127);
+            Modulate(slope_mod, ch, 0, 127);
             break;
         case SHAPE:
             shape_mod += Proportion(DetentedIn(ch), HEMISPHERE_MAX_INPUT_CV, 127);
+            while (shape_mod < 0) shape_mod += 128;
+            while (shape_mod > 127) shape_mod -= 128;
             break;
         case FOLD:
-            fold_mod += Proportion(DetentedIn(ch), HEMISPHERE_MAX_INPUT_CV, 127);
+            Modulate(fold_mod, ch, 0, 127);
             break;
         }
     }
-    slope_mod = constrain(slope_mod, 0, 127);
-    while (shape_mod < 0) shape_mod += 128;
-    while (shape_mod > 127) shape_mod -= 128;
-    fold_mod = constrain(fold_mod, 0, 127);
 
     uint32_t phase_increment = ComputePhaseIncrement(pitch_mod);
     phase += phase_increment;

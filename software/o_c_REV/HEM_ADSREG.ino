@@ -56,9 +56,11 @@ public:
     }
 
     void Controller() {
-        // Look for CV modification of attack
-        attack_mod = get_modification_with_input(0);
-        release_mod = get_modification_with_input(1);
+        // CV input modulation
+        attack_mod = attack;
+        release_mod = release;
+        Modulate(attack_mod, 0, 1, HEM_EG_MAX_VALUE);
+        Modulate(release_mod, 1, 0, HEM_EG_MAX_VALUE - 1);
 
         ForEachChannel(ch)
         {
@@ -205,10 +207,9 @@ private:
     }
 
     void AttackAmplitude(int ch) {
-        int effective_attack = constrain(attack + attack_mod, 1, HEM_EG_MAX_VALUE);
-        int total_stage_ticks = Proportion(effective_attack, HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_AD);
+        int total_stage_ticks = Proportion(attack_mod, HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_AD);
         int ticks_remaining = total_stage_ticks - stage_ticks[ch];
-        if (effective_attack == 1) ticks_remaining = 0;
+        if (attack_mod == 1) ticks_remaining = 0;
         if (ticks_remaining <= 0) { // End of attack; move to decay
             stage[ch] = HEM_EG_DECAY;
             stage_ticks[ch] = 0;
@@ -240,10 +241,9 @@ private:
     }
 
     void ReleaseAmplitude(int ch) {
-        int effective_release = constrain(release + release_mod, 1, HEM_EG_MAX_VALUE) - 1;
-        int total_stage_ticks = Proportion(effective_release, HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_R);
+        int total_stage_ticks = Proportion(release_mod, HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_R);
         int ticks_remaining = total_stage_ticks - stage_ticks[ch];
-        if (effective_release == 0) ticks_remaining = 0;
+        if (release_mod == 0) ticks_remaining = 0;
         if (ticks_remaining <= 0 || amplitude[ch] <= 0) { // End of release; turn off envelope
             stage[ch] = HEM_EG_NO_STAGE;
             stage_ticks[ch] = 0;

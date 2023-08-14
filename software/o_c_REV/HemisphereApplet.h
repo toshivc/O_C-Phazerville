@@ -411,6 +411,13 @@ public:
         return &HS::quantizer[io_offset + ch];
     }
 
+    // Standard bi-polar CV modulation scenario
+    void Modulate(auto &param, const int ch, const int min = 0, const int max = 255) {
+        int cv = DetentedIn(ch);
+        param = constrain(param + Proportion(cv, HEMISPHERE_MAX_INPUT_CV, max), min, max);
+        //return param_mod;
+    }
+
     void Out(int ch, int value, int octave = 0) {
         DAC_CHANNEL channel = (DAC_CHANNEL)(ch + io_offset);
         OC::DAC::set_pitch(channel, value, octave);

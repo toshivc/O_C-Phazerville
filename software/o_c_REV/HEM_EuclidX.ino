@@ -63,10 +63,6 @@ public:
     void Controller() {
         if (Clock(1)) step = 0; // Reset
 
-        int cv_data[2];
-        cv_data[0] = DetentedIn(0);
-        cv_data[1] = DetentedIn(1);
-
         // continuously recalculate pattern with CV offsets
         ForEachChannel(ch) {
             actual_length[ch] = length[ch];
@@ -78,7 +74,7 @@ public:
             ForEachChannel(cv_ch) {
                 switch (cv_dest[cv_ch] - ch * LENGTH2) { // this is dumb, but efficient
                 case LENGTH1:
-                    actual_length[ch] = constrain(actual_length[ch] + Proportion(cv_data[cv_ch], HEMISPHERE_MAX_INPUT_CV, 31), 2, 32);
+                    Modulate(actual_length[ch], ch, 2, 32);
 
                     if (actual_beats[ch] > actual_length[ch])
                         actual_beats[ch] = actual_length[ch];
@@ -89,13 +85,13 @@ public:
 
                     break;
                 case BEATS1:
-                    actual_beats[ch] = constrain(actual_beats[ch] + Proportion(cv_data[cv_ch], HEMISPHERE_MAX_INPUT_CV, actual_length[ch]), 0, actual_length[ch]);
+                    Modulate(actual_beats[ch], ch, 0, actual_length[ch]);
                     break;
                 case OFFSET1:
-                    actual_offset[ch] = constrain(actual_offset[ch] + Proportion(cv_data[cv_ch], HEMISPHERE_MAX_INPUT_CV, actual_length[ch] + actual_padding[ch]), 0, actual_length[ch] + padding[ch] - 1);
+                    Modulate(actual_offset[ch], ch, 0, actual_length[ch] + padding[ch]);
                     break;
                 case PADDING1:
-                    actual_padding[ch] = constrain(actual_padding[ch] + Proportion(cv_data[cv_ch], HEMISPHERE_MAX_INPUT_CV, 32 - actual_length[ch]), 0, 32 - actual_length[ch]);
+                    Modulate(actual_padding[ch], ch, 0, 32 - actual_length[ch]);
                     if (actual_offset[ch] >= actual_length[ch] + actual_padding[ch])
                         actual_offset[ch] = actual_length[ch] + actual_padding[ch] - 1;
                     break;

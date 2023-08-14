@@ -43,30 +43,30 @@ public:
     }
 
     void Controller() {
-        cv1 = Proportion(DetentedIn(0), HEMISPHERE_MAX_INPUT_CV, 255);
-        cv2 = Proportion(DetentedIn(1), HEMISPHERE_MAX_INPUT_CV, 255);
+        _fill[0] = fill[0];
+        _fill[1] = fill[1];
+        _x = x;
+        _y = y;
+        _chaos = chaos;
 
-        int _fill[2] = {fill[0], fill[1]};
-        if (cv_mode == 0) {
-          _fill[0] = constrain(_fill[0]+cv1, 0, 255);
-          _fill[1] = constrain(_fill[1]+cv2, 0, 255);
+        switch (cv_mode) {
+        case 0:
+          Modulate(_fill[0], 0, 0, 255);
+          Modulate(_fill[1], 1, 0, 255);
+          break;
+
+        case 1:
+          Modulate(_x, 0, 0, 255);
+          Modulate(_y, 1, 0, 255);
+          break;
+
+        case 2:
+          Modulate(_fill[0], 0, 0, 255);
+          Modulate(_chaos, 1, 0, 255);
+          break;
         }
 
-        int _x = x;
-        int _y = y;
-        if (cv_mode == 1) {
-          _x = constrain(_x+cv1, 0, 255);
-          _y = constrain(_y+cv2, 0, 255);
-        }
-
-        int _chaos = chaos;
-        if (cv_mode == 2) {
-          _fill[0] = constrain(_fill[0]+cv1, 0, 255);
-          _chaos = constrain(_chaos+cv2, 0, 255);
-        }
-        
-
-        if (Clock(1)) Reset(); // Reset
+        if (Clock(1)) Reset();
 
         if (Clock(0)) {
             // generate randomness for each drum type on first step of the pattern
@@ -245,12 +245,14 @@ private:
     // settings
     int8_t mode[2] = {0, 1};
     int fill[2] = {128, 128}; 
+    int _fill[2] = {128, 128};
     int x = 0;
+    int _x = 0;
     int y = 0;
+    int _y = 0;
     int chaos = 0;
+    int _chaos = 0;
     int8_t cv_mode = 0; // 0 = Fill A/B, 1 = X/Y, 2 = Fill A/Chaos
-    int cv1 = 0; // internal tracking of cv inputs
-    int cv2 = 0;
 
     uint8_t ReadDrumMap(uint8_t step, uint8_t part, uint8_t x, uint8_t y) {
       uint8_t i = x >> 6;
@@ -298,32 +300,20 @@ private:
 
         // fill
         gfxPrint(1,25,"F");
-        // add cv1 to fill_a value if cv1 mode is set to Fill A
-        int fa = fill[0];
-        if (cv_mode == 0 || cv_mode == 2) fa = constrain(fa+cv1, 0, 255);
-        DrawKnobAt(9,25,20,fa,cursor == 2);
+        DrawKnobAt(9,25,20,_fill[0],cursor == 2);
         // don't show fill for channel b if it is an accent mode
         if (mode[1] < 3) {
             gfxPrint(32,25,"F");
-            // add cv1 to fill_a value if cv1 mode is set to Fill A
-            int fb = fill[1];
-            if (cv_mode == 0) fb = constrain(fb+cv2, 0, 255);
-            DrawKnobAt(40,25,20,fb,cursor == 3);
+            DrawKnobAt(40,25,20,_fill[1],cursor == 3);
         }
         
         // x & y
-        int _x = x;
-        if (cv_mode == 1) _x = constrain(_x+cv1, 0, 255);
         gfxPrint(1,35,"X");
         DrawKnobAt(9,35,20,_x,cursor == 4);
-        int _y = y;
-        if (cv_mode == 1) _y = constrain(_y+cv2, 0, 255);
         gfxPrint(32,35,"Y");
         DrawKnobAt(40,35,20,_y,cursor == 5);
         
         // chaos
-        int _chaos = chaos;
-        if (cv_mode == 2) _chaos = constrain(_chaos+cv2, 0, 255);
         gfxPrint(1,45,"CHAOS");
         DrawKnobAt(32,45,28,_chaos,cursor == 6);
         

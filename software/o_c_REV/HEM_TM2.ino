@@ -112,18 +112,18 @@ public:
         ForEachChannel(ch) {
             switch (cvmode[ch]) {
             case SLEW_MOD:
-                smooth_mod = constrain(smooth_mod + Proportion(cv_data[ch], HEMISPHERE_MAX_INPUT_CV, 128), 1, 128);
+                Modulate(smooth_mod, ch, 1, 128);
                 break;
             case LENGTH_MOD:
-                len_mod = constrain(len_mod + Proportion(cv_data[ch], HEMISPHERE_MAX_INPUT_CV, TM2_MAX_LENGTH), TM2_MIN_LENGTH, TM2_MAX_LENGTH);
+                Modulate(len_mod, ch, TM2_MIN_LENGTH, TM2_MAX_LENGTH);
                 break;
 
             case P_MOD:
-                p_mod = constrain(p_mod + Proportion(cv_data[ch], HEMISPHERE_MAX_INPUT_CV, 100), 0, 100);
+                Modulate(p_mod, ch, 0, 100);
                 break;
 
             case RANGE_MOD:
-                range_mod = constrain(range_mod + Proportion(cv_data[ch], HEMISPHERE_MAX_INPUT_CV, 32), 1, 32);
+                Modulate(range_mod, ch, 1, 32);
                 break;
 
             // bi-polar transpose before quantize

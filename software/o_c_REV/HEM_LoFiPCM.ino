@@ -57,7 +57,6 @@ public:
                 }
 
                 int cv = SmoothedIn(0);
-                int cv2 = DetentedIn(1);
 
                 // bitcrush the input
                 cv = cv >> depth;
@@ -70,7 +69,8 @@ public:
                 int fbmix = PCM_TO_CV(lofi_pcm_buffer[head]) * fdbk_g / 100 + cv;
                 lofi_pcm_buffer[head_w] = CV_TO_PCM(fbmix);
                 
-                rate_mod = constrain( rate + Proportion(cv2, HEMISPHERE_MAX_INPUT_CV, 32), 1, 64);
+                rate_mod = rate;
+                Modulate(rate_mod, 1, 1, 64);
 
                 countdown = rate_mod;
             }
