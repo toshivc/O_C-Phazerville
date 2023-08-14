@@ -24,8 +24,8 @@
 // #define CLIPLIMIT 32512
 #define CLIPLIMIT HEMISPHERE_3V_CV
 
-#define PCM_TO_CV(S) Proportion((int)S - 127, 128, CLIPLIMIT)
-#define CV_TO_PCM(S) Proportion(constrain(S, -CLIPLIMIT, CLIPLIMIT), CLIPLIMIT, 128) + 127
+#define PCM_TO_CV(S) Proportion((int)S - 127, 127, CLIPLIMIT)
+#define CV_TO_PCM(S) Proportion(constrain(S, -CLIPLIMIT, CLIPLIMIT), CLIPLIMIT, 127) + 127
 
 uint8_t lofi_pcm_buffer[HEM_LOFI_PCM_BUFFER_SIZE];
 
