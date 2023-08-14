@@ -382,7 +382,7 @@ private:
 
         switch (cvmode[ch]) {
         case SLEW_MOD:
-            gfxIcon(15 + ch*32, 35, MOD_ICON);
+            gfxIcon(15 + ch*32, 35, SLEW_ICON);
             break;
         case LENGTH_MOD:
             gfxIcon(15 + ch*32, 35, LOOP_ICON);
@@ -391,7 +391,7 @@ private:
             gfxIcon(15 + ch*32, 35, TOSS_ICON);
             break;
         case RANGE_MOD:
-            gfxIcon(15 + ch*32, 35, RANGE_ICON);
+            gfxIcon(15 + ch*32, 35, UP_DOWN_ICON);
             break;
         case TRANSPOSE1:
             gfxIcon(15 + ch*32, 35, BEND_ICON);
@@ -411,15 +411,15 @@ private:
     void DrawSelector() {
         gfxBitmap(1, 14, 8, LOOP_ICON);
         gfxPrint(12 + pad(10, len_mod), 15, len_mod);
-        gfxPrint(pad(100, p_mod), p_mod);
+        gfxPrint(35 + pad(100, p_mod), 15, p_mod);
         if (cursor == PROB || Gate(1)) { // p unlocked
-            gfxBitmap(49, 15, 8, TOSS_ICON);
+            gfxBitmap(55, 15, 8, TOSS_ICON);
         } else { // p is disabled
-            gfxBitmap(49, 15, 8, LOCK_ICON);
+            gfxBitmap(55, 15, 8, LOCK_ICON);
         }
         gfxBitmap(1, 25, 8, SCALE_ICON);
         gfxPrint(9, 25, OC::scale_names_short[scale]);
-        gfxBitmap(40, 25, 8, RANGE_ICON);
+        gfxBitmap(40, 25, 8, UP_DOWN_ICON);
         gfxPrint(49, 25, range_mod); // APD
 
         switch ((TM2Cursor)cursor){
@@ -442,7 +442,7 @@ private:
 
         switch ((TM2Cursor)cursor) {
             case LENGTH: gfxCursor(13, 23, 12); break;
-            case PROB: gfxCursor(35, 23, 10); break;
+            case PROB: gfxCursor(35, 23, 18); break;
             case SCALE: gfxCursor(9, 33, 25); break;
             case RANGE: gfxCursor(49, 33, 14); break;
 
