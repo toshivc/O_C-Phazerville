@@ -56,7 +56,11 @@ public:
         Out(ch, Proportion(sample.unipolar, 65535, HEMISPHERE_MAX_CV));
         break;
       case BIPOLAR:
+        #ifdef VOR
+        Out(ch, Proportion(sample.bipolar, 32767, 7680)); // hardcoded at 5V for Plum Audio
+        #else
         Out(ch, Proportion(sample.bipolar, 32767, HEMISPHERE_MAX_CV / 2));
+        #endif
         break;
       case EOA:
         GateOut(ch, sample.flags & FLAG_EOA);
