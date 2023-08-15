@@ -51,14 +51,18 @@ public:
             if (idx == 5) { // S&H
                 if (Clock(ch)) Out(ch, In(ch));
             } else if (idx == 6) { // Rand
-                // The first time a clock comes in, Rand becomes clocked, freezing a random
-                // value with each clock pulse. Otherwise, Rand is unclocked, and outputs
-                // a random value with each tick.
-                if (Clock(ch)) {
-                    Out(ch, random(0, HEMISPHERE_MAX_CV));
+                // The first time a clock comes in, Rand becomes clocked.
+                // Otherwise, Rand is unclocked, and outputs a random value with each tick.
+
+                bool clk = Clock(ch);
+                bool recalc = clk || !rand_clocked[ch];
+                if (clk)
                     rand_clocked[ch] = 1;
-                }
-                else if (!rand_clocked[ch]) Out(ch, random(0, HEMISPHERE_MAX_CV));
+                else if (ch == 1 && rand_clocked[0] && !rand_clocked[1]) // normalled clock input from TR1 for channel 2
+                    recalc = Clock(0);
+
+                if (recalc)
+                    Out(ch, random(0, HEMISPHERE_MAX_CV));
             } else if (idx < 5) {
                 int result = calc_fn[idx](In(0), In(1));
                 Out(ch, result);
@@ -122,10 +126,10 @@ private:
         ForEachChannel(ch)
         {
             gfxPrint(31 * ch, 15, op_name[operation[ch]]);
-            if (ch == selected) gfxCursor(0 + (31 * ch), 23, 30);
-
             // Show the icon if this random calculator is clocked
             if (operation[ch] == 6 && rand_clocked[ch]) gfxIcon(20 + 31 * ch, 15, CLOCK_ICON);
+
+            if (ch == selected) gfxCursor(0 + (31 * ch), 23, 30);
         }
     }
 };
