@@ -1,18 +1,20 @@
 "What's the worst that could happen?"
 ===
 
+Watch SynthDad's [**video overview**](https://www.youtube.com/watch?v=XRGlAmz3AKM) and check the [**Wiki**](https://github.com/djphazer/O_C-BenisphereSuite/wiki) for more info. [Download it here](https://github.com/djphazer/O_C-BenisphereSuite/releases).
+
 ## Phazerville Suite - an active o_C firmware fork
 
 Using [**Benisphere**](https://github.com/benirose/O_C-BenisphereSuite) as a starting point, this branch takes the **Hemisphere Suite** in new directions, with several new applets and enhancements to existing ones. I've merged bleeding-edge features from other clever developers, with the goal of cramming as much functionality and flexibility into the nifty dual-applet design as possible!
 
-I've also included **all of the stock O&C firmware apps**, although they don't all fit in one build. I provide **3 different builds** with various combinations of apps, listed in the [**Release Notes**](https://github.com/djphazer/O_C-BenisphereSuite/releases).
+I've also included **all of the stock O&C firmware apps**, but they don't all fit in one .hex. As a courtesy, I provide **3 different build choices** with various combinations of Apps in my [**Releases**](https://github.com/djphazer/O_C-BenisphereSuite/releases). I think of it like the boxed set of a movie trilogy or whatever. The O&C Saga. 4 different hardware format options. Free and Open Source, baby!
 
-Watch SynthDad's [**video overview**](https://www.youtube.com/watch?v=XRGlAmz3AKM) or check the [**Wiki**](https://github.com/djphazer/O_C-BenisphereSuite/wiki) for more info. 
+You can also customize the `platformio.ini` file to mix & match for yourself ;-)
 
 ### Notable Features in this branch:
 
 * 4 Presets in the new [**Hemisphere Config**](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Hemisphere-Config)
-* Modal-editing style cursor navigation
+* Modal-editing style cursor navigation (and other usability tweaks)
 * Expanded internal [**Clock Setup**](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Clock-Setup)
 * A new App called [**Calibr8or**](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Calibr8or)
 * **[DualTM](https://github.com/djphazer/O_C-BenisphereSuite/wiki/DualTM)** - two 32-bit shift registers. Assignable I/O.
@@ -38,7 +40,7 @@ python3 get-platformio.py
 
 This project lives within the `software/o_c_REV` directory. From there, you can Build the desired configuration and Upload via USB to your module:
 ```
-pio run -e main -t upload
+pio run -e oc_stock2_flipped -t upload
 ```
 Alternate build environment configurations exist in `platformio.ini` for VOR, Buchla, flipped screen, etc. To build all the defaults consecutively, simply use `pio run`
 
@@ -46,12 +48,12 @@ Alternate build environment configurations exist in `platformio.ini` for VOR, Bu
 
 Many minds before me have made this project possible. Attribution is present in the git commit log and within individual files.
 Shoutouts:
-* Logarhythm1 for the incredible **TB-3PO** sequencer.
-* herrkami and Beni Rose for their work on **BugCrack**.
-* Ben also gets massive props for **DrumMap** and the **ProbDiv / ProbMelo** applets.
-* qiemem (Bryan Head) for the **Ebb&LFO** applet and its _tideslite_ backend
+* **[Logarhythm1](https://github.com/Logarhythm1)** for the incredible **TB-3PO** sequencer, as well as **Stairs**.
+* **[herrkami](https://github.com/herrkami)** and **Ben Rosenbach** for their work on **BugCrack**.
+* **[benirose](https://github.com/benirose)** also gets massive props for **DrumMap** and the **ProbDiv / ProbMelo** applets.
+* **[qiemem](https://github.com/qiemem)** (Bryan Head) for the **Ebb&LFO** applet and its _tideslite_ backend, among other things.
 
-And, of course, thank you to Chysn for the clever applet framework from which we've all drawn inspiration.
+And, of course, thank you to **[Chysn](https://github.com/Chysn)** for the clever applet framework from which we've all drawn inspiration.
 
 This is a fork of [Benisphere Suite](https://github.com/benirose/O_C-BenisphereSuite) which is a fork of [Hemisphere Suite](https://github.com/Chysn/O_C-HemisphereSuite) by Jason Justian (aka chysn).
 
