@@ -436,7 +436,7 @@ private:
             gfxIcon(1, 35, SLEW_ICON);
             gfxPrint(15, 35, smooth_mod);
 
-            gfxCursor(15, 43, 10);
+            gfxCursor(15, 43, 18);
             break;
         }
 
@@ -444,7 +444,7 @@ private:
             case LENGTH: gfxCursor(13, 23, 12); break;
             case PROB: gfxCursor(35, 23, 18); break;
             case SCALE: gfxCursor(9, 33, 25); break;
-            case RANGE: gfxCursor(49, 33, 14); break;
+            case RANGE: gfxCursor(49, 33, 13); break;
 
             case OUT_A:
             case CVMODE1: gfxCursor(14, 43, 10); break;
