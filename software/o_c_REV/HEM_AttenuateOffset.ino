@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 #define ATTENOFF_INCREMENTS 128
+#define ATTENOFF_MAX_LEVEL 63
 
 class AttenuateOffset : public HemisphereApplet {
 public:
@@ -28,16 +29,16 @@ public:
     }
 
     void Start() {
-        ForEachChannel(ch) level[ch] = 63;
+        ForEachChannel(ch) level[ch] = ATTENOFF_MAX_LEVEL;
     }
 
     void Controller() {
-        mix_final = mix || Gate(0);
+        mix_final = mix || Gate(1);
         int prevSignal = 0;
         
         ForEachChannel(ch)
         {
-            int signal = Proportion(level[ch], 63, In(ch)) + (offset[ch] * ATTENOFF_INCREMENTS);
+            int signal = Proportion(level[ch], ATTENOFF_MAX_LEVEL, In(ch)) + (offset[ch] * ATTENOFF_INCREMENTS);
             if (ch == 1 && mix_final) {
                 signal = signal + prevSignal;
             }
@@ -79,8 +80,8 @@ public:
             int max = HEMISPHERE_MAX_CV / ATTENOFF_INCREMENTS;
             offset[ch] = constrain(offset[ch] + direction, min, max);
         } else {
-            // Change level percentage
-            level[ch] = constrain(level[ch] + direction, -63, 63);
+            // Change level percentage (+/-200%)
+            level[ch] = constrain(level[ch] + direction, -ATTENOFF_MAX_LEVEL*2, ATTENOFF_MAX_LEVEL*2);
         }
     }
         
@@ -88,24 +89,24 @@ public:
         uint64_t data = 0;
         Pack(data, PackLocation {0,9}, offset[0] + 256);
         Pack(data, PackLocation {10,9}, offset[1] + 256);
-        Pack(data, PackLocation {19,7}, level[0] + 64);
-        Pack(data, PackLocation {26,7}, level[1] + 64);
-        Pack(data, PackLocation {34,1}, mix);
+        Pack(data, PackLocation {19,8}, level[0] + ATTENOFF_MAX_LEVEL*2);
+        Pack(data, PackLocation {27,8}, level[1] + ATTENOFF_MAX_LEVEL*2);
+        Pack(data, PackLocation {35,1}, mix);
         return data;
     }
 
     void OnDataReceive(uint64_t data) {
         offset[0] = Unpack(data, PackLocation {0,9}) - 256;
         offset[1] = Unpack(data, PackLocation {10,9}) - 256;
-        level[0] = Unpack(data, PackLocation {19,7}) - 64;
-        level[1] = Unpack(data, PackLocation {26,7}) - 64;
-        mix = Unpack(data, PackLocation {34,1});
+        level[0] = Unpack(data, PackLocation {19,8}) - ATTENOFF_MAX_LEVEL*2;
+        level[1] = Unpack(data, PackLocation {27,8}) - ATTENOFF_MAX_LEVEL*2;
+        mix = Unpack(data, PackLocation {35,1});
     }
 
 protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
-        help[HEMISPHERE_HELP_DIGITALS] = "1=Mix A&B";
+        help[HEMISPHERE_HELP_DIGITALS] = "2=Mix A&B";
         help[HEMISPHERE_HELP_CVS]      = "CV Inputs 1,2";
         help[HEMISPHERE_HELP_OUTS]     = "Outputs A,B";
         help[HEMISPHERE_HELP_ENCODER]  = "Offset V / Level %";
