@@ -175,7 +175,7 @@ typedef struct IOFrame {
                 case usbMIDI.PitchBend:
                     if (function[ch] == HEM_MIDI_PB_OUT) {
                         int data = (data2 << 7) + data1 - 8192;
-                        outputs[ch] = Proportion(data, 0x7fff, HEMISPHERE_3V_CV);
+                        outputs[ch] = Proportion(data, 8192, HEMISPHERE_3V_CV);
                         log_this = 1;
                     }
                     break;
