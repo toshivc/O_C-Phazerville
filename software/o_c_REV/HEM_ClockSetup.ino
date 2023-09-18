@@ -46,7 +46,6 @@ public:
     // The ClockSetup controller handles MIDI Clock and Transport Start/Stop
     void Controller() {
         bool clock_sync = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
-        bool reset = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
 
         // MIDI Clock is filtered to 2 PPQN
         if (frame.MIDIState.clock_q) {
@@ -71,7 +70,7 @@ public:
 
         // Advance internal clock, sync to external clock / reset
         if (clock_m->IsRunning())
-            clock_m->SyncTrig( clock_sync, reset );
+            clock_m->SyncTrig( clock_sync );
 
         // ------------ //
         if (clock_m->IsRunning() && clock_m->MIDITock()) usbMIDI.sendRealTime(usbMIDI.Clock);
