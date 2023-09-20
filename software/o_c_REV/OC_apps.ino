@@ -42,6 +42,10 @@ OC::App available_apps[] = {
   #ifdef ENABLE_APP_CALIBR8OR
   DECLARE_APP('C','8', "Calibr8or", Calibr8or),
   #endif
+  #ifdef ENABLE_APP_SCENES
+  DECLARE_APP('S','X', "Scenes", ScenesApp),
+  #endif
+
   DECLARE_APP('H','S', "Hemisphere", HEMISPHERE),
   #ifdef ENABLE_APP_ASR
   DECLARE_APP('A','S', "CopierMaschine", ASR),
