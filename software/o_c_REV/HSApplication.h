@@ -93,6 +93,34 @@ public:
         last_view_tick = OC::CORE::ticks;
     }
 
+    // general screensaver view, visualizing inputs and outputs
+    void BaseScreensaver(bool notenames = 0) {
+        gfxDottedLine(0, 32, 127, 32); // horizontal baseline
+        for (int ch = 0; ch < 4; ++ch)
+        {
+            if (notenames) {
+                // approximate notes being output
+                gfxPrint(8 + 32*ch, 55, midi_note_numbers[MIDIQuantizer::NoteNumber(HS::frame.outputs[ch])] );
+            }
+
+            // trigger/gate indicators
+            if (HS::frame.gate_high[ch]) gfxIcon(11 + 32*ch, 0, CLOCK_ICON);
+
+            // input
+            int height = ProportionCV(HS::frame.inputs[ch], 32);
+            int y = constrain(32 - height, 0, 32);
+            gfxFrame(3 + (32 * ch), y, 6, abs(height));
+
+            // output
+            height = ProportionCV(HS::frame.outputs[ch], 32);
+            y = constrain(32 - height, 0, 32);
+            gfxInvert(11 + (32 * ch), y, 12, abs(height));
+
+            gfxLine(32 * ch, 0, 32*ch, 63); // vertical divider, left side
+        }
+        gfxLine(127, 0, 127, 63); // vertical line, right side
+    }
+
     int Proportion(int numerator, int denominator, int max_value) {
         simfloat proportion = int2simfloat((int32_t)numerator) / (int32_t)denominator;
         int scaled = simfloat2int(proportion * max_value);

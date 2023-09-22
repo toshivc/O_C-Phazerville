@@ -277,28 +277,6 @@ public:
         }
     }
 
-    void Screensaver() {
-        gfxDottedLine(0, 32, 127, 32); // horizontal baseline
-        for (int ch = 0; ch < 4; ++ch)
-        {
-            gfxPrint(8 + 32*ch, 55, midi_note_numbers[MIDIQuantizer::NoteNumber(channel[ch].last_note)] );
-            if (trigger_flash[ch] > 0) gfxIcon(11 + 32*ch, 0, CLOCK_ICON);
-
-            // input
-            int height = ProportionCV(ViewIn(ch), 32);
-            int y = constrain(32 - height, 0, 32);
-            gfxFrame(3 + (32 * ch), y, 6, abs(height));
-
-            // output
-            height = ProportionCV(ViewOut(ch), 32);
-            y = constrain(32 - height, 0, 32);
-            gfxInvert(11 + (32 * ch), y, 12, abs(height));
-
-            gfxLine(32 * ch, 0, 32*ch, 63); // vertical divider, left side
-        }
-        gfxLine(127, 0, 127, 63); // vertical line, right side
-    }
-
     /////////////////////////////////////////////////////////////////
     // Control handlers
     /////////////////////////////////////////////////////////////////
@@ -625,7 +603,7 @@ void Calibr8or_loop() {} // Deprecated
 void Calibr8or_menu() { Calibr8or_instance.BaseView(); }
 
 void Calibr8or_screensaver() {
-    Calibr8or_instance.Screensaver();
+    Calibr8or_instance.BaseScreensaver(true);
 }
 
 void Calibr8or_handleButtonEvent(const UI::Event &event) {

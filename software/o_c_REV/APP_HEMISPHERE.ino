@@ -695,7 +695,9 @@ void HEMISPHERE_menu() {
     manager.View();
 }
 
-void HEMISPHERE_screensaver() {} // Deprecated in favor of screen blanking
+void HEMISPHERE_screensaver() {
+    manager.BaseScreensaver(true); // show note names
+}
 
 void HEMISPHERE_handleButtonEvent(const UI::Event &event) {
     switch (event.type) {

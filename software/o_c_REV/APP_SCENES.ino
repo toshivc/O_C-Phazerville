@@ -235,27 +235,6 @@ public:
         }
     }
 
-    void Screensaver() {
-        gfxDottedLine(0, 32, 127, 32); // horizontal baseline
-        for (int ch = 0; ch < 4; ++ch)
-        {
-            if (trigger_flash[ch] > 0) gfxIcon(11 + 32*ch, 0, CLOCK_ICON);
-
-            // input
-            int height = ProportionCV(ViewIn(ch), 32);
-            int y = constrain(32 - height, 0, 32);
-            gfxFrame(3 + (32 * ch), y, 6, abs(height));
-
-            // output
-            height = ProportionCV(ViewOut(ch), 32);
-            y = constrain(32 - height, 0, 32);
-            gfxInvert(11 + (32 * ch), y, 12, abs(height));
-
-            gfxLine(32 * ch, 0, 32*ch, 63); // vertical divider, left side
-        }
-        gfxLine(127, 0, 127, 63); // vertical line, right side
-    }
-
     /////////////////////////////////////////////////////////////////
     // Control handlers
     /////////////////////////////////////////////////////////////////
@@ -400,7 +379,6 @@ private:
     uint16_t left_accel = 16;
     uint16_t right_accel = 16;
 
-    int trigger_flash[NR_OF_SCENE_CHANNELS];
     int smooth_offset = 0; // -128 to 128, for display
 
     Scene scene[NR_OF_SCENE_CHANNELS];
@@ -531,7 +509,7 @@ void ScenesApp_loop() {} // Deprecated
 void ScenesApp_menu() { ScenesApp_instance.BaseView(); }
 
 void ScenesApp_screensaver() {
-    ScenesApp_instance.Screensaver();
+    ScenesApp_instance.BaseScreensaver();
 }
 
 void ScenesApp_handleButtonEvent(const UI::Event &event) {
