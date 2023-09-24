@@ -257,9 +257,6 @@ public:
         // top-level MIDI-to-CV handling - alters frame outputs
         ProcessMIDI();
 
-        // Load the IO frame from CV inputs
-        HS::frame.Load();
-
         // XXX: kind of a crutch, should be replaced with general Trigger input mapping
         if (clock_m->IsForwarded()) {
             HS::frame.clocked[2] = HS::frame.clocked[0];
@@ -300,9 +297,6 @@ public:
             }
             HS::available_applets[index].Controller(h, 0);
         }
-
-        // set outputs from IO frame
-        HS::frame.Send();
     }
 
     void View() {

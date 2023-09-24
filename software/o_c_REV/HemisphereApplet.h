@@ -191,14 +191,6 @@ public:
         hemisphere = hemisphere_;
 
         // Initialize some things for startup
-        ForEachChannel(ch)
-        {
-            frame.clock_countdown[io_offset + ch]  = 0;
-            frame.inputs[io_offset + ch] = 0;
-            frame.outputs[io_offset + ch] = 0;
-            frame.outputs_smooth[io_offset + ch] = 0;
-            frame.adc_lag_countdown[io_offset + ch] = 0;
-        }
         help_active = 0;
         cursor_countdown[hemisphere] = HEMISPHERE_CURSOR_TICKS;
 

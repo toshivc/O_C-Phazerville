@@ -25,6 +25,8 @@
  * for consistency in development, or ease of porting apps or applets in either direction.
  */
 
+#pragma once
+
 #ifndef int2simfloat
 #define int2simfloat(x) (x << 14)
 #define simfloat2int(x) (x >> 14)
@@ -33,9 +35,7 @@ typedef int32_t simfloat;
 
 #include "HSicons.h"
 #include "HSClockManager.h"
-
-#ifndef HSAPPLICATION_H_
-#define HSAPPLICATION_H_
+#include "HemisphereApplet.h"
 
 #define HSAPPLICATION_CURSOR_TICKS 12000
 #define HSAPPLICATION_5V 7680
@@ -48,6 +48,8 @@ typedef int32_t simfloat;
 #define HSAPP_PULSE_VOLTAGE 5
 #endif
 
+using namespace HS;
+
 class HSApplication {
 public:
     virtual void Start();
@@ -56,32 +58,27 @@ public:
     virtual void Resume();
 
     void BaseController() {
-        for (uint8_t ch = 0; ch < 4; ch++)
-        {
-            // Set ADC input values
-            inputs[ch] = OC::ADC::raw_pitch_value((ADC_CHANNEL)ch);
-            if (abs(inputs[ch] - last_cv[ch]) > HSAPPLICATION_CHANGE_THRESHOLD) {
-                changed_cv[ch] = 1;
-                last_cv[ch] = inputs[ch];
-            } else changed_cv[ch] = 0;
-
-            if (clock_countdown[ch] > 0) {
-                if (--clock_countdown[ch] == 0) Out(ch, 0);
-            }
-        }
+        // Load the IO frame from CV inputs
+        HS::frame.Load();
 
         // Cursor countdowns. See CursorBlink(), ResetCursor(), gfxCursor()
         if (--cursor_countdown < -HSAPPLICATION_CURSOR_TICKS) cursor_countdown = HSAPPLICATION_CURSOR_TICKS;
 
         Controller();
+
+        // set outputs from IO frame
+        HS::frame.Send();
     }
 
     void BaseStart() {
         // Initialize some things for startup
         for (uint8_t ch = 0; ch < 4; ch++)
         {
-            clock_countdown[ch]  = 0;
-            adc_lag_countdown[ch] = 0;
+            frame.clock_countdown[ch]  = 0;
+            frame.inputs[ch] = 0;
+            frame.outputs[ch] = 0;
+            frame.outputs_smooth[ch] = 0;
+            frame.adc_lag_countdown[ch] = 0;
         }
         cursor_countdown = HSAPPLICATION_CURSOR_TICKS;
 
@@ -130,12 +127,11 @@ public:
     //////////////// Hemisphere-like IO methods
     ////////////////////////////////////////////////////////////////////////////////
     void Out(int ch, int value, int octave = 0) {
-        OC::DAC::set_pitch((DAC_CHANNEL)ch, value, octave);
-        outputs[ch] = value + (octave * (12 << 7));
+        frame.Out( (DAC_CHANNEL)(ch), value + (octave * (12 << 7)));
     }
 
     int In(int ch) {
-        return inputs[ch];
+        return frame.inputs[ch];
     }
 
     // Apply small center detent to input, so it reads zero before a threshold
@@ -144,16 +140,11 @@ public:
     }
 
     bool Changed(int ch) {
-        return changed_cv[ch];
+        return frame.changed_cv[ch];
     }
 
     bool Gate(int ch) {
-        bool high = 0;
-        if (ch == 0) high = OC::DigitalInputs::read_immediate<OC::DIGITAL_INPUT_1>();
-        if (ch == 1) high = OC::DigitalInputs::read_immediate<OC::DIGITAL_INPUT_2>();
-        if (ch == 2) high = OC::DigitalInputs::read_immediate<OC::DIGITAL_INPUT_3>();
-        if (ch == 3) high = OC::DigitalInputs::read_immediate<OC::DIGITAL_INPUT_4>();
-        return high;
+        return frame.gate_high[ch];
     }
 
     void GateOut(int ch, bool high) {
@@ -167,31 +158,27 @@ public:
         if (clock_m->IsRunning() && clock_m->GetMultiply(ch) != 0)
             clocked = clock_m->Tock(ch);
         else {
-            if (ch == 0) clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
-            if (ch == 1) clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_2>();
-            if (ch == 2) clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_3>();
-            if (ch == 3) clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_4>();
+            clocked = frame.clocked[ch];
         }
 
         // manual triggers
         clocked = clocked || clock_m->Beep(ch);
 
         if (clocked) {
-            cycle_ticks[ch] = OC::CORE::ticks - last_clock[ch];
-            last_clock[ch] = OC::CORE::ticks;
+            frame.cycle_ticks[ch] = OC::CORE::ticks - frame.last_clock[ch];
+            frame.last_clock[ch] = OC::CORE::ticks;
         }
         return clocked;
     }
 
     void ClockOut(int ch, int ticks = 100) {
-        clock_countdown[ch] = ticks;
-        Out(ch, 0, HSAPP_PULSE_VOLTAGE);
+        frame.ClockOut( (DAC_CHANNEL)ch, ticks );
     }
 
     // Buffered I/O functions for use in Views
-    int ViewIn(int ch) {return inputs[ch];}
-    int ViewOut(int ch) {return outputs[ch];}
-    int ClockCycleTicks(int ch) {return cycle_ticks[ch];}
+    int ViewIn(int ch) {return frame.inputs[ch];}
+    int ViewOut(int ch) {return frame.outputs[ch];}
+    int ClockCycleTicks(int ch) {return frame.cycle_ticks[ch];}
 
     /* ADC Lag: There is a small delay between when a digital input can be read and when an ADC can be
      * read. The ADC value lags behind a bit in time. So StartADCLag() and EndADCLag() are used to
@@ -204,8 +191,8 @@ public:
      *     // etc...
      * }
      */
-    void StartADCLag(int ch) {adc_lag_countdown[ch] = 96;}
-    bool EndOfADCLag(int ch) {return (--adc_lag_countdown[ch] == 0);}
+    void StartADCLag(int ch) {frame.adc_lag_countdown[ch] = 96;}
+    bool EndOfADCLag(int ch) {return (--frame.adc_lag_countdown[ch] == 0);}
 
     //////////////// Hemisphere-like graphics methods for easy porting
     ////////////////////////////////////////////////////////////////////////////////
@@ -330,16 +317,6 @@ protected:
     }
 
 private:
-    int clock_countdown[4]; // For clock output timing
-    int adc_lag_countdown[4]; // Lag countdown for each input channel
     int cursor_countdown; // Timer for cursor blinkin'
     uint32_t last_view_tick; // Time since the last view, for activating screen blanking
-    int inputs[4]; // Last ADC values
-    int outputs[4]; // Last DAC values; inputs[] and outputs[] are used to allow access to values in Views
-    bool changed_cv[4]; // Has the input changed by more than 1/8 semitone since the last read?
-    int last_cv[4]; // For change detection
-    uint32_t last_clock[4]; // Tick number of the last clock observed by the child class
-    uint32_t cycle_ticks[4]; // Number of ticks between last two clocks
 };
-
-#endif /* HSAPPLICATION_H_ */
