@@ -182,10 +182,7 @@ public:
     void LoadPreset() {
         bool success = cal8_presets[index].load_preset(channel);
         if (success) {
-            for (int ch = 0; ch < NR_OF_CHANNELS; ++ch) {
-                HS::quantizer[ch].Configure(OC::Scales::GetScale(channel[ch].scale), 0xffff);
-                HS::quantizer[ch].Requantize();
-            }
+            Resume();
             preset_modified = 0;
         }
         else
@@ -196,8 +193,13 @@ public:
         preset_modified = 0;
     }
 
-	void Resume() {
-	}
+    void Resume() {
+        // restore quantizer settings
+        for (int ch = 0; ch < NR_OF_CHANNELS; ++ch) {
+            HS::quantizer[ch].Configure(OC::Scales::GetScale(channel[ch].scale), 0xffff);
+            HS::quantizer[ch].Requantize();
+        }
+    }
 
     void ProcessMIDI() {
         HS::IOFrame &f = HS::frame;

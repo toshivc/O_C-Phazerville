@@ -182,6 +182,7 @@ public:
     void Resume() {
         if (!hem_active_preset)
             LoadFromPreset(0);
+        // TODO: restore quantizer settings...
     }
     void Suspend() {
         if (hem_active_preset) {
