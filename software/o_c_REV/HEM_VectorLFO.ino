@@ -28,7 +28,7 @@ public:
         return "VectorLFO";
     }
 
-    static constexpr int min_freq = 3;
+    static constexpr int min_freq = 1;
     static constexpr int max_freq = 100000;
 
     void Start() {
@@ -43,11 +43,9 @@ public:
 
     void Controller() {
         // Input 1 is frequency modulation for channel 1
-        if (Changed(0)) {
-            int mod = Proportion(DetentedIn(0), HEMISPHERE_3V_CV, 3000);
-            mod = constrain(mod, -3000, 3000);
-            if (mod + freq[0] > 10) osc[0].SetFrequency(freq[0] + mod);
-        }
+        int freq_mod = Proportion(DetentedIn(0), HEMISPHERE_3V_CV, 3000);
+        freq_mod = constrain(freq[0] + freq_mod, min_freq, max_freq);
+        osc[0].SetFrequency(freq_mod);
 
         // Input 2 determines signal 1's level on the B/D output mix
         int mix_level = DetentedIn(1);
@@ -59,9 +57,8 @@ public:
             if (Clock(ch)) {
                 uint32_t ticks = ClockCycleTicks(ch);
                 int new_freq = 1666666 / ticks;
-                new_freq = constrain(new_freq, min_freq, max_freq);
-                osc[ch].SetFrequency(new_freq);
-                freq[ch] = new_freq;
+                freq[ch] = constrain(new_freq, min_freq, max_freq);
+                osc[ch].SetFrequency(freq[ch]);
                 osc[ch].Reset();
             }
 
