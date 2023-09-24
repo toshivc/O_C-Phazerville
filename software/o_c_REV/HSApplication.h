@@ -36,6 +36,7 @@ typedef int32_t simfloat;
 #include "HSicons.h"
 #include "HSClockManager.h"
 #include "HemisphereApplet.h"
+#include "HSUtils.h"
 
 #define HSAPPLICATION_CURSOR_TICKS 12000
 #define HSAPPLICATION_5V 7680
@@ -118,12 +119,6 @@ public:
         gfxLine(127, 0, 127, 63); // vertical line, right side
     }
 
-    int Proportion(int numerator, int denominator, int max_value) {
-        simfloat proportion = int2simfloat((int32_t)numerator) / (int32_t)denominator;
-        int scaled = simfloat2int(proportion * max_value);
-        return scaled;
-    }
-
     //////////////// Hemisphere-like IO methods
     ////////////////////////////////////////////////////////////////////////////////
     void Out(int ch, int value, int octave = 0) {
@@ -194,116 +189,13 @@ public:
     void StartADCLag(int ch) {frame.adc_lag_countdown[ch] = 96;}
     bool EndOfADCLag(int ch) {return (--frame.adc_lag_countdown[ch] == 0);}
 
-    //////////////// Hemisphere-like graphics methods for easy porting
-    ////////////////////////////////////////////////////////////////////////////////
     void gfxCursor(int x, int y, int w) {
         if (CursorBlink()) gfxLine(x, y, x + w - 1, y);
     }
-
-    void gfxPos(int x, int y) {
-        graphics.setPrintPos(x, y);
-    }
-
-    void gfxPrint(int x, int y, const char *str) {
-        graphics.setPrintPos(x, y);
-        graphics.print(str);
-    }
-
-    void gfxPrint(int x, int y, int num) {
-        graphics.setPrintPos(x, y);
-        graphics.print(num);
-    }
-
-    void gfxPrint(int x_adv, int num) { // Print number with character padding
-        for (int c = 0; c < (x_adv / 6); c++) gfxPrint(" ");
-        gfxPrint(num);
-    }
-
-    void gfxPrint(const char *str) {
-        graphics.print(str);
-    }
-
-    void gfxPrint(int num) {
-        graphics.print(num);
-    }
-
-    /* Convert CV value to voltage level and print  to two decimal places */
-    void gfxPrintVoltage(int cv) {
-        int v = (cv * 100) / (12 << 7);
-        bool neg = v < 0 ? 1 : 0;
-        if (v < 0) v = -v;
-        int wv = v / 100; // whole volts
-        int dv = v - (wv * 100); // decimal
-        gfxPrint(neg ? "-" : "+");
-        gfxPrint(wv);
-        gfxPrint(".");
-        if (dv < 10) gfxPrint("0");
-        gfxPrint(dv);
-        gfxPrint("V");
-    }
-
-    void gfxPixel(int x, int y) {
-        graphics.setPixel(x, y);
-    }
-
-    void gfxFrame(int x, int y, int w, int h) {
-        graphics.drawFrame(x, y, w, h);
-    }
-
-    void gfxRect(int x, int y, int w, int h) {
-        graphics.drawRect(x, y, w, h);
-    }
-
-    void gfxInvert(int x, int y, int w, int h) {
-        graphics.invertRect(x, y, w, h);
-    }
-
-    void gfxLine(int x, int y, int x2, int y2) {
-        graphics.drawLine(x, y, x2, y2);
-    }
-
-    void gfxDottedLine(int x, int y, int x2, int y2, uint8_t p = 2) {
-#ifdef HS_GFX_MOD
-        graphics.drawLine(x, y, x2, y2, p);
-#else
-        graphics.drawLine(x, y, x2, y2);
-#endif
-    }
-
-    void gfxCircle(int x, int y, int r) {
-        graphics.drawCircle(x, y, r);
-    }
-
-    void gfxBitmap(int x, int y, int w, const uint8_t *data) {
-        graphics.drawBitmap8(x, y, w, data);
-    }
-
-    // Like gfxBitmap, but always 8x8
-    void gfxIcon(int x, int y, const uint8_t *data) {
-        gfxBitmap(x, y, 8, data);
-    }
-
-
-    uint8_t pad(int range, int number) {
-        uint8_t padding = 0;
-        while (range > 1)
-        {
-            if (abs(number) < range) padding += 6;
-            range = range / 10;
-        }
-        if (number < 0 && padding > 0) padding -= 6; // Compensate for minus sign
-        return padding;
-    }
-
     void gfxHeader(const char *str) {
          gfxPrint(1, 2, str);
          gfxLine(0, 10, 127, 10);
          gfxLine(0, 12, 127, 12);
-    }
-
-    int ProportionCV(int cv_value, int max_pixels) {
-        int prop = constrain(Proportion(cv_value, HSAPPLICATION_5V, max_pixels), -max_pixels, max_pixels);
-        return prop;
     }
 
 protected:
@@ -311,7 +203,6 @@ protected:
     bool CursorBlink() {
         return (cursor_countdown > 0);
     }
-
     void ResetCursor() {
         cursor_countdown = HSAPPLICATION_CURSOR_TICKS;
     }

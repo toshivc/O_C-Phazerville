@@ -94,58 +94,7 @@ typedef int32_t simfloat;
 
 #include "hemisphere_config.h"
 #include "braids_quantizer.h"
-
-//////////////// Calculation methods
-////////////////////////////////////////////////////////////////////////////////
-
-/* Proportion method using simfloat, useful for calculating scaled values given
- * a fractional value.
- *
- * Solves this:  numerator        ???
- *              ----------- = -----------
- *              denominator       max
- *
- * For example, to convert a parameter with a range of 1 to 100 into value scaled
- * to HEMISPHERE_MAX_CV, to be sent to the DAC:
- *
- * Out(ch, Proportion(value, 100, HEMISPHERE_MAX_CV));
- *
- */
-int Proportion(int numerator, int denominator, int max_value) {
-    simfloat proportion = int2simfloat((int32_t)numerator) / (int32_t)denominator;
-    int scaled = simfloat2int(proportion * max_value);
-    return scaled;
-}
-
-/* Proportion CV values into pixels for display purposes.
- *
- * Solves this:     cv_value           ???
- *              ----------------- = ----------
- *              HEMISPHERE_MAX_CV   max_pixels
- */
-int ProportionCV(int cv_value, int max_pixels) {
-    int prop = constrain(Proportion(cv_value, HEMISPHERE_MAX_INPUT_CV, max_pixels), 0, max_pixels);
-    return prop;
-}
-
-// Specifies where data goes in flash storage for each selcted applet, and how big it is
-typedef struct PackLocation {
-    size_t location;
-    size_t size;
-} PackLocation;
-
-/* Add value to a 64-bit storage unit at the specified location */
-void Pack(uint64_t &data, PackLocation p, uint64_t value) {
-    data |= (value << p.location);
-}
-
-/* Retrieve value from a 64-bit storage unit at the specified location and of the specified bit size */
-int Unpack(uint64_t data, PackLocation p) {
-    uint64_t mask = 1;
-    for (size_t i = 1; i < p.size; i++) mask |= (0x01 << i);
-    return (data >> p.location) & mask;
-}
-
+#include "HSUtils.h"
 #include "HSIOFrame.h"
 
 namespace HS {
@@ -179,7 +128,6 @@ using namespace HS;
 
 class HemisphereApplet {
 public:
-    //static HSIOFrame frame;
     static int cursor_countdown[2];
 
     virtual const char* applet_name(); // Maximum of 9 characters
@@ -287,6 +235,13 @@ public:
         return (isEditing || !modal_edit_mode);
     }
 
+    // Override HSUtils function to only return positive values
+    // Not ideal, but too many applets rely on this.
+    int ProportionCV(int cv_value, int max_pixels) {
+        int prop = constrain(Proportion(cv_value, HEMISPHERE_MAX_INPUT_CV, max_pixels), 0, max_pixels);
+        return prop;
+    }
+
     //////////////// Offset graphics methods
     ////////////////////////////////////////////////////////////////////////////////
     void gfxCursor(int x, int y, int w, int h = 9) { // assumes standard text height for highlighting
@@ -302,40 +257,22 @@ public:
         graphics.setPrintPos(x + gfx_offset, y);
         graphics.print(str);
     }
-
     void gfxPrint(int x, int y, int num) {
         graphics.setPrintPos(x + gfx_offset, y);
         graphics.print(num);
     }
-
+    void gfxPrint(const char *str) {
+        graphics.print(str);
+    }
+    void gfxPrint(int num) {
+        graphics.print(num);
+    }
     void gfxPrint(int x_adv, int num) { // Print number with character padding
         for (int c = 0; c < (x_adv / 6); c++) gfxPrint(" ");
         gfxPrint(num);
     }
 
-    void gfxPrint(const char *str) {
-        graphics.print(str);
-    }
-
-    void gfxPrint(int num) {
-        graphics.print(num);
-    }
-
     /* Convert CV value to voltage level and print  to two decimal places */
-    void gfxPrintVoltage(int cv) {
-        int v = (cv * 100) / (12 << 7);
-        bool neg = v < 0 ? 1 : 0;
-        if (v < 0) v = -v;
-        int wv = v / 100; // whole volts
-        int dv = v - (wv * 100); // decimal
-        gfxPrint(neg ? "-" : "+");
-        gfxPrint(wv);
-        gfxPrint(".");
-        if (dv < 10) gfxPrint("0");
-        gfxPrint(dv);
-        gfxPrint("V");
-    }
-
     void gfxPixel(int x, int y) {
         graphics.setPixel(x + gfx_offset, y);
     }
@@ -371,19 +308,8 @@ public:
     void gfxBitmap(int x, int y, int w, const uint8_t *data) {
         graphics.drawBitmap8(x + gfx_offset, y, w, data);
     }
-
     void gfxIcon(int x, int y, const uint8_t *data) {
         gfxBitmap(x, y, 8, data);
-    }
-
-    uint8_t pad(int range, int number) {
-        uint8_t padding = 0;
-        while (range > 1)
-        {
-            if (abs(number) < range) padding += 6;
-            range = range / 10;
-        }
-        return padding;
     }
 
     //////////////// Hemisphere-specific graphics methods
@@ -432,7 +358,6 @@ public:
     void Modulate(auto &param, const int ch, const int min = 0, const int max = 255) {
         int cv = DetentedIn(ch);
         param = constrain(param + Proportion(cv, HEMISPHERE_MAX_INPUT_CV, max), min, max);
-        //return param_mod;
     }
 
     void Out(int ch, int value, int octave = 0) {
