@@ -52,8 +52,6 @@ class TheDarkestTimeline : public HSApplication, public SystemExclusiveHandler,
     public settings::SettingsBase<TheDarkestTimeline, DT_SETTING_LAST> {
 public:
 	void Start() {
-        quantizer.Init();
-        quantizer.Configure(OC::Scales::GetScale(5), 0xffff);
         Resume();
 	}
 
@@ -67,6 +65,8 @@ public:
             values_[DT_MIDI_CHANNEL] = 11;
             values_[DT_MIDI_CHANNEL_ALT] = 12;
         }
+        HS::quantizer[0].Init();
+        HS::quantizer[0].Configure(OC::Scales::GetScale(scale()), 0xffff);
 	}
 
     void Controller() {
@@ -156,13 +156,13 @@ public:
 
             if (tl == 0) {
                 // This is a CV Timeline, so output the normal universe note
-                int32_t pitch = quantizer.Process(cv, root() << 7, transpose);
+                int32_t pitch = HS::quantizer[0].Process(cv, root() << 7, transpose);
                 Out(0, pitch);
 
                 // and then output the alternate universe note
                 uint8_t alt_idx = (idx + length()) % 32;
                 int alt_cv = get_data_at(alt_idx, tl);
-                pitch = quantizer.Process(alt_cv, root() << 7, transpose);
+                pitch = HS::quantizer[0].Process(alt_cv, root() << 7, transpose);
                 Out(1, pitch);
             } else if (clocked) {
                 // This is the Probability Timeline, and it's only calculated when
@@ -352,7 +352,7 @@ public:
         if (setup_screen == 0) change_value(DT_LENGTH, -direction);
         else change_value(setup_screen + 1, direction);
 
-        quantizer.Configure(OC::Scales::GetScale(scale()), 0xffff);
+        HS::quantizer[0].Configure(OC::Scales::GetScale(scale()), 0xffff);
         if (setup_screen > 0) setup_screen_timeout_countdown = DT_SETUP_SCREEN_TIMEOUT;
     }
 
@@ -370,7 +370,6 @@ private:
     int8_t cursor; // The play/record point within the sequence
     bool record[2]; // 0 = CV Timeline, 1 = Proability Timeline
     bool index_edit_enabled; // The index is being edited via the panel
-    braids::Quantizer quantizer;
     uint8_t setup_screen; // Setup screen state
     int setup_screen_timeout_countdown;
     bool clocked; // Sequencer has been clocked, and a probability trigger needs to be determined

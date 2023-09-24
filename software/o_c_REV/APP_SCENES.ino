@@ -488,20 +488,19 @@ size_t ScenesApp_restore(const void *storage) {
 void ScenesApp_isr() { return ScenesApp_instance.BaseController(); }
 
 void ScenesApp_handleAppEvent(OC::AppEvent event) {
+    /*
     switch (event) {
     case OC::APP_EVENT_RESUME:
-        ScenesApp_instance.Resume();
+        //ScenesApp_instance.Resume();
         break;
 
-    // The idea is to auto-save when the screen times out...
     case OC::APP_EVENT_SUSPEND:
     case OC::APP_EVENT_SCREENSAVER_ON:
-        // TODO: initiate actual EEPROM save
-        // app_data_save();
         break;
 
     default: break;
     }
+    */
 }
 
 void ScenesApp_loop() {} // Deprecated
