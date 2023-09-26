@@ -28,7 +28,7 @@ public:
         return "VectorLFO";
     }
 
-    static constexpr int min_freq = 1;
+    static constexpr int min_freq = 8;
     static constexpr int max_freq = 100000;
 
     void Start() {
