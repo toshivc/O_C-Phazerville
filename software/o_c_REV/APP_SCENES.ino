@@ -36,6 +36,8 @@ static const int NR_OF_SCENE_CHANNELS = 4;
 
 #define SCENE_MAX_VAL HEMISPHERE_MAX_CV
 #define SCENE_MIN_VAL HEMISPHERE_MIN_CV
+#define SCENE_ACCEL_MIN 16
+#define SCENE_ACCEL_MAX 256
 
 struct Scene {
     int16_t values[4];
@@ -167,7 +169,7 @@ public:
             Sequence.active = 0;
         }
 
-        // smooth interpolation offset, starting from last triggered scene
+        // CV1: smooth interpolation offset, starting from last triggered scene
         if (DetentedIn(0)) {
             int cv = In(0);
             int direction = (cv < 0) ? -1 : 1;
@@ -207,17 +209,27 @@ public:
             smooth_offset = 0;
         }
 
+        // CV2: bipolar offset added to all values
+        if (DetentedIn(1)) {
+            int cv_offset = In(1);
+            for (int i = 0; i < NR_OF_SCENE_CHANNELS; ++i) {
+                active_scene.values[i] = constrain(active_scene.values[i] + cv_offset, SCENE_MIN_VAL, SCENE_MAX_VAL);
+            }
+        }
+
+        // CV3: TODO
+
         // set outputs
         for (int ch = 0; ch < NR_OF_SCENE_CHANNELS; ++ch) {
             Out(ch, active_scene.values[ch]);
         }
 
         // encoder deceleration
-        if (left_accel > 16) --left_accel;
-        else left_accel = 16; // just in case lol
+        if (left_accel > SCENE_ACCEL_MIN) --left_accel;
+        else left_accel = SCENE_ACCEL_MIN; // just in case lol
 
-        if (right_accel > 16) --right_accel;
-        else right_accel = 16;
+        if (right_accel > SCENE_ACCEL_MIN) --right_accel;
+        else right_accel = SCENE_ACCEL_MIN;
     }
 
     void View() {
@@ -249,6 +261,7 @@ public:
 
     void OnLeftButtonLongPress() {
         if (preset_select) return;
+        // TODO: toggle something cool here
     }
 
     void OnRightButtonPress() {
@@ -272,29 +285,11 @@ public:
         edit_mode_right = !edit_mode_right;
     }
 
-    void OnButtonDown(const UI::Event &event) {
-        // check for clock setup secret combo (dual press)
-        if ( event.control == OC::CONTROL_BUTTON_DOWN || event.control == OC::CONTROL_BUTTON_UP)
-            UpOrDownButtonPress(event.control == OC::CONTROL_BUTTON_UP);
-    }
-
-    void UpOrDownButtonPress(bool up) {
-        if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME && up != first_click) {
-            // show clock setup if both buttons pressed quickly
-            click_tick = 0;
-        } else {
-            click_tick = OC::CORE::ticks;
-            first_click = up;
-        }
-    }
-
     void SwitchChannel(bool up) {
         if (!preset_select) {
             sel_chan += (up? 1 : -1) + NR_OF_SCENE_CHANNELS;
             sel_chan %= NR_OF_SCENE_CHANNELS;
-        }
-
-        if (click_tick) {
+        } else {
             // always cancel preset select on single click
             preset_select = 0;
         }
@@ -321,7 +316,7 @@ public:
         scene[sel_chan].values[idx] = constrain( scene[sel_chan].values[idx], SCENE_MIN_VAL, SCENE_MAX_VAL );
 
         left_accel <<= 3;
-        if (left_accel > 256) left_accel = 256;
+        if (left_accel > SCENE_ACCEL_MAX) left_accel = SCENE_ACCEL_MAX;
     }
 
     // Right encoder: Edit C or D on current scene
@@ -337,8 +332,8 @@ public:
         scene[sel_chan].values[idx] += direction * right_accel;
         scene[sel_chan].values[idx] = constrain( scene[sel_chan].values[idx], SCENE_MIN_VAL, SCENE_MAX_VAL );
 
-        right_accel <<= 4;
-        if (right_accel > 512) right_accel = 512;
+        right_accel <<= 3;
+        if (right_accel > SCENE_ACCEL_MAX) right_accel = SCENE_ACCEL_MAX;
     }
 
 private:
@@ -373,11 +368,8 @@ private:
         }
     } Sequence;
 
-    uint32_t click_tick = 0;
-    bool first_click = 0;
-
-    uint16_t left_accel = 16;
-    uint16_t right_accel = 16;
+    uint16_t left_accel = SCENE_ACCEL_MIN;
+    uint16_t right_accel = SCENE_ACCEL_MIN;
 
     int smooth_offset = 0; // -128 to 128, for display
 
@@ -403,10 +395,6 @@ private:
     }
 
     void DrawInterface() {
-        /*
-        gfxPrint(2, 15, "Scene ");
-        gfxPrint(sel_chan + 1);
-        */
         for (int i = 0; i < NR_OF_SCENE_CHANNELS; ++i) {
             gfxPrint(i*32 + 13, 14, i+1);
         }
@@ -417,16 +405,16 @@ private:
         // edit pointer
         gfxIcon(sel_chan*32 + 13, 25, UP_ICON);
 
-        gfxPrint(8, 35, "A: ");
+        gfxPrint(8, 35, "A:");
         gfxPrintVoltage(scene[sel_chan].values[0]);
-        gfxPrint(8, 45, "B: ");
+        gfxPrint(8, 45, "B:");
         gfxPrintVoltage(scene[sel_chan].values[1]);
 
         gfxIcon(0, 35 + 10*edit_mode_left, RIGHT_ICON);
 
-        gfxPrint(72, 35, "C: ");
+        gfxPrint(72, 35, "C:");
         gfxPrintVoltage(scene[sel_chan].values[2]);
-        gfxPrint(72, 45, "D: ");
+        gfxPrint(72, 45, "D:");
         gfxPrintVoltage(scene[sel_chan].values[3]);
 
         gfxIcon(64, 35 + 10*edit_mode_right, RIGHT_ICON);
@@ -488,7 +476,6 @@ size_t ScenesApp_restore(const void *storage) {
 void ScenesApp_isr() { return ScenesApp_instance.BaseController(); }
 
 void ScenesApp_handleAppEvent(OC::AppEvent event) {
-    /*
     switch (event) {
     case OC::APP_EVENT_RESUME:
         //ScenesApp_instance.Resume();
@@ -500,7 +487,6 @@ void ScenesApp_handleAppEvent(OC::AppEvent event) {
 
     default: break;
     }
-    */
 }
 
 void ScenesApp_loop() {} // Deprecated
@@ -518,8 +504,6 @@ void ScenesApp_handleButtonEvent(const UI::Event &event) {
     // For down button, handle press and long press
     switch (event.type) {
     case UI::EVENT_BUTTON_DOWN:
-        ScenesApp_instance.OnButtonDown(event);
-
         break;
     case UI::EVENT_BUTTON_PRESS: {
         switch (event.control) {
@@ -538,7 +522,7 @@ void ScenesApp_handleButtonEvent(const UI::Event &event) {
     } break;
     case UI::EVENT_BUTTON_LONG_PRESS:
         if (event.control == OC::CONTROL_BUTTON_L) {
-            ScenesApp_instance.OnLeftButtonLongPress();
+            //ScenesApp_instance.OnLeftButtonLongPress();
         }
         if (event.control == OC::CONTROL_BUTTON_DOWN) {
             ScenesApp_instance.OnDownButtonLongPress();
