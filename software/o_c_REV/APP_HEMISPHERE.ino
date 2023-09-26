@@ -388,14 +388,12 @@ public:
 
         // -- button down
         if (down) {
-            // dual press for Clock Setup...
-            // a less favorable approach was to check if both buttons are currently pressed. For some reason, this sometimes cancels clock_setup when you let go.
-            //if (event.mask == (OC::CONTROL_BUTTON_UP | OC::CONTROL_BUTTON_DOWN))
-            if (OC::CORE::ticks - click_tick < HEMISPHERE_SIM_CLICK_TIME && hemisphere != first_click) {
+            // dual press for Clock Setup... check first_click, so we only process the 2nd button event
+            if (event.mask == (OC::CONTROL_BUTTON_UP | OC::CONTROL_BUTTON_DOWN) && hemisphere != first_click) {
                 clock_setup = 1;
                 SetHelpScreen(-1);
                 select_mode = -1;
-                OC::ui.SetButtonIgnoreMask();
+                OC::ui.SetButtonIgnoreMask(); // ignore button release
                 return;
             }
 
