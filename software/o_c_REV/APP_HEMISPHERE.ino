@@ -274,23 +274,22 @@ public:
             {
                 ForEachChannel(ch) {
                     int chan = h*2 + ch;
-                    // override CV inputs with applicable MIDI signals
+                    // mix CV inputs with applicable MIDI signals
                     switch (HS::frame.MIDIState.function[chan]) {
                     case HEM_MIDI_CC_OUT:
                     case HEM_MIDI_NOTE_OUT:
                     case HEM_MIDI_VEL_OUT:
                     case HEM_MIDI_AT_OUT:
                     case HEM_MIDI_PB_OUT:
-                        HS::frame.inputs[chan] = HS::frame.MIDIState.outputs[chan];
+                        HS::frame.inputs[chan] += HS::frame.MIDIState.outputs[chan];
                         break;
                     case HEM_MIDI_GATE_OUT:
-                        // XXX: how do we want this one to behave? override digital? or CV? both?
-                        HS::frame.gate_high[chan] = (HS::frame.MIDIState.outputs[chan] > (12 << 7));
+                        HS::frame.gate_high[chan] |= (HS::frame.MIDIState.outputs[chan] > (12 << 7));
                         break;
                     case HEM_MIDI_TRIG_OUT:
                     case HEM_MIDI_CLOCK_OUT:
                     case HEM_MIDI_START_OUT:
-                        HS::frame.clocked[chan] = HS::frame.MIDIState.trigout_q[chan];
+                        HS::frame.clocked[chan] |= HS::frame.MIDIState.trigout_q[chan];
                         HS::frame.MIDIState.trigout_q[chan] = 0;
                         break;
                     }
