@@ -80,6 +80,7 @@ namespace OC {
   
 void inline pinMode(uint8_t pin, uint8_t mode) {
   
+#if defined(__MK20DX256__)
     volatile uint32_t *config;
   
     if (pin >= CORE_NUM_DIGITAL) return;
@@ -114,6 +115,9 @@ void inline pinMode(uint8_t pin, uint8_t mode) {
         *config = 0;
       }
     }
+#else
+    ::pinMode(pin, mode); // for Teensy 4.x, just use normal pinMode
+#endif
   }
 }
 

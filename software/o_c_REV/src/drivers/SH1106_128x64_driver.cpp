@@ -114,13 +114,19 @@ void SH1106_128x64_Driver::Init() {
   digitalWriteFast(OLED_CS, OLED_CS_INACTIVE); // U8G_ESC_CS(0),             /* disable chip */
 
 #ifdef DMA_PAGE_TRANSFER
+#if defined(__MK20DX256__)
   page_dma.destination((volatile uint8_t&)SPI0_PUSHR);
   page_dma.transferSize(1);
   page_dma.transferCount(kPageSize);
   page_dma.disableOnCompletion();
   page_dma.triggerAtHardwareEvent(DMAMUX_SOURCE_SPI0_TX);
   page_dma.disable();
-#endif
+
+#elif defined(__IMXRT1062__)
+  // TODO Teensy 4.1
+
+#endif // __IMXRT1062__
+#endif // DMA_PAGE_TRANSFER
 
   Clear();
 }
@@ -138,6 +144,7 @@ void SH1106_128x64_Driver::Flush() {
   // would be pulled high too soon. Why this effect is more pronounced with
   // gcc >= 5.4.1 is a different mystery.
 
+#if defined(__MK20DX256__)
   if (page_dma_active) {
     while (!page_dma.complete()) { }
     while (0 != (SPI0_SR & 0x0000f000)); // SPIx_SR TXCTR
@@ -151,7 +158,12 @@ void SH1106_128x64_Driver::Flush() {
     SPI0_RSER = 0;
     SPI0_SR = 0xFF0F0000;
   }
-#endif
+
+#elif defined(__IMXRT1062__)
+  // TODO Teensy 4.1
+
+#endif // __IMXRT1062__
+#endif // DMA_PAGE_TRANSFER
 }
 
 static uint8_t empty_page[SH1106_128x64_Driver::kPageSize];
@@ -186,18 +198,26 @@ void SH1106_128x64_Driver::SendPage(uint_fast8_t index, const uint8_t *data) {
 
 #ifdef DMA_PAGE_TRANSFER
   // DmaSpi.h::pre_cs_impl()
+#if defined(__MK20DX256__)
   SPI0_SR = 0xFF0F0000;
   SPI0_RSER = SPI_RSER_RFDF_RE | SPI_RSER_RFDF_DIRS | SPI_RSER_TFFF_RE | SPI_RSER_TFFF_DIRS;
 
   page_dma.sourceBuffer(data, kPageSize);
   page_dma.enable(); // go
   page_dma_active = true;
-#else
+
+#elif defined(__IMXRT1062__)
+  // TODO Teensy 4.1
+  page_dma_active = true;
+
+#endif // __IMXRT1062__
+#else // not DMA_PAGE_TRANSFER
   SPI_send(data, kPageSize);
   digitalWriteFast(OLED_CS, OLED_CS_INACTIVE); // U8G_ESC_CS(0)
 #endif
 }
 
+#if defined(__MK20DX256__)
 void SH1106_128x64_Driver::SPI_send(void *bufr, size_t n) {
 
   // adapted from https://github.com/xxxajk/spi4teensy3
@@ -241,6 +261,12 @@ void SH1106_128x64_Driver::SPI_send(void *bufr, size_t n) {
   }
 }
 
+#elif defined(__IMXRT1062__)
+void SH1106_128x64_Driver::SPI_send(void *bufr, size_t n) {
+  // TODO Teensy 4.1
+}
+
+#endif // __IMXRT1062__
 /*static*/
 void SH1106_128x64_Driver::AdjustOffset(uint8_t offset) {
   SH1106_data_start_seq[1] = offset; // lower 4 bits of col adr

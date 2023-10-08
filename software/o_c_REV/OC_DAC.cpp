@@ -77,8 +77,14 @@ void DAC::Init(CalibrationData *calibration_data) {
   history_tail_ = 0;
   memset(history_, 0, sizeof(uint16_t) * kHistoryDepth * DAC_CHANNEL_LAST);
 
+#if defined(__MK20DX256__)
   if (F_BUS == 60000000 || F_BUS == 48000000) 
     SPIFIFO.begin(DAC_CS, SPICLOCK_30MHz, SPI_MODE0);  
+
+#elif defined(__IMXRT1062__)
+  // TODO Teensy 4.1
+
+#endif
 
   set_all(0xffff);
   Update();
@@ -206,6 +212,7 @@ uint32_t DAC::store_scaling() {
   return _scaling;
 }
 
+#if defined(__MK20DX256__)
 /*static*/ 
 void DAC::init_Vbias() {
   /* using MK20 DAC0 for Vbias*/
@@ -217,6 +224,16 @@ void DAC::init_Vbias() {
 void DAC::set_Vbias(uint32_t data) {
   *(volatile int16_t *)&(DAC0_DAT0L) = data;
 }
+
+#elif defined(__IMXRT1062__)
+void DAC::init_Vbias() {
+  // TODO Teensy 4.1
+}
+void DAC::set_Vbias(uint32_t data) {
+  // TODO Teensy 4.1
+}
+
+#endif
 
 /*static*/
 DAC::CalibrationData *DAC::calibration_data_ = nullptr;
@@ -230,6 +247,7 @@ volatile size_t DAC::history_tail_;
 uint8_t DAC::DAC_scaling[DAC_CHANNEL_LAST];
 }; // namespace OC
 
+#if defined(__MK20DX256__)
 void set8565_CHA(uint32_t data) {
   #ifdef BUCHLA_cOC
   uint32_t _data = data;
@@ -294,8 +312,25 @@ void set8565_CHD(uint32_t data) {
   SPIFIFO.read();
 }
 
+#elif defined(__IMXRT1062__)
+void set8565_CHA(uint32_t data) {
+  // TODO Teensy 4.1
+}
+void set8565_CHB(uint32_t data) {
+  // TODO Teensy 4.1
+}
+void set8565_CHC(uint32_t data) {
+  // TODO Teensy 4.1
+}
+void set8565_CHD(uint32_t data) {
+  // TODO Teensy 4.1
+}
+
+#endif // __IMXRT1062__
+
 // adapted from https://github.com/xxxajk/spi4teensy3 (MISO disabled) : 
 
+#if defined(__MK20DX256__)
 void SPI_init() {
 
   uint32_t ctar0, ctar1;
@@ -328,4 +363,12 @@ void SPI_init() {
     SPI0_MCR = mcr;
   }
 }
+
+#elif defined(__IMXRT1062__)
+void SPI_init() {
+  // TODO Teensy 4.1
+}
+
+#endif // __IMXRT1062__
+
 // OC_DAC

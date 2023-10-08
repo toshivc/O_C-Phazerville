@@ -5,7 +5,9 @@
 
 namespace OC {
 
+#if defined(__MK20DX256__)
 /*static*/ ::ADC ADC::adc_;
+#endif
 /*static*/ ADC::CalibrationData *ADC::calibration_data_;
 /*static*/ uint32_t ADC::raw_[ADC_CHANNEL_LAST];
 /*static*/ uint32_t ADC::smoothed_[ADC_CHANNEL_LAST];
@@ -18,6 +20,7 @@ DMAChannel* dma0 = new DMAChannel(false); // dma0 channel, fills adcbuffer_0
 DMAChannel* dma1 = new DMAChannel(false); // dma1 channel, updates ADC0_SC1A which holds the channel/pin IDs
 DMAMEM static volatile uint16_t __attribute__((aligned(DMA_BUF_SIZE+0))) adcbuffer_0[DMA_BUF_SIZE];
 
+#if defined(__MK20DX256__)
 /*static*/ void ADC::Init(CalibrationData *calibration_data) {
 
   adc_.setReference(ADC_REF_3V3);
@@ -33,6 +36,17 @@ DMAMEM static volatile uint16_t __attribute__((aligned(DMA_BUF_SIZE+0))) adcbuff
   
   adc_.enableDMA();
 }
+
+#elif defined(__IMXRT1062__)
+/*static*/ void ADC::Init(CalibrationData *calibration_data) {
+  calibration_data_ = calibration_data;
+  std::fill(raw_, raw_ + ADC_CHANNEL_LAST, 0);
+  std::fill(smoothed_, smoothed_ + ADC_CHANNEL_LAST, 0);
+  std::fill(adcbuffer_0, adcbuffer_0 + DMA_BUF_SIZE, 0);
+  // TODO Teensy 4.1
+}
+
+#endif // __IMXRT1062__
 
 #ifdef OC_ADC_ENABLE_DMA_INTERRUPT
 /*static*/ void ADC::DMA_ISR() {
@@ -50,6 +64,7 @@ DMAMEM static volatile uint16_t __attribute__((aligned(DMA_BUF_SIZE+0))) adcbuff
  * 
 */
 
+#if defined(__MK20DX256__)
 void ADC::Init_DMA() {
   
   dma0->begin(true); // allocate the DMA channel 
@@ -88,6 +103,14 @@ void ADC::Init_DMA() {
   dma0->enable();
   dma1->enable();
 } 
+
+#elif defined(__IMXRT1062__)
+void ADC::Init_DMA() {
+  // TODO Teensy 4.1
+}
+
+#endif // __IMXRT1062__
+
 
 /*static*/void FASTRUN ADC::Scan_DMA() {
 

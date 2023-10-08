@@ -98,7 +98,9 @@ void FASTRUN CORE_timer_ISR() {
 
 void setup() {
   delay(50);
+#if defined(__MK20DX256__)
   NVIC_SET_PRIORITY(IRQ_PORTB, 0); // TR1 = 0 = PTB16
+#endif
   SPI_init();
   SERIAL_PRINTLN("* O&C BOOTING...");
   SERIAL_PRINTLN("* %s", OC_VERSION);
