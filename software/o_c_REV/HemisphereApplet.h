@@ -355,7 +355,12 @@ public:
     }
 
     // Standard bi-polar CV modulation scenario
+#if __cplusplus == 201703L
+    template <typename T>
+    void Modulate(T &param, const int ch, const int min = 0, const int max = 255) {
+#else
     void Modulate(auto &param, const int ch, const int min = 0, const int max = 255) {
+#endif
         int cv = DetentedIn(ch);
         param = constrain(param + Proportion(cv, HEMISPHERE_MAX_INPUT_CV, max), min, max);
     }
