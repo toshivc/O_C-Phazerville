@@ -147,6 +147,16 @@ public:
 	}
 
     void Controller() {
+        // Keep the MIDI clock ticking
+        HS::IOFrame &f = HS::frame;
+        while (usbMIDI.read()) {
+            const int message = usbMIDI.getType();
+            const int data1 = usbMIDI.getData1();
+            const int data2 = usbMIDI.getData2();
+            f.MIDIState.ProcessMIDIMsg(usbMIDI.getChannel(), message, data1, data2);
+        }
+        HS::clock_setup_applet.Controller(0, 0);
+
         const int OCTAVE = (12 << 7);
         // -- core processing --
 
