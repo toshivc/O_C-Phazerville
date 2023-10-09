@@ -112,7 +112,7 @@ public:
         ForEachChannel(ch) {
             switch (cvmode[ch]) {
             case SLEW_MOD:
-                Modulate(smooth_mod, ch, 1, 128);
+                Modulate(smooth_mod, ch, 0, 127);
                 break;
             case LENGTH_MOD:
                 Modulate(len_mod, ch, TM2_MIN_LENGTH, TM2_MAX_LENGTH);
@@ -171,20 +171,20 @@ public:
               int x = constrain(note_trans[2], -range_mod, range_mod);
               int y = range_mod;
               int n = (note * (y + x) + note2 * (y - x)) / (2*y);
-              Output[ch] = slew(Output[ch], quantizer->Lookup(n));
+              slew(Output[ch], quantizer->Lookup(n));
               break;
               }
             case PITCH1:
-              Output[ch] = slew(Output[ch], quantizer->Lookup(note + note_trans[0]));
+              slew(Output[ch], quantizer->Lookup(note + note_trans[0]));
               break;
             case PITCH2:
-              Output[ch] = slew(Output[ch], quantizer->Lookup(note2 + note_trans[1]));
+              slew(Output[ch], quantizer->Lookup(note2 + note_trans[1]));
               break;
             case MOD1: // 8-bit bi-polar proportioned CV
-              Output[ch] = slew(Output[ch], Proportion( int(reg[0] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
+              slew(Output[ch], Proportion( int(reg[0] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
               break;
             case MOD2:
-              Output[ch] = slew(Output[ch], Proportion( int(reg[1] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
+              slew(Output[ch], Proportion( int(reg[1] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
               break;
             case TRIG1:
             case TRIG2:
@@ -197,16 +197,16 @@ public:
               {
                 // hold until it's time to pull it down
                 if (--trigpulse[ch] < 0)
-                  Output[ch] = slew(Output[ch]);
+                  slew(Output[ch]);
               }
               break;
             case GATE1:
             case GATE2:
-              Output[ch] = slew(Output[ch], (reg[outmode[ch] - GATE1] & 0x01)*HEMISPHERE_MAX_CV );
+              slew(Output[ch], (reg[outmode[ch] - GATE1] & 0x01)*HEMISPHERE_MAX_CV );
               break;
 
             case GATE_SUM:
-              Output[ch] = slew(Output[ch], ((reg[0] & 0x01)+(reg[1] & 0x01))*HEMISPHERE_MAX_CV/2 );
+              slew(Output[ch], ((reg[0] & 0x01)+(reg[1] & 0x01))*HEMISPHERE_MAX_CV/2 );
               break;
 
             default: break;
@@ -261,7 +261,7 @@ public:
             cvmode[1] = (InputMode) constrain(cvmode[1] + direction, 0, INMODE_LAST-1);
             break;
         case SLEW:
-            smoothing = constrain(smoothing + direction, 1, 128);
+            smoothing = constrain(smoothing + direction, 0, 127);
             break;
 
         default: break;
@@ -278,7 +278,7 @@ public:
         Pack(data, PackLocation {25,8}, constrain(scale, 0, 255));
         Pack(data, PackLocation {33,4}, cvmode[0]);
         Pack(data, PackLocation {37,4}, cvmode[1]);
-        Pack(data, PackLocation {41,6}, smoothing - 1);
+        Pack(data, PackLocation {41,6}, smoothing);
 
         // TODO: utilize enigma's global turing machine storage for the registers
 
@@ -295,8 +295,8 @@ public:
         quantizer->Configure(OC::Scales::GetScale(scale), 0xffff);
         cvmode[0] = (InputMode) Unpack(data, PackLocation {33,4});
         cvmode[1] = (InputMode) Unpack(data, PackLocation {37,4});
-        smoothing = Unpack(data, PackLocation {41,6}) + 1;
-        smoothing = constrain(smoothing, 1, 128);
+        smoothing = Unpack(data, PackLocation {41,6});
+        smoothing = constrain(smoothing, 0, 127);
     }
 
 protected:
@@ -330,19 +330,19 @@ private:
     int p_mod;
     int range = 24;
     int range_mod;
-    int smoothing = 4;
+    int smoothing = 0;
     int smooth_mod;
     int note_trans[3] = {0, 0, 0}; // transpose from CV input
 
     OutputMode outmode[2] = {PITCH1, TRIG2};
     InputMode cvmode[2] = {LENGTH_MOD, RANGE_MOD};
 
-    int slew(int old_val, const int new_val = 0) {
+    void slew(int &old_val, const int new_val = 0) {
+        const int s = 1 + smooth_mod;
         // more smoothing causes more ticks to be skipped
-        if (OC::CORE::ticks % smooth_mod) return old_val;
+        if (OC::CORE::ticks % s) return;
 
-        old_val = (old_val * (smooth_mod - 1) + new_val) / smooth_mod;
-        return old_val; 
+        old_val = (old_val * (s - 1) + new_val) / s;
     }
 
     void DrawOutputMode(int ch) {
@@ -376,36 +376,40 @@ private:
         gfxBitmap(24+ch*32, 35, 3, (outmode[ch] % 2) ? SUP_ONE : SUB_TWO );
     }
 
-    void DrawCVMode(int ch) {
-        gfxIcon(1 + 31*ch, 35, CV_ICON);
-        gfxBitmap(9 + 31*ch, 35, 3, ch ? SUB_TWO : SUP_ONE);
+    void DrawCVMode(int ch, bool cur) {
+        const int y = 25;
+
+        gfxIcon(1 + 31*ch, y, CV_ICON);
+        gfxBitmap(9 + 31*ch, y, 3, ch ? SUB_TWO : SUP_ONE);
 
         switch (cvmode[ch]) {
         case SLEW_MOD:
-            gfxIcon(15 + ch*32, 35, SLEW_ICON);
+            gfxIcon(15 + ch*32, y, SLEW_ICON);
             break;
         case LENGTH_MOD:
-            gfxIcon(15 + ch*32, 35, LOOP_ICON);
+            gfxIcon(15 + ch*32, y, LOOP_ICON);
             break;
         case P_MOD:
-            gfxIcon(15 + ch*32, 35, TOSS_ICON);
+            gfxIcon(15 + ch*32, y, TOSS_ICON);
             break;
         case RANGE_MOD:
-            gfxIcon(15 + ch*32, 35, UP_DOWN_ICON);
+            gfxIcon(15 + ch*32, y, UP_DOWN_ICON);
             break;
         case TRANSPOSE1:
-            gfxIcon(15 + ch*32, 35, BEND_ICON);
-            gfxBitmap(24+ch*32, 35, 3, SUP_ONE);
+            gfxIcon(15 + ch*32, y, BEND_ICON);
+            gfxBitmap(24+ch*32, y, 3, SUP_ONE);
             break;
         case BLEND_XFADE:
-            gfxBitmap(24+ch*32, 35, 3, SUP_ONE);
+            gfxBitmap(24+ch*32, y, 3, SUP_ONE);
         case TRANSPOSE2:
-            gfxIcon(15 + ch*32, 35, BEND_ICON);
-            gfxBitmap(24+ch*32, 35, 3, SUB_TWO);
+            gfxIcon(15 + ch*32, y, BEND_ICON);
+            gfxBitmap(24+ch*32, y, 3, SUB_TWO);
             break;
 
         default: break;
         }
+
+        if (cur) gfxCursor(14 + 32*ch, y + 8, 10);
     }
 
     void DrawSelector() {
@@ -417,40 +421,38 @@ private:
         } else { // p is disabled
             gfxBitmap(55, 15, 8, LOCK_ICON);
         }
-        gfxBitmap(1, 25, 8, SCALE_ICON);
-        gfxPrint(9, 25, OC::scale_names_short[scale]);
-        gfxBitmap(40, 25, 8, UP_DOWN_ICON);
-        gfxPrint(49, 25, range_mod); // APD
 
+        // two separate pages of params
         switch ((TM2Cursor)cursor){
         default:
+            gfxBitmap(1, 25, 8, SCALE_ICON);
+            gfxPrint(9, 25, OC::scale_names_short[scale]);
+            gfxBitmap(40, 25, 8, UP_DOWN_ICON);
+            gfxPrint(49, 25, range_mod);
             ForEachChannel(ch) DrawOutputMode(ch);
 
             break;
         case CVMODE1:
         case CVMODE2:
-            ForEachChannel(ch) DrawCVMode(ch);
-
-            break;
         case SLEW:
-            gfxIcon(1, 35, SLEW_ICON);
-            gfxPrint(15, 35, smooth_mod);
+            ForEachChannel(ch) DrawCVMode(ch, cursor == CVMODE1 + ch);
 
-            gfxCursor(15, 43, 18);
+            gfxIcon(1, 35, SLEW_ICON);
+            gfxPrint(12, 35, smooth_mod);
+
             break;
         }
 
+        // TODO: generalize this as a cursor LUT for all applets
         switch ((TM2Cursor)cursor) {
             case LENGTH: gfxCursor(13, 23, 12); break;
-            case PROB: gfxCursor(35, 23, 18); break;
-            case SCALE: gfxCursor(9, 33, 25); break;
-            case RANGE: gfxCursor(49, 33, 13); break;
+            case PROB:   gfxCursor(35, 23, 18); break;
+            case SCALE:  gfxCursor( 9, 33, 25); break;
+            case RANGE:  gfxCursor(49, 33, 13); break;
 
-            case OUT_A:
-            case CVMODE1: gfxCursor(14, 43, 10); break;
-
-            case OUT_B:
-            case CVMODE2: gfxCursor(46, 43, 10); break;
+            case OUT_A:  gfxCursor(14, 43, 10); break;
+            case OUT_B:  gfxCursor(46, 43, 10); break;
+            case SLEW:   gfxCursor(12, 43, 18); break;
 
             default: break;
         }
