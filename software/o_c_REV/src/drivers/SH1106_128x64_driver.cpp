@@ -126,6 +126,7 @@ void SH1106_128x64_Driver::Init() {
   SPI_send(SH1106_init_seq, sizeof(SH1106_init_seq));
 
   digitalWriteFast(OLED_CS, OLED_CS_INACTIVE); // U8G_ESC_CS(0),             /* disable chip */
+  delayMicroseconds(1);
 
 #if defined(__MK20DX256__)
 #ifdef DMA_PAGE_TRANSFER
@@ -195,11 +196,13 @@ void SH1106_128x64_Driver::Clear() {
   for (size_t p = 0; p < kNumPages; ++p)
     SPI_send(empty_page, kPageSize);
   digitalWriteFast(OLED_CS, OLED_CS_INACTIVE); // U8G_ESC_CS(0)
+  delayMicroseconds(1);
 
   digitalWriteFast(OLED_DC, LOW);
   digitalWriteFast(OLED_CS, OLED_CS_ACTIVE);
   SPI_send(SH1106_display_on_seq, sizeof(SH1106_display_on_seq));
   digitalWriteFast(OLED_DC, HIGH);
+  digitalWriteFast(OLED_CS, OLED_CS_INACTIVE);
 }
 
 #if defined(__MK20DX256__)
@@ -340,20 +343,10 @@ void SH1106_128x64_Driver::SPI_send(void *bufr, size_t n) {
 
 #elif defined(__IMXRT1062__)
 void SH1106_128x64_Driver::SPI_send(void *bufr, size_t n) {
-  delayMicroseconds(10);
-  SPI.beginTransaction(SPISettings(30000000, MSBFIRST, SPI_MODE0));
-  // TODO: check if we're also pulling DAC CS low?
-  //LPSPI4_TCR |= LPSPI_TCR_PCS(3); // do not interfere with DAC's CS pin
-#if 0
-  const uint8_t *p = bufr;
-  for (size_t i=0; i < n; i++) {
-    SPI.transfer(*p++);
-  }
-#else
+  SPI.beginTransaction(SPISettings(24000000, MSBFIRST, SPI_MODE0));
+  LPSPI4_TCR |= LPSPI_TCR_PCS(3); // do not interfere with DAC's CS pin
   SPI.transfer(bufr, NULL, n);
-#endif
   SPI.endTransaction();
-  delayMicroseconds(10);
 }
 #endif // __IMXRT1062__
 
