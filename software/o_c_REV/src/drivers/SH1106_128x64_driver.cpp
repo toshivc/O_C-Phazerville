@@ -250,8 +250,8 @@ static void spi_sendpage_isr() {
     digitalWriteFast(OLED_CS, OLED_CS_ACTIVE);
     LPSPI4_TCR = (LPSPI4_TCR & 0xF8000000) | LPSPI_TCR_FRAMESZ(23)
       | LPSPI_TCR_PCS(3) | LPSPI_TCR_RXMSK;
-    LPSPI4_TDR = (SH1106_data_start_seq[2] << 16) | (SH1106_data_start_seq[1] << 8)
-      | SH1106_data_start_seq[0];
+    LPSPI4_TDR = (SH1106_data_start_seq[0] << 16) | (SH1106_data_start_seq[1] << 8)
+      | SH1106_data_start_seq[2];
     sendpage_state = 1;
     LPSPI4_IER = LPSPI_IER_TCIE; // run spi_sendpage_isr() when command complete
     return; // FIFO loaded with 3 byte command
