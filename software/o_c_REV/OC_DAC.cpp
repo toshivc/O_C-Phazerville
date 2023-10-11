@@ -40,6 +40,9 @@
 #include "OC_calibration.h"
 #include "OC_autotune_presets.h"
 #include "OC_autotune.h"
+#if defined(__IMXRT1062__)
+#include <SPI.h>
+#endif
 
 #define SPICLOCK_30MHz   (SPI_CTAR_PBR(0) | SPI_CTAR_BR(0) | SPI_CTAR_DBR) //(60 / 2) * ((1+1)/2) = 30 MHz (= 24MHz, when F_BUS == 48000000)
 
@@ -82,8 +85,8 @@ void DAC::Init(CalibrationData *calibration_data) {
     SPIFIFO.begin(DAC_CS, SPICLOCK_30MHz, SPI_MODE0);  
 
 #elif defined(__IMXRT1062__)
-  // TODO Teensy 4.1
-
+  SPI.begin();
+  IOMUXC_SW_MUX_CTL_PAD_GPIO_B0_00 = 3; // DAC CS pin controlled by SPI
 #endif
 
   set_all(0xffff);
@@ -312,18 +315,62 @@ void set8565_CHD(uint32_t data) {
   SPIFIFO.read();
 }
 
-#elif defined(__IMXRT1062__)
+#elif defined(__IMXRT1062__) // Teensy 4.1
 void set8565_CHA(uint32_t data) {
-  // TODO Teensy 4.1
+  LPSPI4_TCR = (LPSPI4_TCR & 0xF8000000) | LPSPI_TCR_FRAMESZ(23)
+    | LPSPI_TCR_PCS(0) | LPSPI_TCR_RXMSK;
+  #ifdef BUCHLA_cOC
+  uint32_t _data = data;
+  #else
+  uint32_t _data = OC::DAC::MAX_VALUE - data;
+  #endif
+  #ifdef FLIP_180
+  _data = (0b00010110 << 16) | (data & 0xFFFF);
+  #else
+  _data = (0b00010000 << 16) | (data & 0xFFFF);
+  #endif
+  LPSPI4_TDR = _data;
 }
+
 void set8565_CHB(uint32_t data) {
-  // TODO Teensy 4.1
+  #ifdef BUCHLA_cOC
+  uint32_t _data = data;
+  #else
+  uint32_t _data = OC::DAC::MAX_VALUE - data;
+  #endif
+  #ifdef FLIP_180
+  _data = (0b00010100 << 16) | (data & 0xFFFF);
+  #else
+  _data = (0b00010010 << 16) | (data & 0xFFFF);
+  #endif
+  LPSPI4_TDR = _data;
 }
 void set8565_CHC(uint32_t data) {
-  // TODO Teensy 4.1
+  #ifdef BUCHLA_cOC
+  uint32_t _data = data;
+  #else
+  uint32_t _data = OC::DAC::MAX_VALUE - data;
+  #endif
+  #ifdef FLIP_180
+  _data = (0b00010010 << 16) | (data & 0xFFFF);
+  #else
+  _data = (0b00010100 << 16) | (data & 0xFFFF);
+  #endif
+  LPSPI4_TDR = _data;
 }
 void set8565_CHD(uint32_t data) {
-  // TODO Teensy 4.1
+  #ifdef BUCHLA_cOC
+  uint32_t _data = data;
+  #else
+  uint32_t _data = OC::DAC::MAX_VALUE - data;
+  #endif
+  #ifdef FLIP_180
+  _data = (0b00010000 << 16) | (data & 0xFFFF);
+  #else
+  _data = (0b00010110 << 16) | (data & 0xFFFF);
+  #endif
+  LPSPI4_SR = LPSPI_SR_TCF; //  clear transmit complete flag before last write to FIFO
+  LPSPI4_TDR = _data;
 }
 
 #endif // __IMXRT1062__

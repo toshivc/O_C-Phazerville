@@ -107,6 +107,8 @@ void ADC::Init_DMA() {
 #elif defined(__IMXRT1062__)
 void ADC::Init_DMA() {
   // TODO Teensy 4.1
+  dma0->begin(true); // allocate the DMA channel
+  dma1->begin(true); // allocate the DMA channel
 }
 
 #endif // __IMXRT1062__
