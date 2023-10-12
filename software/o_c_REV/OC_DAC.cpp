@@ -325,9 +325,9 @@ void set8565_CHA(uint32_t data) {
   uint32_t _data = OC::DAC::MAX_VALUE - data;
   #endif
   #ifdef FLIP_180
-  _data = (0b00010110 << 16) | (data & 0xFFFF);
+  _data = (0b00010110 << 16) | (_data & 0xFFFF);
   #else
-  _data = (0b00010000 << 16) | (data & 0xFFFF);
+  _data = (0b00010000 << 16) | (_data & 0xFFFF);
   #endif
   LPSPI4_TDR = _data;
 }
@@ -339,9 +339,9 @@ void set8565_CHB(uint32_t data) {
   uint32_t _data = OC::DAC::MAX_VALUE - data;
   #endif
   #ifdef FLIP_180
-  _data = (0b00010100 << 16) | (data & 0xFFFF);
+  _data = (0b00010100 << 16) | (_data & 0xFFFF);
   #else
-  _data = (0b00010010 << 16) | (data & 0xFFFF);
+  _data = (0b00010010 << 16) | (_data & 0xFFFF);
   #endif
   LPSPI4_TDR = _data;
 }
@@ -352,9 +352,9 @@ void set8565_CHC(uint32_t data) {
   uint32_t _data = OC::DAC::MAX_VALUE - data;
   #endif
   #ifdef FLIP_180
-  _data = (0b00010010 << 16) | (data & 0xFFFF);
+  _data = (0b00010010 << 16) | (_data & 0xFFFF);
   #else
-  _data = (0b00010100 << 16) | (data & 0xFFFF);
+  _data = (0b00010100 << 16) | (_data & 0xFFFF);
   #endif
   LPSPI4_TDR = _data;
 }
@@ -365,9 +365,9 @@ void set8565_CHD(uint32_t data) {
   uint32_t _data = OC::DAC::MAX_VALUE - data;
   #endif
   #ifdef FLIP_180
-  _data = (0b00010000 << 16) | (data & 0xFFFF);
+  _data = (0b00010000 << 16) | (_data & 0xFFFF);
   #else
-  _data = (0b00010110 << 16) | (data & 0xFFFF);
+  _data = (0b00010110 << 16) | (_data & 0xFFFF);
   #endif
   LPSPI4_SR = LPSPI_SR_TCF; //  clear transmit complete flag before last write to FIFO
   LPSPI4_TDR = _data;
