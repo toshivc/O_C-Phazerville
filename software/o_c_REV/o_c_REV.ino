@@ -98,6 +98,13 @@ void FASTRUN CORE_timer_ISR() {
 
 void setup() {
   delay(50);
+#if defined(__IMXRT1062__)
+  if (CrashReport) {
+    while (!Serial && millis() < 3000) ; // wait
+    Serial.println(CrashReport);
+    delay(1500);
+  }
+#endif
 #if defined(__MK20DX256__)
   NVIC_SET_PRIORITY(IRQ_PORTB, 0); // TR1 = 0 = PTB16
 #endif
