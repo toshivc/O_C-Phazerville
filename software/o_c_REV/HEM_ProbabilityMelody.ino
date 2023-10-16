@@ -46,19 +46,17 @@ public:
     void Controller() {
         loop_linker->RegisterMelo(hemisphere);
 
-        int downCv = DetentedIn(0);
-        int oldDown = down;
-        if (downCv < 0) down = 1;        
-        if (downCv > 0) {
-            down = constrain(ProportionCV(downCv, HEM_PROB_MEL_MAX_RANGE + 1), 1, up);
-        }
+        // stash these to check for regen
+        int oldDown = down_mod;
+        int oldUp = up_mod;
 
-        int upCv = DetentedIn(1);
-        int oldUp = up;
-        if (upCv < 0) up = 1;        
-        if (upCv > 0) {
-            up = constrain(ProportionCV(upCv, HEM_PROB_MEL_MAX_RANGE + 1), down, HEM_PROB_MEL_MAX_RANGE);
-        }
+        // CV modulation
+        down_mod = down;
+        up_mod = up;
+        // down scales to the up setting
+        Modulate(down_mod, 0, 1, up);
+        // up scales full range, with down value as a floor
+        Modulate(up_mod, 1, down_mod, HEM_PROB_MEL_MAX_RANGE);
 
         // regen when looping was enabled from ProbDiv
         bool regen = loop_linker->IsLooping() && !isLooping;
@@ -68,7 +66,7 @@ public:
         regen = regen || loop_linker->ShouldReseed();
         
         // reseed loop if range has changed due to CV
-        regen = regen || (isLooping && (oldDown != down || oldUp != up));
+        regen = regen || (isLooping && (down_mod != oldDown || up_mod != oldUp));
 
         if (regen) {
             GenerateLoop();
@@ -178,8 +176,8 @@ protected:
 private:
     int cursor; // ProbMeloCursor 
     int weights[12] = {10,0,0,2,0,0,0,2,0,0,4,0};
-    int up;
-    int down;
+    int up, up_mod;
+    int down, down_mod;
     int pitch;
     bool isLooping = false;
     int loop[HEM_PROB_MEL_MAX_LOOP_LENGTH];
@@ -195,12 +193,12 @@ private:
     int GetNextWeightedPitch() {
         int total_weights = 0;
 
-        for(int i = down-1; i < up; i++) {
+        for(int i = down_mod-1; i < up_mod; i++) {
             total_weights += weights[i % 12];
         }
 
         int rnd = random(0, total_weights + 1);
-        for(int i = down-1; i < up; i++) {
+        for(int i = down_mod-1; i < up_mod; i++) {
             int weight = weights[i % 12];
             if (rnd <= weight && weight > 0) {
                 return i;
@@ -279,14 +277,14 @@ private:
         // scaling params
 
         gfxIcon(0, 13, DOWN_BTN_ICON);
-        gfxPrint(8, 15, ((down - 1) / 12) + 1);
+        gfxPrint(8, 15, ((down_mod - 1) / 12) + 1);
         gfxPrint(13, 15, ".");
-        gfxPrint(17, 15, ((down - 1) % 12) + 1);
+        gfxPrint(17, 15, ((down_mod - 1) % 12) + 1);
 
         gfxIcon(30, 16, UP_BTN_ICON);
-        gfxPrint(38, 15, ((up - 1) / 12) + 1);
+        gfxPrint(38, 15, ((up_mod - 1) / 12) + 1);
         gfxPrint(43, 15, ".");
-        gfxPrint(47, 15, ((up - 1) % 12) + 1);
+        gfxPrint(47, 15, ((up_mod - 1) % 12) + 1);
 
         if (cursor == LOWER) gfxCursor(9, 23, 21);
         if (cursor == UPPER) gfxCursor(39, 23, 21);
