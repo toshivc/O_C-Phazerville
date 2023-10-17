@@ -54,13 +54,13 @@ public:
         loop_linker->RegisterDiv(hemisphere);
 
         // CV 1 control over loop length
-        int lengthCv = DetentedIn(0);
-        if (lengthCv < 0) loop_length = 0;        
-        if (lengthCv > 0) {
-            loop_length = constrain(ProportionCV(lengthCv, HEM_PROB_DIV_MAX_LOOP_LENGTH + 1), 0, HEM_PROB_DIV_MAX_LOOP_LENGTH);
+        loop_length_mod = loop_length;
+        if (DetentedIn(0)) {
+            Modulate(loop_length_mod, 0, 0, HEM_PROB_DIV_MAX_LOOP_LENGTH);
+            // TODO: regenerate if changing from 0?
         }
 
-        loop_linker->SetLooping(loop_length > 0);
+        loop_linker->SetLooping(loop_length_mod > 0);
 
         // reset
         if (Clock(1)) {
@@ -85,7 +85,7 @@ public:
             }
 
             // reset loop
-            if (loop_length > 0 && loop_step >= loop_length) {
+            if (loop_length_mod > 0 && loop_step >= loop_length_mod) {
                 loop_step = 0;
                 loop_index = 0;
                 skip_steps = 0;
@@ -96,7 +96,7 @@ public:
 
             // continue with active division
             if (--skip_steps > 0) {
-                if (loop_length > 0) {
+                if (loop_length_mod > 0) {
                     loop_step++;
                 }
                 ClockOut(1);
@@ -104,7 +104,7 @@ public:
             }
 
             // get next weighted div or next div from loop
-            if (loop_length > 0) {
+            if (loop_length_mod > 0) {
                 skip_steps = GetNextLoopDiv();
             } else {
                 skip_steps = GetNextWeightedDiv();
@@ -208,7 +208,7 @@ private:
     int weight_2;
     int weight_4;
     int weight_8;
-    int loop_length;
+    int loop_length, loop_length_mod;
     int loop[HEM_PROB_DIV_MAX_LOOP_LENGTH];
     int loop_index;
     int loop_step;
@@ -245,10 +245,10 @@ private:
         if (reseed_animation > 0) {
             gfxInvert(4, 55, 12, 8);
         }
-        if (loop_length == 0) {
+        if (loop_length_mod == 0) {
             gfxPrint(19, 55, "off");
         } else {
-            gfxPrint(19, 55, loop_length);
+            gfxPrint(19, 55, loop_length_mod);
         }
         if (cursor == LOOP_LENGTH) gfxCursor(19, 63, 18);
 
