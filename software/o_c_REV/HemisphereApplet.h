@@ -357,6 +357,16 @@ public:
     braids::Quantizer* GetQuantizer(int ch) {
         return &HS::quantizer[io_offset + ch];
     }
+    int Quantize(int ch, int cv, int root, int transpose) {
+        return HS::quantizer[io_offset + ch].Process(cv, root, transpose);
+    }
+    int QuantizerLookup(int ch, int note) {
+        return HS::quantizer[io_offset + ch].Lookup(note);
+    }
+    void QuantizerConfigure(int ch, int scale, uint16_t mask = 0xffff) {
+        const braids::Scale &quant_scale = OC::Scales::GetScale(scale);
+        HS::quantizer[io_offset + ch].Configure(quant_scale, mask);
+    }
 
     // Standard bi-polar CV modulation scenario
 #if __cplusplus == 201703L
