@@ -179,6 +179,16 @@ public:
             Sequence.active = 0;
         }
 
+        // CV2: bipolar offset added to all values
+        int cv_offset = DetentedIn(1);
+
+        // CV3: Slew/Smoothing
+        smoothing_mod = smoothing;
+        if (DetentedIn(2) > 0) {
+            Modulate(smoothing_mod, 2, 0, 127);
+        }
+
+        // -- update active scene values, with smoothing
         // CV1: smooth interpolation offset, starting from last triggered scene
         if (DetentedIn(0)) {
             int cv = In(0);
@@ -205,29 +215,25 @@ public:
                 }
 
                 // a weighted average of the two chosen scene values
-                active_scene.values[i] = ( v1 * (OCTAVE - partial) + v2 * partial) / OCTAVE;
+                int target = ( v1 * (OCTAVE - partial) + v2 * partial ) / OCTAVE;
+                target = constrain(target + cv_offset, SCENE_MIN_VAL, SCENE_MAX_VAL);
+
+                slew(active_scene.values[i], target);
             }
         } else if (scene4seq && trig_chan == 3) { // looped sequence for TR4
             for (int i = 0; i < NR_OF_SCENE_CHANNELS; ++i) {
-                active_scene.values[i] = scene[ Sequence.Get(i) / 4 ].values[ Sequence.Get(i) % 4 ];
+                int target = scene[ Sequence.Get(i) / 4 ].values[ Sequence.Get(i) % 4 ];
+                target = constrain(target + cv_offset, SCENE_MIN_VAL, SCENE_MAX_VAL);
+                slew(active_scene.values[i], target);
             }
             smooth_offset = 0;
         } else { // a simple scene copy will suffice
             for (int i = 0; i < NR_OF_SCENE_CHANNELS; ++i) {
-                active_scene.values[i] = scene[trig_chan].values[i]; // copy-on-assign for structs?
+                int target = constrain(scene[trig_chan].values[i] + cv_offset, SCENE_MIN_VAL, SCENE_MAX_VAL);
+                slew(active_scene.values[i], target);
             }
             smooth_offset = 0;
         }
-
-        // CV2: bipolar offset added to all values
-        if (DetentedIn(1)) {
-            int cv_offset = In(1);
-            for (int i = 0; i < NR_OF_SCENE_CHANNELS; ++i) {
-                active_scene.values[i] = constrain(active_scene.values[i] + cv_offset, SCENE_MIN_VAL, SCENE_MAX_VAL);
-            }
-        }
-
-        // CV3: TODO
 
         // set outputs
         for (int ch = 0; ch < NR_OF_SCENE_CHANNELS; ++ch) {
@@ -386,6 +392,17 @@ private:
     Scene scene[NR_OF_SCENE_CHANNELS];
     Scene active_scene;
 
+    int smoothing, smoothing_mod;
+
+    template <typename T>
+    void slew(T &old_val, const int new_val = 0) {
+        const int s = 1 + smoothing_mod;
+        // more smoothing causes more ticks to be skipped
+        if (OC::CORE::ticks % s) return;
+
+        old_val = (old_val * (s - 1) + new_val) / s;
+    }
+
     void DrawPresetSelector() {
         // index is the currently loaded preset (0-3)
         // preset_select is current selection (1-4, 5=clear)
@@ -428,6 +445,10 @@ private:
         gfxPrintVoltage(scene[sel_chan].values[3]);
 
         gfxIcon(64, 35 + 10*edit_mode_right, RIGHT_ICON);
+
+        // slew amount (view only)
+        gfxIcon(0, 55, SLEW_ICON);
+        gfxPrint(10, 55, smoothing_mod);
     }
 };
 

@@ -134,6 +134,13 @@ public:
         return (In(ch) > 64 || In(ch) < -64) ? In(ch) : 0;
     }
 
+    // Standard bi-polar CV modulation scenario
+    template <typename T>
+    void Modulate(T &param, const int ch, const int min = 0, const int max = 255) {
+        int cv = DetentedIn(ch);
+        param = constrain(param + Proportion(cv, HEMISPHERE_MAX_INPUT_CV, max), min, max);
+    }
+
     bool Changed(int ch) {
         return frame.changed_cv[ch];
     }
