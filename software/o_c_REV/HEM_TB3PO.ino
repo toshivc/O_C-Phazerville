@@ -224,17 +224,12 @@ class TB_3PO: public HemisphereApplet {
       if (scale >= OC::Scales::NUM_SCALES) scale = 0;
       if (scale < 0) scale = OC::Scales::NUM_SCALES - 1;
       set_quantizer_scale(scale);
-
-      int max_root = scale_size > 12 ? 12 : scale_size;
-      if (max_root > 0) {
-        root = constrain(root, 0, max_root - 1);
-      }
       break;
     }
     case 7: { // Root note selection
 
       int r = root + direction;
-      int max_root = scale_size > 12 ? 12 : scale_size;
+      const int max_root = 12;
 
       if (direction > 0 && r >= max_root && octave_offset < 3) {
         ++octave_offset; // Go up to next octave
@@ -367,7 +362,10 @@ private:
 
   // Get the cv value to use for a given step including root + transpose values
   int get_pitch_for_step(int step_num) {
-    int quant_note = 64 + int(notes[step_num]) + int(root);
+    int quant_note = 64 + int(notes[step_num]);
+
+    // transpose in scale degrees, proportioned from semitones
+    quant_note += (MIDIQuantizer::NoteNumber(transpose_cv) - 60) * scale_size / 12;
 
     // Apply the manual octave offset
     quant_note += (int(octave_offset) * int(scale_size));
@@ -381,15 +379,16 @@ private:
 
     quant_note = constrain(quant_note, 0, 127);
 
-    return quantizer->Lookup(quant_note) + transpose_cv;
+    // root note is the semitone offset after quantization
+    return quantizer->Lookup(quant_note) + (root << 7);
     //return quantizer->Lookup( 64 );  // Test: note 64 is definitely 0v=c4 if output directly, on ALL scales
   }
 
   int get_semitone_for_step(int step_num) {
     // Don't add in octaves-- use the current quantizer limited to the base octave
-    int quant_note = 64 + notes[step_num] + root; // + transpose_note_in;
+    int quant_note = 64 + notes[step_num]; // + transpose_note_in;
     int32_t cv_note = quantizer->Lookup(constrain(quant_note, 0, 127));
-    return MIDIQuantizer::NoteNumber(cv_note) % 12;
+    return (MIDIQuantizer::NoteNumber(cv_note) + root) % 12;
   }
 
   void reseed() {
@@ -678,10 +677,7 @@ private:
       gfxBitmap(41, 54, 8, UP_BTN_ICON);
     }
 
-    int keyboard_pitch = curr_step_semitone - 4; // Translate from 0v
-    if (keyboard_pitch < 0) keyboard_pitch += 12; // Deal with c being at the start, not middle of keyboard
-
-    gfxPrint(49, 55, keyboard_pitch);
+    gfxPrint(49, 55, curr_step_semitone);
 
     // Draw a TB-303 style octave of a piano keyboard, indicating the playing pitch 
     int x = 1;
@@ -694,7 +690,7 @@ private:
       // Two white keys in a row E and F
       if (i == 5) x += 3;
 
-      if (keyboard_pitch == i && step_is_gated(step)) // Only render a pitch if gated
+      if (curr_step_semitone == i && step_is_gated(step)) // Only render a pitch if gated
       {
         gfxRect(x - 1, y - 1, 5, 4); // Larger box
 
