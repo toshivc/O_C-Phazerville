@@ -48,6 +48,7 @@
     DECLARE_APPLET( 27, 0x20, hMIDIOut), \
     DECLARE_APPLET( 33, 0x10, MixerBal), \
     DECLARE_APPLET( 20, 0x02, Palimpsest), \
+    DECLARE_APPLET( 71, 0x02, Pigeons), \
     DECLARE_APPLET( 59, 0x04, ProbabilityDivider), \
     DECLARE_APPLET( 62, 0x04, ProbabilityMelody), \
     DECLARE_APPLET( 70, 0x14, ResetClock), \
