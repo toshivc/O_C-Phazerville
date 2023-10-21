@@ -31,7 +31,6 @@ uint8_t lofi_pcm_buffer[HEM_LOFI_PCM_BUFFER_SIZE];
 
 class LoFiPCM : public HemisphereApplet {
 public:
-    // TODO: consider making a singleton class to manage/share buffers
     const int length = HEM_LOFI_PCM_BUFFER_SIZE;
 
     const char* applet_name() { // Maximum 10 characters
@@ -157,7 +156,7 @@ private:
         if (pos < 0) pos += length;
         for (int i = 0; i < 64; i++)
         {
-            int height = Proportion((int)lofi_pcm_buffer[pos]-127, 128, 16);
+            int height = Proportion(127 - (int)lofi_pcm_buffer[pos], 128, 16);
             gfxLine(i, 46, i, 46+height);
 
             pos += inc;
