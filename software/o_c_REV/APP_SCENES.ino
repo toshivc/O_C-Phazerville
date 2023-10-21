@@ -171,7 +171,7 @@ public:
             trig_chan = 3;
         // else, it's unchanged
 
-        bool scene4seq = (In(3) > 2 * OCTAVE); // gate at CV4
+        scene4seq = (In(3) > 2 * OCTAVE); // gate at CV4
         if (scene4seq) {
           if (!Sequence.active) Sequence.Generate();
           if (Clock(3)) Sequence.Advance();
@@ -180,7 +180,7 @@ public:
         }
 
         // CV2: bipolar offset added to all values
-        int cv_offset = DetentedIn(1);
+        cv_offset = DetentedIn(1);
 
         // CV3: Slew/Smoothing
         smoothing_mod = smoothing;
@@ -237,6 +237,11 @@ public:
 
         // set outputs
         for (int ch = 0; ch < NR_OF_SCENE_CHANNELS; ++ch) {
+            if (trigsum_mode && ch == 3) { // TrigSum output overrides D
+                if (Clock(0) || Clock(1) || Clock(2) || Clock(3))
+                    ClockOut(3);
+                continue;
+            }
             Out(ch, active_scene.values[ch]);
         }
 
@@ -276,8 +281,8 @@ public:
     }
 
     void OnLeftButtonLongPress() {
-        if (preset_select) return;
-        // TODO: toggle something cool here
+        //if (preset_select) return;
+        trigsum_mode = !trigsum_mode;
     }
 
     void OnRightButtonPress() {
@@ -356,6 +361,7 @@ private:
     static const int SEQ_LENGTH = 16;
 
     int index = 0;
+    int cv_offset = 0;
 
 	int sel_chan = 0;
     int trig_chan = 0;
@@ -363,6 +369,9 @@ private:
     bool preset_modified = 0;
     bool edit_mode_left = 0;
     bool edit_mode_right = 0;
+    bool trigsum_mode = 0;
+    bool scene4seq = 0;
+    // oh jeez, why do we have so many bools?!
 
     struct {
         bool active = 0;
@@ -442,13 +451,29 @@ private:
         gfxPrint(72, 35, "C:");
         gfxPrintVoltage(scene[sel_chan].values[2]);
         gfxPrint(72, 45, "D:");
-        gfxPrintVoltage(scene[sel_chan].values[3]);
+        if (trigsum_mode)
+            gfxPrint("(trig)");
+        else
+            gfxPrintVoltage(scene[sel_chan].values[3]);
 
         gfxIcon(64, 35 + 10*edit_mode_right, RIGHT_ICON);
 
-        // slew amount (view only)
-        gfxIcon(0, 55, SLEW_ICON);
-        gfxPrint(10, 55, smoothing_mod);
+        // ------------------- //
+        gfxLine(0, 54, 127, 54);
+
+        // -- Input indicators
+        // bias (CV2)
+        if (cv_offset) {
+            gfxIcon(0, 56, UP_DOWN_ICON);
+            gfxPos(10, 56);
+            gfxPrintVoltage(cv_offset);
+        }
+        // slew amount (CV3)
+        gfxIcon(64, 56, SLEW_ICON);
+        gfxPrint(74, 56, smoothing_mod);
+
+        // sequencer (CV4)
+        if (scene4seq) gfxIcon( 108, 56, LOOP_ICON );
     }
 };
 
@@ -553,7 +578,7 @@ void ScenesApp_handleButtonEvent(const UI::Event &event) {
     } break;
     case UI::EVENT_BUTTON_LONG_PRESS:
         if (event.control == OC::CONTROL_BUTTON_L) {
-            //ScenesApp_instance.OnLeftButtonLongPress();
+            ScenesApp_instance.OnLeftButtonLongPress();
         }
         if (event.control == OC::CONTROL_BUTTON_DOWN) {
             ScenesApp_instance.OnDownButtonLongPress();
