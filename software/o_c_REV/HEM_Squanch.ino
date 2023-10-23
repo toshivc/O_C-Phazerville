@@ -40,8 +40,7 @@ public:
     void Start() {
         scale = 5;
         ForEachChannel(ch) {
-            quantizer[ch] = GetQuantizer(ch);
-            quantizer[ch]->Configure(OC::Scales::GetScale(scale), 0xffff);
+            QuantizerConfigure(ch, scale);
         }
     }
 
@@ -60,7 +59,7 @@ public:
                 // output, the output is raised by one octave when Digital 2 is gated.
                 int32_t shift_alt = (ch == 1) ? DetentedIn(1) : Gate(1) * (12 << 7);
 
-                int32_t quantized = quantizer[ch]->Process(pitch + shift_alt, root << 7, shift[ch]);
+                int32_t quantized = Quantize(ch, pitch + shift_alt, root << 7, shift[ch]);
                 Out(ch, quantized);
                 last_note[ch] = quantized;
             }
@@ -94,7 +93,7 @@ public:
             if (scale >= OC::Scales::NUM_SCALES) scale = 0;
             if (scale < 0) scale = OC::Scales::NUM_SCALES - 1;
             ForEachChannel(ch)
-                quantizer[ch]->Configure(OC::Scales::GetScale(scale), 0xffff);
+                QuantizerConfigure(ch, scale);
             continuous = 1; // Re-enable continuous mode when scale is changed
             break;
 
@@ -120,7 +119,7 @@ public:
         root = Unpack(data, PackLocation {24,4});
         root = constrain(root, 0, 11);
         ForEachChannel(ch)
-            quantizer[ch]->Configure(OC::Scales::GetScale(scale), 0xffff);
+            QuantizerConfigure(ch, scale);
     }
 
 protected:
@@ -137,10 +136,6 @@ private:
     int cursor; // 0=A shift, 1=B shift, 2=Scale
     bool continuous = 1;
     int last_note[2]; // Last quantized note
-
-    // Both channels use the same quantizer settings, but we need two instances
-    // to respect hysteresis independently on each, or else things get slippy
-    braids::Quantizer* quantizer[2];
 
     // Settings
     int scale;
