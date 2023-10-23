@@ -35,6 +35,10 @@
 #include "src/drivers/FreqMeasure/OC_FreqMeasure.h"
 #include "HemisphereApplet.h"
 
+namespace OC {
+  void save_app_data();
+}
+
 #define CAL8_MAX_TRANSPOSE 60
 const int CAL8OR_PRECISION = 10000;
 
@@ -191,6 +195,14 @@ public:
     void SavePreset() {
         cal8_presets[index].save_preset(channel);
         preset_modified = 0;
+
+        // initiate actual EEPROM save
+        OC::CORE::app_isr_enabled = false;
+        delay(1);
+        OC::save_app_data();
+        delay(1);
+        // TODO: display message during save?
+        OC::CORE::app_isr_enabled = true;
     }
 
     void Resume() {
@@ -348,7 +360,7 @@ public:
     // fires on button release
     void SwitchChannel(bool up) {
         if (!clock_setup && !preset_select) {
-            sel_chan += (up? 1 : -1) + NR_OF_CHANNELS;
+            sel_chan += (up? -1 : 1) + NR_OF_CHANNELS;
             sel_chan %= NR_OF_CHANNELS;
         }
 
@@ -364,7 +376,7 @@ public:
         preset_select = 1 + index;
     }
 
-    // Left encoder: Octave or VScaling + Root Note
+    // Left encoder: Octave or VScaling + Scale Select
     void OnLeftEncoderMove(int direction) {
         if (clock_setup) {
             HS::clock_setup_applet.OnEncoderMove(0, direction);
@@ -379,7 +391,13 @@ public:
 
         preset_modified = 1;
         if (scale_edit) {
-            channel[sel_chan].root_note = constrain(channel[sel_chan].root_note + direction, 0, 11);
+            // Scale Select
+            int s_ = channel[sel_chan].scale + direction;
+            if (s_ >= OC::Scales::NUM_SCALES) s_ = 0;
+            if (s_ < 0) s_ = OC::Scales::NUM_SCALES - 1;
+
+            channel[sel_chan].scale = s_;
+            HS::quantizer[sel_chan].Configure(OC::Scales::GetScale(s_), 0xffff);
             HS::quantizer[sel_chan].Requantize();
             return;
         }
@@ -395,7 +413,7 @@ public:
         }
     }
 
-    // Right encoder: Semitones or Bias Offset + Scale Select
+    // Right encoder: Semitones or Bias Offset + Root Note
     void OnRightEncoderMove(int direction) {
         if (clock_setup) {
             HS::clock_setup_applet.OnEncoderMove(0, direction);
@@ -408,12 +426,8 @@ public:
 
         preset_modified = 1;
         if (scale_edit) {
-            int s_ = channel[sel_chan].scale + direction;
-            if (s_ >= OC::Scales::NUM_SCALES) s_ = 0;
-            if (s_ < 0) s_ = OC::Scales::NUM_SCALES - 1;
-
-            channel[sel_chan].scale = s_;
-            HS::quantizer[sel_chan].Configure(OC::Scales::GetScale(s_), 0xffff);
+            // Root Note
+            channel[sel_chan].root_note = constrain(channel[sel_chan].root_note + direction, 0, 11);
             HS::quantizer[sel_chan].Requantize();
             return;
         }
@@ -592,8 +606,6 @@ void Calibr8or_handleAppEvent(OC::AppEvent event) {
     // The idea is to auto-save when the screen times out...
     case OC::APP_EVENT_SUSPEND:
     case OC::APP_EVENT_SCREENSAVER_ON:
-        // TODO: initiate actual EEPROM save
-        // app_data_save();
         break;
 
     default: break;
