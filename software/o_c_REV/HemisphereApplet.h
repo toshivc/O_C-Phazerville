@@ -246,7 +246,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////
     void gfxCursor(int x, int y, int w, int h = 9) { // assumes standard text height for highlighting
         if (isEditing) gfxInvert(x, y - h, w, h);
-        else if (CursorBlink()) gfxLine(x, y, x + w - 1, y);
+        else if (CursorBlink()) {
+            gfxLine(x, y, x + w - 1, y);
+            gfxPixel(x, y-1);
+            gfxPixel(x + w - 1, y-1);
+        }
     }
 
     void gfxPos(int x, int y) {
