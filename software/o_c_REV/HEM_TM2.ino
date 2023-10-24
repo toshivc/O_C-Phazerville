@@ -88,8 +88,6 @@ public:
     void Start() {
         reg[0] = random(0, 65535);
         reg[1] = ~reg[0];
-
-        QuantizerConfigure(0, scale);
     }
 
     void Controller() {
@@ -171,14 +169,14 @@ public:
               int x = constrain(note_trans[2], -range_mod, range_mod);
               int y = range_mod;
               int n = (note * (y + x) + note2 * (y - x)) / (2*y);
-              slew(Output[ch], QuantizerLookup(0, n) + (root_note << 7));
+              slew(Output[ch], QuantizerLookup(0, n));
               break;
               }
             case PITCH1:
-              slew(Output[ch], QuantizerLookup(0, note + note_trans[0]) + (root_note << 7));
+              slew(Output[ch], QuantizerLookup(0, note + note_trans[0]));
               break;
             case PITCH2:
-              slew(Output[ch], QuantizerLookup(0, note2 + note_trans[1]) + (root_note << 7));
+              slew(Output[ch], QuantizerLookup(0, note2 + note_trans[1]));
               break;
             case MOD1: // 8-bit bi-polar proportioned CV
               slew(Output[ch], Proportion( int(reg[0] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
@@ -240,13 +238,12 @@ public:
             p = constrain(p + direction, 0, 100);
             break;
         case SCALE:
-            scale += direction;
-            if (scale >= TM2_MAX_SCALE) scale = 0;
-            if (scale < 0) scale = TM2_MAX_SCALE - 1;
-            QuantizerConfigure(0, scale);
+            NudgeScale(0, direction);
+            NudgeScale(1, direction);
             break;
         case ROOT_NOTE:
-            root_note = constrain(root_note + direction, 0, 11);
+            root_note = GetRootNote(0);
+            root_note = SetRootNote(0, constrain(root_note + direction, 0, 11));
             break;
         case RANGE:
             range = constrain(range + direction, 1, 32);
@@ -296,12 +293,14 @@ public:
         outmode[0] = (OutputMode) Unpack(data, PackLocation {17,4});
         outmode[1] = (OutputMode) Unpack(data, PackLocation {21,4});
         scale = Unpack(data, PackLocation {25,8});
-        QuantizerConfigure(0, scale);
         cvmode[0] = (InputMode) Unpack(data, PackLocation {33,4});
         cvmode[1] = (InputMode) Unpack(data, PackLocation {37,4});
         smoothing = Unpack(data, PackLocation {41,6});
         smoothing = constrain(smoothing, 0, 127);
         root_note = Unpack(data, PackLocation {47,4});
+
+        QuantizerConfigure(0, scale);
+        SetRootNote(0, root_note);
     }
 
 protected:
@@ -434,8 +433,8 @@ private:
         default:
         case SLEW:
             gfxBitmap(1, 25, 8, SCALE_ICON);
-            gfxPrint(9, 25, OC::scale_names_short[scale]);
-            gfxPrint(39, 25, OC::Strings::note_names_unpadded[root_note]);
+            gfxPrint(9, 25, OC::scale_names_short[GetScale(0)]);
+            gfxPrint(39, 25, OC::Strings::note_names_unpadded[GetRootNote(0)]);
 
             gfxBitmap(1, 35, 8, UP_DOWN_ICON);
             gfxPrint(10, 35, range_mod);

@@ -10,6 +10,9 @@
 namespace HS {
 
 braids::Quantizer quantizer[4]; // global shared quantizers
+int quant_scale[4];
+int root_note[4];
+
 uint8_t trig_length = 2; // multiplier for HEMISPHERE_CLOCK_TICKS
 
 typedef struct MIDILogEntry {

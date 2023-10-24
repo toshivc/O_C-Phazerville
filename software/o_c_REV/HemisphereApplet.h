@@ -361,20 +361,34 @@ public:
         return HS::quantizer[io_offset + ch].Process(cv, root, transpose);
     }
     int QuantizerLookup(int ch, int note) {
-        return HS::quantizer[io_offset + ch].Lookup(note);
+        return HS::quantizer[io_offset + ch].Lookup(note) + (HS::root_note[io_offset+ch] << 7);
     }
     void QuantizerConfigure(int ch, int scale, uint16_t mask = 0xffff) {
-        const braids::Scale &quant_scale = OC::Scales::GetScale(scale);
-        HS::quantizer[io_offset + ch].Configure(quant_scale, mask);
+        HS::quant_scale[io_offset + ch] = scale;
+        HS::quantizer[io_offset + ch].Configure(OC::Scales::GetScale(scale), mask);
+    }
+    int GetScale(int ch) {
+        return HS::quant_scale[io_offset + ch];
+    }
+    int GetRootNote(int ch) {
+        return HS::root_note[io_offset + ch];
+    }
+    int SetRootNote(int ch, int root) {
+        return (HS::root_note[io_offset + ch] = root);
+    }
+    void NudgeScale(int ch, int dir) {
+        const int max = OC::Scales::NUM_SCALES;
+        int &s = HS::quant_scale[io_offset + ch];
+
+        s+= dir;
+        if (s >= max) s = 0;
+        if (s < 0) s = max - 1;
+        QuantizerConfigure(ch, s);
     }
 
     // Standard bi-polar CV modulation scenario
-#if __cplusplus == 201703L
     template <typename T>
     void Modulate(T &param, const int ch, const int min = 0, const int max = 255) {
-#else
-    void Modulate(auto &param, const int ch, const int min = 0, const int max = 255) {
-#endif
         int cv = DetentedIn(ch);
         param = constrain(param + Proportion(cv, HEMISPHERE_MAX_INPUT_CV, max), min, max);
     }
