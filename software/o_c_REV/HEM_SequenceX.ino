@@ -35,15 +35,30 @@ public:
     }
 
     void Start() {
+        Randomize();
+    }
+
+    void Randomize() {
         for (int s = 0; s < SEQX_STEPS; s++) note[s] = random(0, SEQX_MAX_VALUE);
     }
 
     void Controller() {
+        if (DetentedIn(1) > (24 << 7) ) // 24 semitones == 2V
+        {
+            // new random sequence if CV2 goes high
+            if (!cv2_gate) {
+                cv2_gate = 1;
+                Randomize();
+            }
+        }
+        else cv2_gate = 0;
+
         if (Clock(1)) { // reset
             step = 0;
             reset = true;
         }
         if (Clock(0)) { // clock
+
             if (!reset) Advance(step);
             reset = false;
             // send trigger on first step
@@ -105,9 +120,9 @@ protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "1=Clock 2=Reset";
-        help[HEMISPHERE_HELP_CVS]      = "1=Transpose";
+        help[HEMISPHERE_HELP_CVS]      = "1=Trans 2=RndSeq";
         help[HEMISPHERE_HELP_OUTS]     = "A=CV B=Clk Step 1";
-        help[HEMISPHERE_HELP_ENCODER]  = "Note";
+        help[HEMISPHERE_HELP_ENCODER]  = "Edit Step";
         //                               "------------------" <-- Size Guide
     }
     
@@ -117,6 +132,7 @@ private:
     int note[SEQX_STEPS]; // Sequence value (0 - 30)
     int step = 0; // Current sequencer step
     bool reset = true;
+    bool cv2_gate = false;
 
     void Advance(int starting_point) {
         if (++step == SEQX_STEPS) step = 0;
@@ -132,7 +148,7 @@ private:
             int x = 6 + (7 * s); // APD:  narrower to fit more
             
             if (!step_is_muted(s)) {
-                gfxLine(x, 25, x, 63, (s != cursor) ); // dotted line for unselected steps
+                gfxLine(x, 27, x, 63, (s != cursor) ); // dotted line for unselected steps
 
                 // When cursor, there's a solid slider
                 if (s == cursor) {
@@ -141,15 +157,16 @@ private:
                     gfxFrame(x - 2, BottomAlign(note[s]), 5, 3);  // APD
                 }
                 
-                // When on this step, there's an indicator circle
+                // Arrow indicator for current step
                 if (s == step) {
-                    gfxCircle(x, 20, 3);
+                    gfxIcon(x - 3, 17, DOWN_ICON);
+                    //gfxCircle(x, 20, 3);
                 }
             } else if (s == cursor) {
-                gfxLine(x, 25, x, 63);
+                gfxLine(x, 27, x, 63);
             }
 
-            if (s == cursor && EditMode()) gfxInvert(x - 2, 25, 5, 39);
+            if (s == cursor && EditMode()) gfxInvert(x - 2, 27, 5, 37);
         }
     }
 
