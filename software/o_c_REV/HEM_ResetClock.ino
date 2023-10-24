@@ -39,8 +39,15 @@ public:
     }
 
     void Controller() {
+        // CV1 modulates offset
+        int cv1_mod = offset;
+        Modulate(cv1_mod, 0, 0, length-1);
+
+        if (cv1_mod != offset_mod) // changed
+            UpdateOffset(offset_mod, cv1_mod);
+
         if (Clock(1)) {
-            pending_clocks += (length - position + offset - 1) % length;
+            pending_clocks += (length - position + offset_mod - 1) % length;
         }
 
         if (Clock(0)) pending_clocks++;
@@ -80,13 +87,8 @@ public:
         offset %= length;
         break;
       case 1: // offset
-        {
-          int prevOffset = offset;
-          offset = constrain(offset + direction, 0, length-1);
-          pending_clocks += offset - prevOffset;
-          if (pending_clocks < 0) pending_clocks += length;
-          break;
-        }
+        UpdateOffset(offset, offset + direction);
+        break;
       case 2: // spacing
         spacing = constrain(spacing + direction, RC_MIN_SPACING, 100);
         break;
@@ -95,7 +97,13 @@ public:
         break;
       }
     }
-        
+    void UpdateOffset(int &o, int new_offset) {
+      int prev_offset = o;
+      o = constrain(new_offset, 0, length-1);
+      pending_clocks += o - prev_offset;
+      if (pending_clocks < 0) pending_clocks += length;
+    }
+
     uint64_t OnDataRequest() {
         uint64_t data = 0;
         Pack(data, PackLocation {0,5}, length-1);
@@ -114,7 +122,7 @@ protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "Clock, Reset";
-        help[HEMISPHERE_HELP_CVS]      = "";
+        help[HEMISPHERE_HELP_CVS]      = "1=Offset";
         help[HEMISPHERE_HELP_OUTS]     = "Clock, Reset";
         help[HEMISPHERE_HELP_ENCODER]  = "Len/Offst/Spac/Pos";
         //                               "------------------" <-- Size Guide
@@ -128,7 +136,7 @@ private:
     // Settings
     int length;
     int position;
-    int offset;
+    int offset, offset_mod;
     int spacing;
 
     void DrawInterface() {
@@ -138,7 +146,7 @@ private:
 
         // Offset
         gfxIcon(32, 15, ROTATE_R_ICON);
-        gfxPrint(40 + pad(10, offset), 15, offset);
+        gfxPrint(40 + pad(10, offset_mod), 15, offset_mod);
     
         // Spacing
         gfxIcon(1, 25, CLOCK_ICON);
