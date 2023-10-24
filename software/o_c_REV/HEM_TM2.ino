@@ -46,13 +46,14 @@ public:
         LENGTH,
         PROB,
         SCALE,
+        ROOT_NOTE,
         RANGE,
-        OUT_A,
-        OUT_B,
+        SLEW,
         CVMODE1,
         CVMODE2,
-        SLEW,
-        LAST_SETTING = SLEW
+        OUT_A,
+        OUT_B,
+        LAST_SETTING = OUT_B
     };
 
     enum OutputMode {
@@ -171,14 +172,14 @@ public:
               int x = constrain(note_trans[2], -range_mod, range_mod);
               int y = range_mod;
               int n = (note * (y + x) + note2 * (y - x)) / (2*y);
-              slew(Output[ch], quantizer->Lookup(n));
+              slew(Output[ch], quantizer->Lookup(n) + (root_note << 7));
               break;
               }
             case PITCH1:
-              slew(Output[ch], quantizer->Lookup(note + note_trans[0]));
+              slew(Output[ch], quantizer->Lookup(note + note_trans[0]) + (root_note << 7));
               break;
             case PITCH2:
-              slew(Output[ch], quantizer->Lookup(note2 + note_trans[1]));
+              slew(Output[ch], quantizer->Lookup(note2 + note_trans[1]) + (root_note << 7));
               break;
             case MOD1: // 8-bit bi-polar proportioned CV
               slew(Output[ch], Proportion( int(reg[0] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
@@ -245,6 +246,9 @@ public:
             if (scale < 0) scale = TM2_MAX_SCALE - 1;
             quantizer->Configure(OC::Scales::GetScale(scale), 0xffff);
             break;
+        case ROOT_NOTE:
+            root_note = constrain(root_note + direction, 0, 11);
+            break;
         case RANGE:
             range = constrain(range + direction, 1, 32);
             break;
@@ -279,6 +283,7 @@ public:
         Pack(data, PackLocation {33,4}, cvmode[0]);
         Pack(data, PackLocation {37,4}, cvmode[1]);
         Pack(data, PackLocation {41,6}, smoothing);
+        Pack(data, PackLocation {47,4}, root_note);
 
         // TODO: utilize enigma's global turing machine storage for the registers
 
@@ -297,6 +302,7 @@ public:
         cvmode[1] = (InputMode) Unpack(data, PackLocation {37,4});
         smoothing = Unpack(data, PackLocation {41,6});
         smoothing = constrain(smoothing, 0, 127);
+        root_note = Unpack(data, PackLocation {47,4});
     }
 
 protected:
@@ -314,7 +320,7 @@ private:
 
     braids::Quantizer* quantizer;
     int scale = OC::Scales::SCALE_SEMI; // Scale used for quantized output
-    int root_note; // TODO
+    int root_note = 0;
 
     // TODO: consider using the TuringMachine class or whatev
     uint32_t reg[2]; // 32-bit sequence registers
@@ -346,70 +352,73 @@ private:
     }
 
     void DrawOutputMode(int ch) {
-        gfxPrint(1 + 31*ch, 36, ch ? (hemisphere ? "D" : "B") : (hemisphere ? "C" : "A") );
+        const int y = 35;
+        const int x = 34*ch;
+
+        gfxPrint(x+1, y+1, ch ? (hemisphere ? "D" : "B") : (hemisphere ? "C" : "A") );
         gfxPrint(":");
 
         switch (outmode[ch]) {
-        case PITCH_BLEND: gfxBitmap(24+ch*32, 35, 3, SUP_ONE);
+        case PITCH_BLEND: gfxBitmap(24+x, y, 3, SUP_ONE);
         case PITCH1:
         case PITCH2:
-            gfxBitmap(15 + ch*32, 35, 8, NOTE_ICON);
+            gfxBitmap(15 + x, y, 8, NOTE_ICON);
             break;
         case MOD1:
         case MOD2:
-            gfxBitmap(15 + ch*32, 35, 8, WAVEFORM_ICON);
+            gfxBitmap(15 + x, y, 8, WAVEFORM_ICON);
             break;
         case TRIG1:
         case TRIG2:
-            gfxBitmap(15 + ch*32, 35, 8, CLOCK_ICON);
+            gfxBitmap(15 + x, y, 8, CLOCK_ICON);
             break;
-        case GATE_SUM: gfxBitmap(24+ch*32, 35, 3, SUB_TWO);
+        case GATE_SUM: gfxBitmap(24+x, y, 3, SUB_TWO);
         case GATE1:
         case GATE2:
-            gfxBitmap(15 + ch*32, 35, 8, GATE_ICON);
+            gfxBitmap(15 + x, y, 8, GATE_ICON);
             break;
 
         default: break;
         }
 
         // indicator for reg1 or reg2
-        gfxBitmap(24+ch*32, 35, 3, (outmode[ch] % 2) ? SUP_ONE : SUB_TWO );
+        gfxBitmap(24+x, y, 3, (outmode[ch] % 2) ? SUP_ONE : SUB_TWO );
     }
 
-    void DrawCVMode(int ch, bool cur) {
+    void DrawCVMode(int ch) {
         const int y = 25;
+        const int x = 34*ch;
 
-        gfxIcon(1 + 31*ch, y, CV_ICON);
-        gfxBitmap(9 + 31*ch, y, 3, ch ? SUB_TWO : SUP_ONE);
+        gfxIcon(1 + x, y, CV_ICON);
+        gfxBitmap(9 + x, y, 3, ch ? SUB_TWO : SUP_ONE);
 
         switch (cvmode[ch]) {
         case SLEW_MOD:
-            gfxIcon(15 + ch*32, y, SLEW_ICON);
+            gfxIcon(15 + x, y, SLEW_ICON);
             break;
         case LENGTH_MOD:
-            gfxIcon(15 + ch*32, y, LOOP_ICON);
+            gfxIcon(15 + x, y, LOOP_ICON);
             break;
         case P_MOD:
-            gfxIcon(15 + ch*32, y, TOSS_ICON);
+            gfxIcon(15 + x, y, TOSS_ICON);
             break;
         case RANGE_MOD:
-            gfxIcon(15 + ch*32, y, UP_DOWN_ICON);
+            gfxIcon(15 + x, y, UP_DOWN_ICON);
             break;
         case TRANSPOSE1:
-            gfxIcon(15 + ch*32, y, BEND_ICON);
-            gfxBitmap(24+ch*32, y, 3, SUP_ONE);
+            gfxIcon(15 + x, y, BEND_ICON);
+            gfxBitmap(24+x, y, 3, SUP_ONE);
             break;
         case BLEND_XFADE:
-            gfxBitmap(24+ch*32, y, 3, SUP_ONE);
+            gfxBitmap(24+x, y, 3, SUP_ONE);
         case TRANSPOSE2:
-            gfxIcon(15 + ch*32, y, BEND_ICON);
-            gfxBitmap(24+ch*32, y, 3, SUB_TWO);
+            gfxIcon(15 + x, y, BEND_ICON);
+            gfxBitmap(24+x, y, 3, SUB_TWO);
             break;
 
         default: break;
         }
 
-        if (cur) gfxCursor(14 + 32*ch, y + 8, 10);
     }
 
     void DrawSelector() {
@@ -425,34 +434,46 @@ private:
         // two separate pages of params
         switch ((TM2Cursor)cursor){
         default:
+        case SLEW:
             gfxBitmap(1, 25, 8, SCALE_ICON);
             gfxPrint(9, 25, OC::scale_names_short[scale]);
-            gfxBitmap(40, 25, 8, UP_DOWN_ICON);
-            gfxPrint(49, 25, range_mod);
-            ForEachChannel(ch) DrawOutputMode(ch);
+            gfxPrint(39, 25, OC::Strings::note_names_unpadded[root_note]);
+
+            gfxBitmap(1, 35, 8, UP_DOWN_ICON);
+            gfxPrint(10, 35, range_mod);
+
+            gfxIcon(35, 35, SLEW_ICON);
+            gfxPrint(44, 35, smooth_mod);
 
             break;
         case CVMODE1:
         case CVMODE2:
-        case SLEW:
-            ForEachChannel(ch) DrawCVMode(ch, cursor == CVMODE1 + ch);
-
-            gfxIcon(1, 35, SLEW_ICON);
-            gfxPrint(12, 35, smooth_mod);
+        case OUT_A:
+        case OUT_B:
+            ForEachChannel(ch) {
+                DrawCVMode(ch);
+                DrawOutputMode(ch);
+            }
 
             break;
         }
 
         // TODO: generalize this as a cursor LUT for all applets
         switch ((TM2Cursor)cursor) {
-            case LENGTH: gfxCursor(13, 23, 12); break;
-            case PROB:   gfxCursor(35, 23, 18); break;
+            case LENGTH: gfxCursor(12, 23, 13); break;
+            case PROB:   gfxCursor(35, 23, 19); break;
             case SCALE:  gfxCursor( 9, 33, 25); break;
-            case RANGE:  gfxCursor(49, 33, 13); break;
+            case ROOT_NOTE:  gfxCursor( 39, 33, 13); break;
+            case RANGE:  gfxCursor(10, 43, 13); break;
+            case SLEW:   gfxCursor(44, 43, 19); break;
+
+            case CVMODE1:
+            case CVMODE2:
+                gfxCursor(14 + 34*(cursor-CVMODE1), 33, 10);
+                break;
 
             case OUT_A:  gfxCursor(14, 43, 10); break;
-            case OUT_B:  gfxCursor(46, 43, 10); break;
-            case SLEW:   gfxCursor(12, 43, 18); break;
+            case OUT_B:  gfxCursor(48, 43, 10); break;
 
             default: break;
         }
