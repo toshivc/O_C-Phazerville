@@ -103,6 +103,9 @@ OC::App available_apps[] = {
   #ifdef ENABLE_APP_PONG
   DECLARE_APP('P','O', "Pong", PONGGAME),
   #endif
+  #ifdef ENABLE_APP_REFERENCES
+  DECLARE_APP('R','F', "References", REFS),
+  #endif
   DECLARE_APP('B','R', "Backup / Restore", Backup),
   DECLARE_APP('S','E', "Setup / About", Settings),
 };
