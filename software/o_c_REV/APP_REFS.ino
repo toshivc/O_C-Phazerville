@@ -912,6 +912,15 @@ void ReferenceChannel::RenderScreensaver(weegfx::coord_t start_x, uint8_t chan) 
   }
 }
 
+/*
+void printFloat(float f) {
+  const int f_ = int(floor(f * 1000));
+  const int value = f_ / 1000;
+  const int cents = f_ % 1000;
+  graphics.printf("%6u.%03u", value, cents);
+}
+*/
+
 void REFS_screensaver() {
   references_app.channels_[0].RenderScreensaver( 0, 0);
   references_app.channels_[1].RenderScreensaver(32, 1);
@@ -929,16 +938,27 @@ void REFS_screensaver() {
   int32_t freq_decicents_residual_ = ((freq_decicents_deviation_ - ((freq_octave_ - 1) * 12000)) % 1000) - 500;
 
   if (frequency_ > 0.0) {
+    {
+    const int f = int(floor(frequency_ * 1000));
+    const int value = f / 1000;
+    const int cents = f % 1000;
     #ifdef FLIP_180
-    graphics.printf("TR1 %7.3f Hz", frequency_);
+    graphics.printf("TR1 %7u.%03u Hz", value, cents);
     #else
-    graphics.printf("TR4 %7.3f Hz", frequency_);
+    graphics.printf("TR4 %7u.%03u Hz", value, cents);
     #endif
+    }
     graphics.setPrintPos(2, 56);
     if (references_app.get_notes_or_bpm()) {
-      graphics.printf("%7.2f bpm %2.0fppqn", bpm_, references_app.get_ppqn());
+      const int f = int(floor(bpm_ * 100));
+      const int value = f / 100;
+      const int cents = f % 100;
+      graphics.printf("%5u.%02u bpm %2.0fppqn", value, cents, references_app.get_ppqn());
     } else if(frequency_ >= c0_freq_) {
-      graphics.printf("%+i %s %+7.1fc", freq_octave_, OC::Strings::note_names[freq_note_], freq_decicents_residual_ / 10.0) ;
+      const int f = int(floor(freq_decicents_residual_));
+      const int value = f / 10;
+      const int cents = f % 10;
+      graphics.printf("%+i %s %+5u.%01uc", freq_octave_, OC::Strings::note_names[freq_note_], value, cents) ;
     }
   } else {
     graphics.print("TR4 no input") ;
@@ -952,7 +972,7 @@ void REFS_handleButtonEvent(const UI::Event &event) {
     return;
   }
   
-  if (OC::CONTROL_BUTTON_R == event.control) {
+  if (OC::CONTROL_BUTTON_R == event.control && event.type == UI::EVENT_BUTTON_PRESS) {
 
     auto &selected_channel = references_app.selected_channel();
     switch (selected_channel.enabled_setting_at(references_app.ui.cursor.cursor_pos())) {

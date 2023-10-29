@@ -160,8 +160,12 @@ private:
         if (_freq == 0.0f)
           graphics.printf("wait ...");
         else 
-          // TODO: printf doesn't handle floats with TEENSY_OPT_SMALLEST_CODE
-          graphics.printf("%7.3f", _freq);
+        {
+          const int f = int(floor(_freq * 1000));
+          const int value = f / 1000;
+          const int cents = f % 1000;
+          graphics.printf("%5u.%03u", value, cents);
+        }
         }
         break;
         case AT_RUN:
@@ -178,8 +182,12 @@ private:
             if (!owner_->_ready())
               graphics.print(" ");
             else 
-              // TODO: printf doesn't handle floats with TEENSY_OPT_SMALLEST_CODE
-              graphics.printf(" > %7.3f", owner_->get_auto_frequency());
+            {
+              const int f = int(floor(owner_->get_auto_frequency() * 1000));
+              const int value = f / 1000;
+              const int cents = f % 1000;
+              graphics.printf(" > %5u.%03u", value, cents);
+            }
           }
         }
         break;
