@@ -41,14 +41,22 @@ public:
 
     void Controller() {
         uint32_t tick = OC::CORE::ticks;
-        if (Clock(1)) {
+        if (Clock(1))
+        {
             which = 0; // Reset (next trigger will be even clock)
             last_tick = tick;
             triplet_which = 0;  // Triplets reset to down beat
         }
 
-        if (Clock(0)) {
-        
+        // continuously update CV modulated delay values, for display
+        ForEachChannel(ch)
+        {
+            _delay[ch] = delay[ch];
+            Modulate(_delay[ch], ch, 0, 100);
+        }
+
+        if (Clock(0))
+        {
             // Triplets: Track what triplet timing should be to span 4 normal clocks
             triplet_time = (ClockCycleTicks(0) * 4) / 3;
             if(triplet_which == 0)
@@ -65,8 +73,6 @@ public:
             which = 1 - which;
             if (last_tick) {
                 tempo = tick - last_tick;
-                _delay[which] = delay[which];
-                Modulate(_delay[which], which, 0, 100);
                 uint32_t delay_ticks = Proportion(_delay[which], 100, tempo);
                 next_trigger = tick + delay_ticks;
             }
@@ -143,7 +149,7 @@ private:
     int16_t _delay[2]; // after CV modulation
 
     void DrawSelector() {
-        for (int i = 0; i < 2; i++)
+        ForEachChannel(i)
         {
             gfxPrint(32 + pad(10, _delay[i]), 15 + (i * 10), _delay[i]);
             gfxPrint("%");
@@ -168,7 +174,7 @@ private:
         gfxCircle(53, 47, 1);
         gfxCircle(53, 55, 1);
 
-        for (int n = 0; n < 2; n++)
+        ForEachChannel(n)
         {
             int x = Proportion(_delay[n], 100, 20) + (n * 20) + 4;
             gfxBitmap(x, 48 - (which == n ? 3 : 0), 8, which == n ? NOTE_ICON : X_NOTE_ICON);
