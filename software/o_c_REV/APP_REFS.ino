@@ -33,6 +33,12 @@
 #include "src/drivers/FreqMeasure/OC_FreqMeasure.h"
 
 // autotune constants:
+#ifdef VOR
+static constexpr int ACTIVE_OCTAVES = OCTAVES;
+#else
+static constexpr int ACTIVE_OCTAVES = OCTAVES - 1;
+#endif
+
 #define FREQ_MEASURE_TIMEOUT 512
 #define ERROR_TIMEOUT (FREQ_MEASURE_TIMEOUT << 0x4)
 #define MAX_NUM_PASSES 1500
@@ -49,13 +55,14 @@ const uint8_t DAC_CHANNEL_FTM = DAC_CHANNEL_D;
 
 // 
 #ifdef BUCHLA_4U
-  const float target_multipliers[OCTAVES] = { 1.0f, 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f, 128.0f, 256.0f, 512.0f };
+  constexpr float target_multipliers[OCTAVES] = { 1.0f, 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f, 128.0f, 256.0f, 512.0f };
 #else
-  const float target_multipliers[OCTAVES] = { 0.125f, 0.25f, 0.5f, 1.0f, 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f };
+  constexpr float target_multipliers[OCTAVES + 6] = { 0.03125f, 0.0625f, 0.125f, 0.25f, 0.5f, 1.0f, 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f, 128.0f, 256.0f, 512.0f, 1024.0f };
+//  constexpr float target_multipliers[OCTAVES] = { 0.125f, 0.25f, 0.5f, 1.0f, 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f };
 #endif
 
 #ifdef BUCHLA_SUPPORT
-  const float target_multipliers_1V2[OCTAVES] = {
+  constexpr float target_multipliers_1V2[OCTAVES] = {
     0.1767766952966368931843f,
     0.3149802624737182976666f,
     0.5612310241546865086093f,
@@ -68,7 +75,7 @@ const uint8_t DAC_CHANNEL_FTM = DAC_CHANNEL_D;
     32.0f
   };
 
-  const float target_multipliers_2V0[OCTAVES] = {
+  constexpr float target_multipliers_2V0[OCTAVES] = {
     0.3535533905932737863687f,
     0.5f,
     0.7071067811865475727373f,
@@ -211,6 +218,7 @@ public:
   }
   
   void autotuner_run() {     
+    SERIAL_PRINTLN("Starting autotuner...");
     autotuner_step_ = autotuner_ ? OC::DAC_VOLT_0_BASELINE : OC::DAC_VOLT_0_ARM;
     if (autotuner_step_ == OC::DAC_VOLT_0_BASELINE)
     // we start, so reset data to defaults:
@@ -218,6 +226,7 @@ public:
   }
 
   void auto_reset_step() {
+    SERIAL_PRINTLN("Autotuner reset step...");
     auto_num_passes_ = 0x0;
     auto_DAC_offset_error_ = 0x0;
     correction_direction_ = false;
@@ -245,7 +254,7 @@ public:
     reset_calibration_data();
   }
 
-  float get_auto_frequency() {
+  const uint32_t get_auto_frequency() {
     return auto_frequency_;
   }
 
@@ -255,7 +264,7 @@ public:
 
   void reset_calibration_data() {
     
-    for (int i = 0; i <= OCTAVES; i++) {
+    for (int i = 0; i < OCTAVES + 1; i++) {
       auto_calibration_data_[i] = 0;
       auto_target_frequencies_[i] = 0.0f;
     }
@@ -292,7 +301,7 @@ public:
       if (ticks_since_last_freq_ > _wait) {
 
         // store frequency, reset, and poke ui to preempt screensaver:
-        auto_frequency_ = FreqMeasure.countToFrequency(auto_freq_sum_ / auto_freq_count_);
+        auto_frequency_ = uint32_t(FreqMeasure.countToFrequency(auto_freq_sum_ / auto_freq_count_) * 1000);
         history_[0].Push(auto_frequency_);
         auto_freq_sum_ = 0;
         auto_ready_ = true;
@@ -321,14 +330,15 @@ public:
         if (_update && auto_num_passes_ > kHistoryDepth) { 
           
           auto_last_frequency_ = auto_frequency_;
-          float history[kHistoryDepth]; 
-          float average = 0.0f;
+          uint32_t history[kHistoryDepth]; 
+          uint32_t average = 0;
           // average
           history_->Read(history);
           for (uint8_t i = 0; i < kHistoryDepth; i++)
             average += history[i];
           // ... and derive target frequency at 0V
-          auto_frequency_ = (uint32_t) (0.5f + ((auto_frequency_ + average) / (float)(kHistoryDepth + 1))); // 0V 
+          auto_frequency_ = ((auto_frequency_ + average) / (kHistoryDepth + 1)); // 0V 
+          SERIAL_PRINTLN("Baseline auto_frequency_ = %4.d", auto_frequency_);
           // reset step, and proceed:
           auto_reset_step();
           autotuner_step_++;
@@ -354,11 +364,11 @@ public:
             break;
           }
         #else
-          auto_target_frequencies_[octaves_cnt_]  =  auto_frequency_ * target_multipliers[octaves_cnt_]; 
+          auto_target_frequencies_[octaves_cnt_]  =  auto_frequency_ * target_multipliers[octaves_cnt_ + (5 - OC::DAC::kOctaveZero)]; 
         #endif
         octaves_cnt_++;
         // go to next step, if done:
-        if (octaves_cnt_ >= OCTAVES) {
+        if (octaves_cnt_ > ACTIVE_OCTAVES) {
           octaves_cnt_ = 0x0;
           autotuner_step_++;
         }
@@ -374,56 +384,72 @@ public:
       case OC::DAC_VOLT_4:
       case OC::DAC_VOLT_5:
       case OC::DAC_VOLT_6:
+      #ifdef VOR
+      case OC::DAC_VOLT_7:
+      #endif
       { 
         bool _update = auto_frequency();
         
         if (_update && (auto_num_passes_ > MAX_NUM_PASSES)) {  
           /* target frequency reached */
+          SERIAL_PRINTLN("* Target Frequency Reached *");
           
           if ((autotuner_step_ > OC::DAC_VOLT_2m) && (auto_last_frequency_ * 1.25f > auto_frequency_))
               auto_error_ = true; // throw error, if things don't seem to double ...
+
           // average:
-          float history[kHistoryDepth]; 
-          float average = 0.0f;
+          uint32_t history[kHistoryDepth]; 
+          uint32_t average = 0;
           history_->Read(history);
           for (uint8_t i = 0; i < kHistoryDepth; i++)
             average += history[i];
+
           // store last frequency:
-           auto_last_frequency_  = ((auto_frequency_ + average) / (float)(kHistoryDepth + 1));
+          auto_last_frequency_  = (auto_frequency_ + average) / (kHistoryDepth + 1);
           // and DAC correction value:
           auto_calibration_data_[autotuner_step_ - OC::DAC_VOLT_3m] = auto_DAC_offset_error_;
-          // and reset step:
+
+          // reset and step forward
           auto_reset_step();
           autotuner_step_++; 
         }
-        // 
-        else if (_update) {
+        else if (_update)
+        {
+          auto_num_passes_++; // count passes
 
-          // count passes
-          auto_num_passes_++;
+          SERIAL_PRINTLN("auto_target_frequencies[%3d]_ = %3d", autotuner_step_ - OC::DAC_VOLT_3m,
+                        auto_target_frequencies_[autotuner_step_ - OC::DAC_VOLT_3m] );
+          SERIAL_PRINTLN("auto_frequency_ = %3d", auto_frequency_);
+
           // and correct frequency
-          if (auto_target_frequencies_[autotuner_step_ - OC::DAC_VOLT_3m] > auto_frequency_) {
+          if (auto_target_frequencies_[autotuner_step_ - OC::DAC_VOLT_3m] > auto_frequency_)
+          {
             // update correction factor?
             if (!correction_direction_)
               F_correction_factor_ = (F_correction_factor_ >> 1) | 1u;
+
             correction_direction_ = true;
-            
+
             auto_DAC_offset_error_ += F_correction_factor_;
+
             // we're converging -- count passes, so we can stop after x attempts:
-            if (F_correction_factor_ == 0x1)
-              correction_cnt_positive_++;
+            if (F_correction_factor_ == 0x1) correction_cnt_positive_++;
           }
-          else if (auto_target_frequencies_[autotuner_step_ - OC::DAC_VOLT_3m] < auto_frequency_) {
+          else if (auto_target_frequencies_[autotuner_step_ - OC::DAC_VOLT_3m] < auto_frequency_)
+          {
             // update correction factor?
             if (correction_direction_)
               F_correction_factor_ = (F_correction_factor_ >> 1) | 1u;
+
             correction_direction_ = false;
             
             auto_DAC_offset_error_ -= F_correction_factor_;
+
             // we're converging -- count passes, so we can stop after x attempts:
-            if (F_correction_factor_ == 0x1)
-              correction_cnt_negative_++;
+            if (F_correction_factor_ == 0x1) correction_cnt_negative_++;
           }
+
+          SERIAL_PRINTLN("auto_DAC_offset_error_ = %3d", auto_DAC_offset_error_);
 
           // approaching target? if so, go to next step.
           if (correction_cnt_positive_ > CONVERGE_PASSES && correction_cnt_negative_ > CONVERGE_PASSES)
@@ -558,10 +584,10 @@ private:
   bool autotuner_;
   uint8_t autotuner_step_;
   int32_t auto_DAC_offset_error_;
-  float auto_frequency_;
-  float auto_target_frequencies_[OCTAVES + 1];
+  uint32_t auto_frequency_;
+  uint32_t auto_target_frequencies_[OCTAVES + 1];
   int16_t auto_calibration_data_[OCTAVES + 1];
-  float auto_last_frequency_;
+  uint32_t auto_last_frequency_;
   bool auto_next_step_;
   bool auto_error_;
   bool auto_ready_;
@@ -577,7 +603,7 @@ private:
   int16_t octaves_cnt_;
   DAC_CHANNEL dac_channel_;
 
-  OC::vfx::ScrollingHistory<float, kHistoryDepth> history_[0x1];
+  OC::vfx::ScrollingHistory<uint32_t, kHistoryDepth> history_[0x1];
 
   int num_enabled_settings_;
   ReferenceSetting enabled_settings_[REF_SETTING_LAST];
@@ -595,11 +621,12 @@ const char* const error[] = {
   "0.050", "0.125", "0.250", "0.500", "1.000", "2.000", "4.000"
 };
 
+// EEPROM size: 11 bytes * 4 channels == 44 bytes
 SETTINGS_DECLARE(ReferenceChannel, REF_SETTING_LAST) {
   #ifdef BUCHLA_4U
   { 0, 0, 9, "Octave", nullptr, settings::STORAGE_TYPE_I8 },
   #elif defined(VOR) 
-  {0, 0, 10, "Octave", nullptr, settings::STORAGE_TYPE_I8 },
+  {0, -5, 10, "Octave", nullptr, settings::STORAGE_TYPE_I8 },
   #else
   { 0, -3, 6, "Octave", nullptr, settings::STORAGE_TYPE_I8 },
   #endif
@@ -928,9 +955,9 @@ void REFS_screensaver() {
   references_app.channels_[3].RenderScreensaver(96, 3);
   graphics.setPrintPos(2, 44);
 
-  float frequency_ = references_app.get_frequency() ;
-  float c0_freq_ = references_app.get_C0_freq() ;
-  float bpm_ = (60.0 * frequency_)/references_app.get_ppqn() ;
+  const float frequency_ = references_app.get_frequency() ;
+  const float c0_freq_ = references_app.get_C0_freq() ;
+  const float bpm_ = (60.0 * frequency_)/references_app.get_ppqn() ;
 
   int32_t freq_decicents_deviation_ = round(12000.0 * log2f(frequency_ / c0_freq_)) + 500;
   int8_t freq_octave_ = -2 + ((freq_decicents_deviation_)/ 12000) ;
@@ -943,9 +970,9 @@ void REFS_screensaver() {
     const int value = f / 1000;
     const int cents = f % 1000;
     #ifdef FLIP_180
-    graphics.printf("TR1 %7u.%03u Hz", value, cents);
+    graphics.printf("TR1 %7d.%03d Hz", value, cents);
     #else
-    graphics.printf("TR4 %7u.%03u Hz", value, cents);
+    graphics.printf("TR4 %7d.%03d Hz", value, cents);
     #endif
     }
     graphics.setPrintPos(2, 56);
@@ -953,12 +980,12 @@ void REFS_screensaver() {
       const int f = int(floor(bpm_ * 100));
       const int value = f / 100;
       const int cents = f % 100;
-      graphics.printf("%5u.%02u bpm %2.0fppqn", value, cents, references_app.get_ppqn());
+      graphics.printf("%5d.%02d bpm %2.0fppqn", value, cents, references_app.get_ppqn());
     } else if(frequency_ >= c0_freq_) {
       const int f = int(floor(freq_decicents_residual_));
       const int value = f / 10;
-      const int cents = f % 10;
-      graphics.printf("%+i %s %+5u.%01uc", freq_octave_, OC::Strings::note_names[freq_note_], value, cents) ;
+      const int cents = abs(f) % 10;
+      graphics.printf("%+i %s %+5d.%01dc", freq_octave_, OC::Strings::note_names[freq_note_], value, cents) ;
     }
   } else {
     graphics.print("TR4 no input") ;

@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <algorithm>
 
+#include "OC_strings.h"
 #include "OC_apps.h"
 #include "OC_bitmaps.h"
 #include "OC_calibration.h"

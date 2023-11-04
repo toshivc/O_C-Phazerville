@@ -137,6 +137,7 @@ public:
         case TWOCC<'E','G'>::value: // Piqued (or) 4x EG
         case TWOCC<'B','B'>::value: // Dialectic Ping Pong (or) Balls
         case TWOCC<'B','Y'>::value: // Viznutcracker sweet (or) Bytebeats
+        case TWOCC<'R','F'>::value: // References
             new_state = VBiasManager::UNI;
             break;
         case TWOCC<'P','L'>::value: // Quadraturia (or) Quadrature LFO

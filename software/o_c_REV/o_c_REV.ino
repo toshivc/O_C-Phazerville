@@ -98,6 +98,7 @@ void FASTRUN CORE_timer_ISR() {
 
 void setup() {
   delay(50);
+  Serial.begin(9600);
 #if defined(__IMXRT1062__)
   if (CrashReport) {
     while (!Serial && millis() < 3000) ; // wait
@@ -110,7 +111,7 @@ void setup() {
 #endif
   SPI_init();
   SERIAL_PRINTLN("* O&C BOOTING...");
-  SERIAL_PRINTLN("* %s", OC_VERSION);
+  SERIAL_PRINTLN("* %s", OC::Strings::VERSION);
 
   OC::DEBUG::Init();
   OC::DigitalInputs::Init();

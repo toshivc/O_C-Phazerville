@@ -54,6 +54,9 @@ enum AUTO_CALIBRATION_STEP {
   DAC_VOLT_4, 
   DAC_VOLT_5, 
   DAC_VOLT_6,
+#ifdef VOR
+  DAC_VOLT_7,
+#endif
   AUTO_CALIBRATION_STEP_LAST
 };
 
@@ -156,14 +159,13 @@ private:
         break;
         case AT_READY: {
         graphics.print("arm > ");
-        float _freq = owner_->get_auto_frequency();
-        if (_freq == 0.0f)
+        const uint32_t _freq = owner_->get_auto_frequency();
+        if (_freq == 0)
           graphics.printf("wait ...");
         else 
         {
-          const int f = int(floor(_freq * 1000));
-          const int value = f / 1000;
-          const int cents = f % 1000;
+          const uint32_t value = _freq / 1000;
+          const uint32_t cents = _freq % 1000;
           graphics.printf("%5u.%03u", value, cents);
         }
         }
@@ -183,9 +185,9 @@ private:
               graphics.print(" ");
             else 
             {
-              const int f = int(floor(owner_->get_auto_frequency() * 1000));
-              const int value = f / 1000;
-              const int cents = f % 1000;
+              const uint32_t f = owner_->get_auto_frequency();
+              const uint32_t value = f / 1000;
+              const uint32_t cents = f % 1000;
               graphics.printf(" > %5u.%03u", value, cents);
             }
           }
