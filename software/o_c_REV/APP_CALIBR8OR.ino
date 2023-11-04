@@ -533,6 +533,9 @@ private:
         if (channel[sel_chan].offset >= 0) gfxPrint("+");
         gfxPrint(channel[sel_chan].offset);
 
+        if ( OC::DAC::calibration_data_used( DAC_CHANNEL(sel_chan) ) == 0x01 )
+            gfxPrint(" (auto)");
+
         // mode indicator
         if (!scale_edit)
             gfxIcon(0, 32 + edit_mode*22, RIGHT_ICON);
