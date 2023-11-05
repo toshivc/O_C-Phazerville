@@ -128,8 +128,7 @@ UiMode Ui::DispatchEvents(App *app) {
       case UI::EVENT_BUTTON_DOWN:
 #ifdef VOR
         // dual encoder press
-        if ( ((OC::CONTROL_BUTTON_L | OC::CONTROL_BUTTON_R) == event.mask)
-                || (OC::CONTROL_BUTTON_M == event.control) )
+        if ( ((OC::CONTROL_BUTTON_L | OC::CONTROL_BUTTON_R) == event.mask) )
         {
             VBiasManager *vbias_m = vbias_m->get();
             vbias_m->AdvanceBias();
