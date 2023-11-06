@@ -120,7 +120,6 @@ public:
     }
 
     void View() {
-        gfxHeader(applet_name());
         DrawSteps();
         DrawEditor();
     }

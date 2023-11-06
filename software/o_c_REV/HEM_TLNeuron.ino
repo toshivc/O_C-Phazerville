@@ -67,7 +67,6 @@ public:
     }
 
     void View() {
-        gfxHeader(applet_name());
         DrawDendrites();
         DrawAxon();
         DrawStates();

@@ -62,7 +62,6 @@ public:
     }
 
     void View() {
-        gfxHeader(applet_name());
         DrawEditor();
         DrawOutput();
     }

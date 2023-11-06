@@ -119,6 +119,7 @@ static IOFrame frame;
 
 int octave_max = 5;
 
+int select_mode = -1;
 uint8_t modal_edit_mode = 2; // 0=old behavior, 1=modal editing, 2=modal with wraparound
 static void CycleEditMode() { ++modal_edit_mode %= 3; }
 
@@ -172,6 +173,8 @@ public:
     }
 
     void BaseView() {
+        //if (HS::select_mode == hemisphere)
+        gfxHeader(applet_name());
         // If help is active, draw the help screen instead of the application screen
         if (help_active) DrawHelpScreen();
         else View();
@@ -196,7 +199,6 @@ public:
     }
 
     void DrawHelpScreen() {
-        gfxHeader(applet_name());
         SetHelp();
 
         for (int section = 0; section < 4; section++)

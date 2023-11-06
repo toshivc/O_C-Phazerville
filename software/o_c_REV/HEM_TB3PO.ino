@@ -171,7 +171,6 @@ class TB_3PO: public HemisphereApplet {
   }
 
   void View() {
-    gfxHeader(applet_name());
     DrawGraphics();
   }
 

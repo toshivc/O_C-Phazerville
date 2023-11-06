@@ -75,7 +75,6 @@ public:
     }
 
     void View() {
-        gfxHeader(applet_name());
         DrawMonitor();
         if (cursor == LOG_VIEW) DrawLog();
         else DrawSelector();

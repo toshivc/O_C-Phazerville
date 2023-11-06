@@ -38,7 +38,6 @@ public:
     }
 
     void View() {
-        gfxHeader(applet_name());
         DrawBoard();
         DrawIndicator();
         DrawCrosshairs();

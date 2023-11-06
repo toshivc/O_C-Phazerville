@@ -51,7 +51,6 @@ public:
 
 	/* Draw the screen */
     void View() {
-        gfxHeader(applet_name());
         DrawIndicator();
     }
 

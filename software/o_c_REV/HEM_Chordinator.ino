@@ -62,8 +62,6 @@ public:
   }
 
   void View() {
-    gfxHeader(applet_name());
-
     gfxPrint(0, 15, OC::scale_names_short[scale]);
     if (cursor == 0) gfxCursor(0, 23, 30);
 

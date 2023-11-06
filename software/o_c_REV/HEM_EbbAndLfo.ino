@@ -76,8 +76,6 @@ public:
   }
 
   void View() {
-    gfxHeader(applet_name());
-
     ForEachChannel(ch) {
       int h = 17;
       int bottom = 32 + (h + 1) * ch;

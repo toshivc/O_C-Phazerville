@@ -96,7 +96,6 @@ public:
     }
 
     void View() {
-        gfxHeader(applet_name());
         DrawParams();
         DrawMeters();
         DrawGrid();

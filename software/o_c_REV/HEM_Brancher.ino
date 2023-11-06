@@ -50,7 +50,6 @@ public:
     }
 
     void View() {
-        gfxHeader("Brancher");
         DrawInterface();
     }
 

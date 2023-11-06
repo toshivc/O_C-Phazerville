@@ -60,7 +60,6 @@ public:
     }
 
     void View() {
-        gfxHeader(applet_name());
         DrawSelector();
     }
 

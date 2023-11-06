@@ -163,10 +163,12 @@ HemispherePreset *hem_active_preset;
 //// Hemisphere Manager
 ////////////////////////////////////////////////////////////////////////////////
 
+using namespace HS;
+
 class HemisphereManager : public HSApplication {
 public:
     void Start() {
-        select_mode = -1; // Not selecting
+        //select_mode = -1; // Not selecting
 
         help_hemisphere = -1;
         clock_setup = 0;
@@ -483,7 +485,6 @@ private:
     int preset_id = 0;
     int preset_cursor = 0;
     int my_applet[2]; // Indexes to available_applets
-    int select_mode;
     bool clock_setup;
     bool config_menu;
     bool isEditing = false;

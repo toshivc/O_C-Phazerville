@@ -128,7 +128,6 @@ public:
     }
 
     void View() {
-        gfxHeader(applet_name());
         DrawMonitor();
         if (cursor == 4) DrawLog();
         else DrawSelector();

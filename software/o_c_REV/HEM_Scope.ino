@@ -74,8 +74,6 @@ public:
     }
 
     void View() {
-        gfxHeader(applet_name());
-        
         if(current_display == 4) {
             DrawInput(-1);
         } else {
