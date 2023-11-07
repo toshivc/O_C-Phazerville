@@ -51,7 +51,6 @@ class ClockManager {
     uint32_t ticks_per_beat; // Based on the selected tempo in BPM
     bool running = 0; // Specifies whether the clock is running for interprocess communication
     bool paused = 0; // Specifies whethr the clock is paused
-    bool forwarded = 0; // Master clock forwarding is enabled when true
     bool midi_out_enabled = 1;
 
     uint32_t clock_tick = 0; // tick when a physical clock was received on DIGITAL 1
@@ -222,17 +221,9 @@ public:
 
     void Pause() {paused = 1;}
 
-    void ToggleForwarding() {
-        forwarded = 1 - forwarded;
-    }
-
-    void SetForwarding(bool f) {forwarded = f;}
-
     bool IsRunning() {return (running && !paused);}
 
     bool IsPaused() {return paused;}
-
-    bool IsForwarded() {return forwarded;}
 
     // beep boop
     void Boop(int ch = 0) {

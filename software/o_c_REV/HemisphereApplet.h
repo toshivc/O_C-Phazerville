@@ -419,8 +419,8 @@ public:
         // clock triggers
         if (useTock && clock_m->GetMultiply(ch + io_offset) != 0)
             clocked = clock_m->Tock(ch + io_offset);
-        else
-            clocked = frame.clocked[ch + io_offset];
+        else if (trigger_mapping[ch + io_offset])
+            clocked = frame.clocked[ trigger_mapping[ch + io_offset] - 1 ];
 
         // Try to eat a boop
         clocked = clocked || clock_m->Beep(io_offset + ch);

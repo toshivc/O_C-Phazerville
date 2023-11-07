@@ -260,11 +260,6 @@ public:
         // top-level MIDI-to-CV handling - alters frame outputs
         ProcessMIDI();
 
-        // XXX: kind of a crutch, should be replaced with general Trigger input mapping
-        if (clock_m->IsForwarded()) {
-            HS::frame.clocked[2] = HS::frame.clocked[0];
-        }
-
         // Clock Setup applet handles internal clock duties
         HS::clock_setup_applet.Controller(LEFT_HEMISPHERE, 0);
 
@@ -327,11 +322,6 @@ public:
                 gfxIcon(56, 1, clock_m->Cycle() ? METRO_L_ICON : METRO_R_ICON);
             } else if (clock_m->IsPaused()) {
                 gfxIcon(56, 1, PAUSE_ICON);
-            }
-
-            if (clock_m->IsForwarded()) {
-                // CV Forwarding Icon
-                gfxIcon(120, 1, CLOCK_ICON);
             }
 
             if (select_mode == LEFT_HEMISPHERE) graphics.drawFrame(0, 0, 64, 64);
