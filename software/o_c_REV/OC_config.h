@@ -45,7 +45,9 @@ static constexpr unsigned long SETTINGS_SAVE_TIMEOUT_MS = 1000;
 #define EEPROM_APPDATA_END EEPROMStorage::LENGTH
 
 // This is the available space for all apps' settings (\sa OC_apps.ino)
-#define EEPROM_APPDATA_BINARY_SIZE (1000 - 4)
+#define EEPROM_APPDATA_BINARY_SIZE (EEPROM_APPDATA_END - EEPROM_APPDATA_START - 92)
+// (I'm not entirely sure where 92 comes from... it was originally (1000 - 4) which leaves 92 bytes free
+//  -NJM
 
 #define OC_UI_DEBUG
 #define OC_UI_SEPARATE_ISR
