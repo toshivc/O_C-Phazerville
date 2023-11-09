@@ -31,6 +31,7 @@
 #include "braids_quantizer.h"
 #include "braids_quantizer_scales.h"
 #include "OC_scales.h"
+#include "OC_autotuner.h"
 #include "SegmentDisplay.h"
 #include "src/drivers/FreqMeasure/OC_FreqMeasure.h"
 #include "HemisphereApplet.h"
@@ -53,6 +54,9 @@ struct Cal8ChannelConfig {
     int16_t scale_factor; // precision of 0.01% as an offset from 100%
     int8_t transpose; // in semitones
     int8_t transpose_active; // held value while waiting for trigger
+
+    DAC_CHANNEL chan_;
+    DAC_CHANNEL get_channel() { return chan_; }
 };
 
 // Preset storage spec
@@ -158,6 +162,14 @@ Calibr8orPreset cal8_presets[NR_OF_PRESETS];
 
 class Calibr8or : public HSApplication {
 public:
+    Calibr8or() {
+        for (int i = DAC_CHANNEL_A; i < DAC_CHANNEL_LAST; ++i) {
+            channel[i].chan_ = DAC_CHANNEL(i);
+        }
+    }
+
+  OC::Autotuner<Cal8ChannelConfig> autotuner;
+
 
 	void Start() {
         segment.Init(SegmentSize::BIG_SEGMENTS);
@@ -167,6 +179,8 @@ public:
         OC::DigitalInputs::reInit();
 
         ClearPreset();
+
+        autotuner.Init();
 	}
 	
     void ClearPreset() {
@@ -230,6 +244,10 @@ public:
     }
 
     void Controller() {
+        if (autotuner.active()) {
+          autotuner.ISR();
+          return;
+        }
         ProcessMIDI();
 
         // ClockSetup applet handles internal clock duties
@@ -267,6 +285,11 @@ public:
     void View() {
         if (clock_setup) {
             HS::clock_setup_applet.View(0);
+            return;
+        }
+
+        if (autotuner.active()) {
+            autotuner.Draw();
             return;
         }
 
@@ -308,6 +331,11 @@ public:
 
     void OnLeftButtonLongPress() {
         if (preset_select) return;
+
+        if (edit_mode) {
+            autotuner.Open(&channel[sel_chan]);
+            return;
+        }
 
         // Toggle triggered transpose mode
         ++channel[sel_chan].clocked_mode %= NR_OF_CLOCKMODES;
@@ -440,7 +468,6 @@ public:
         }
     }
 
-private:
     int index = 0;
 
 	int sel_chan = 0;
@@ -624,6 +651,11 @@ void Calibr8or_screensaver() {
 }
 
 void Calibr8or_handleButtonEvent(const UI::Event &event) {
+  if (Calibr8or_instance.autotuner.active()) {
+    Calibr8or_instance.autotuner.HandleButtonEvent(event);
+    return;
+  }
+  
     // For left encoder, handle press and long press
     // For right encoder, only handle press (long press is reserved)
     // For up button, handle only press (long press is reserved)
@@ -662,6 +694,11 @@ void Calibr8or_handleButtonEvent(const UI::Event &event) {
 }
 
 void Calibr8or_handleEncoderEvent(const UI::Event &event) {
+  if (Calibr8or_instance.autotuner.active()) {
+    Calibr8or_instance.autotuner.HandleButtonEvent(event);
+    return;
+  }
+
     // Left encoder turned
     if (event.control == OC::CONTROL_ENCODER_L) Calibr8or_instance.OnLeftEncoderMove(event.value);
 
