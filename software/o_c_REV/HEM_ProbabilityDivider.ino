@@ -100,6 +100,7 @@ public:
                     loop_step++;
                 }
                 ClockOut(1);
+                loop_linker->Trigger(1);
                 return;
             }
 
@@ -116,7 +117,7 @@ public:
             }
 
             ClockOut(0);
-            loop_linker->Trigger();
+            loop_linker->Trigger(0);
             pulse_animation = HEMISPHERE_PULSE_ANIMATION_TIME;
         }
 

@@ -73,7 +73,7 @@ public:
         }
 
         ForEachChannel(ch) {
-            if (Clock(ch) || loop_linker->Ready()) {
+            if (loop_linker->TrigPop(ch) || Clock(ch)) {
                 if (isLooping) {
                     pitch = seqloop[ch][loop_linker->GetLoopStep()] + 60;
                 } else {
