@@ -122,7 +122,7 @@ public:
     data_select_ = 0;
     channel_ = DAC_CHANNEL_A;
     calibration_data_ = 0;
-    auto_tune_running_status_ = 0;
+    auto_tune_running_status_ = AT_OFF;
 
     // moved from REFS
     armed_ = false;
@@ -142,7 +142,7 @@ public:
     correction_cnt_negative_ = 0x0;
     reset_calibration_data();
 
-    history_[0].Init(0x0);
+    history_.Init(0x0);
   }
 
   bool active() const {
@@ -172,10 +172,10 @@ private:
   size_t data_select_;
   DAC_CHANNEL channel_;
   uint8_t calibration_data_;
-  uint8_t auto_tune_running_status_;
+  AT_STATUS auto_tune_running_status_;
 
   // moved from References
-  OC::vfx::ScrollingHistory<uint32_t, kHistoryDepth> history_[0x1];
+  OC::vfx::ScrollingHistory<uint32_t, kHistoryDepth> history_;
 
   bool armed_;
   uint8_t autotuner_step_;
@@ -309,15 +309,14 @@ private:
 
         // store frequency, reset, and poke ui to preempt screensaver:
         auto_frequency_ = uint32_t(FreqMeasure.countToFrequency(auto_freq_sum_ / auto_freq_count_) * 1000);
-        history_[0].Push(auto_frequency_);
+        history_.Push(auto_frequency_);
         auto_freq_sum_ = 0;
         auto_ready_ = true;
         auto_freq_count_ = 0;
         _f_result = true;
         ticks_since_last_freq_ = 0x0;
         OC::ui._Poke();
-        for (auto &sh : history_)
-          sh.Update();
+        history_.Update();
       }
     }
     return _f_result;
@@ -340,7 +339,7 @@ private:
           uint32_t history[kHistoryDepth]; 
           uint32_t average = 0;
           // average
-          history_->Read(history);
+          history_.Read(history);
           for (uint8_t i = 0; i < kHistoryDepth; i++)
             average += history[i];
           // ... and derive target frequency at 0V
@@ -407,7 +406,7 @@ private:
           // average:
           uint32_t history[kHistoryDepth]; 
           uint32_t average = 0;
-          history_->Read(history);
+          history_.Read(history);
           for (uint8_t i = 0; i < kHistoryDepth; i++)
             average += history[i];
 
@@ -527,11 +526,11 @@ private:
 
   template <typename Owner>
   void Autotuner<Owner>::ISR() {
-      measure_frequency_and_calc_error();
-
-      // moved from ReferenceChannel::Update()
-      autotune_updateDAC();
-      ticks_since_last_freq_++;
+      if (armed_) {
+          autotune_updateDAC();
+          measure_frequency_and_calc_error();
+          ticks_since_last_freq_++;
+      }
   }
 
   template <typename Owner>
@@ -745,11 +744,11 @@ private:
         if (auto_tune_running_status_ < AT_RUN) {
           int _status = auto_tune_running_status_ + offset;
           CONSTRAIN(_status, 0, AT_READY);
-          auto_tune_running_status_ = _status;
+          auto_tune_running_status_ = AT_STATUS(_status);
           autotuner_arm(_status);
         }
         else if (auto_tune_running_status_ == AT_ERROR || auto_tune_running_status_ == AT_DONE)
-          auto_tune_running_status_ = 0x0;
+          auto_tune_running_status_ = AT_OFF;
       }
       break;
       default:
@@ -799,12 +798,13 @@ private:
     else
       data_select_ = 0x00;
     cursor_pos_ = 0x0;
-    auto_tune_running_status_ = 0x0;
+    auto_tune_running_status_ = AT_OFF;
   }
   
   template <typename Owner>
   void Autotuner<Owner>::Close() {
     ui.SetButtonIgnoreMask();
+    owner_->ExitAutotune();
     owner_ = nullptr;
   }
 }; // namespace OC

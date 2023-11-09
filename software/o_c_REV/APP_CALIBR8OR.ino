@@ -57,6 +57,9 @@ struct Cal8ChannelConfig {
 
     DAC_CHANNEL chan_;
     DAC_CHANNEL get_channel() { return chan_; }
+    void ExitAutotune() {
+        FreqMeasure.end();
+    }
 };
 
 // Preset storage spec
@@ -244,10 +247,6 @@ public:
     }
 
     void Controller() {
-        if (autotuner.active()) {
-          autotuner.ISR();
-          return;
-        }
         ProcessMIDI();
 
         // ClockSetup applet handles internal clock duties
@@ -333,6 +332,7 @@ public:
         if (preset_select) return;
 
         if (edit_mode) {
+            FreqMeasure.begin();
             autotuner.Open(&channel[sel_chan]);
             return;
         }
@@ -625,7 +625,13 @@ size_t Calibr8or_restore(const void *storage) {
     return used;
 }
 
-void Calibr8or_isr() { return Calibr8or_instance.BaseController(); }
+void Calibr8or_isr() {
+    if (Calibr8or_instance.autotuner.active()) {
+      Calibr8or_instance.autotuner.ISR();
+      return;
+    }
+    Calibr8or_instance.BaseController();
+}
 
 void Calibr8or_handleAppEvent(OC::AppEvent event) {
     switch (event) {
@@ -695,7 +701,7 @@ void Calibr8or_handleButtonEvent(const UI::Event &event) {
 
 void Calibr8or_handleEncoderEvent(const UI::Event &event) {
   if (Calibr8or_instance.autotuner.active()) {
-    Calibr8or_instance.autotuner.HandleButtonEvent(event);
+    Calibr8or_instance.autotuner.HandleEncoderEvent(event);
     return;
   }
 

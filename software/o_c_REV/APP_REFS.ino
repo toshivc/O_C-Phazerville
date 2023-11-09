@@ -93,6 +93,8 @@ public:
     return dac_channel_;
   }
 
+  void ExitAutotune() { }
+
   int32_t get_semitone() const {
     return values_[REF_SETTING_SEMI];
   }
