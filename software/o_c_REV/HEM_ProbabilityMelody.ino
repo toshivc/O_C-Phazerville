@@ -72,17 +72,19 @@ public:
             GenerateLoop();
         }
 
-        if (Clock(0) || loop_linker->Ready()) {
-            if (isLooping) {
-                pitch = loop[loop_linker->GetLoopStep()] + 60;
-            } else {
-                pitch = GetNextWeightedPitch() + 60;
-            }
-            if (pitch != -1) {
-                Out(0, MIDIQuantizer::CV(pitch));
-                pulse_animation = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
-            } else {
-                Out(0, 0);
+        ForEachChannel(ch) {
+            if (Clock(ch) || loop_linker->Ready()) {
+                if (isLooping) {
+                    pitch = seqloop[ch][loop_linker->GetLoopStep()] + 60;
+                } else {
+                    pitch = GetNextWeightedPitch() + 60;
+                }
+                if (pitch != -1) {
+                    Out(ch, MIDIQuantizer::CV(pitch));
+                    pulse_animation = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
+                } else {
+                    Out(ch, 0);
+                }
             }
         }
 
@@ -165,9 +167,9 @@ public:
 protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
-        help[HEMISPHERE_HELP_DIGITALS] = "1=Clock";
+        help[HEMISPHERE_HELP_DIGITALS] = "1=ClockA 2=ClockB";
         help[HEMISPHERE_HELP_CVS]      = "1=LowRng 2=HighRng";
-        help[HEMISPHERE_HELP_OUTS]     = "A=Out";
+        help[HEMISPHERE_HELP_OUTS]     = "A,B=Pitch out";
         help[HEMISPHERE_HELP_ENCODER]  = "Push to edit value";
         //                               "------------------" <-- Size Guide
     }
@@ -179,7 +181,7 @@ private:
     int down, down_mod;
     int pitch;
     bool isLooping = false;
-    int loop[HEM_PROB_MEL_MAX_LOOP_LENGTH];
+    int seqloop[2][HEM_PROB_MEL_MAX_LOOP_LENGTH];
 
     ProbLoopLinker *loop_linker = loop_linker->get();
 
@@ -210,7 +212,8 @@ private:
     void GenerateLoop() {
         // always fill the whole loop to make things easier
         for (int i = 0; i < HEM_PROB_MEL_MAX_LOOP_LENGTH; i++) {
-            loop[i] = GetNextWeightedPitch();
+            seqloop[0][i] = GetNextWeightedPitch();
+            seqloop[1][i] = GetNextWeightedPitch();
         }
     }
 
