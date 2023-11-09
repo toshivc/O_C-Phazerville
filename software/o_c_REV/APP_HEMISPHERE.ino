@@ -174,7 +174,9 @@ public:
         clock_setup = 0;
 
         for (int i = 0; i < 4; ++i) {
-            HS::quantizer[i].Init();
+            quant_scale[i] = OC::Scales::SCALE_SEMI;
+            quantizer[i].Init();
+            quantizer[i].Configure(OC::Scales::GetScale(quant_scale[i]), 0xffff);
         }
 
         SetApplet(0, get_applet_index_by_id(18)); // DualTM

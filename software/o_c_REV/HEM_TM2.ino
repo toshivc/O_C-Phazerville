@@ -274,7 +274,7 @@ public:
         Pack(data, PackLocation {12,5}, range - 1);
         Pack(data, PackLocation {17,4}, outmode[0]);
         Pack(data, PackLocation {21,4}, outmode[1]);
-        Pack(data, PackLocation {25,8}, constrain(scale, 0, 255));
+        Pack(data, PackLocation {25,8}, constrain(GetScale(0), 0, 255));
         Pack(data, PackLocation {33,4}, cvmode[0]);
         Pack(data, PackLocation {37,4}, cvmode[1]);
         Pack(data, PackLocation {41,6}, smoothing);
@@ -291,7 +291,7 @@ public:
         range = Unpack(data, PackLocation{12,5}) + 1;
         outmode[0] = (OutputMode) Unpack(data, PackLocation {17,4});
         outmode[1] = (OutputMode) Unpack(data, PackLocation {21,4});
-        scale = Unpack(data, PackLocation {25,8});
+        int scale = Unpack(data, PackLocation {25,8});
         cvmode[0] = (InputMode) Unpack(data, PackLocation {33,4});
         cvmode[1] = (InputMode) Unpack(data, PackLocation {37,4});
         smoothing = Unpack(data, PackLocation {41,6});
@@ -315,7 +315,6 @@ protected:
 private:
     int cursor; // TM2Cursor
 
-    int scale = OC::Scales::SCALE_SEMI; // Scale used for quantized output
     int root_note = 0;
 
     // TODO: consider using the TuringMachine class or whatev
