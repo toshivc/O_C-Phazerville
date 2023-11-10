@@ -18,8 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// Hijacking ProbDiv triggers, if available, by pretending to be ProbMeloD ;)
+#include "HSProbLoopLinker.h"
+
 class Pigeons : public HemisphereApplet {
 public:
+    ProbLoopLinker *loop_linker = loop_linker->get();
+
     enum PigeonCursor {
         CHAN1_V1, CHAN1_V2,
         CHAN1_MOD,
@@ -42,13 +47,15 @@ public:
     }
 
     void Controller() {
+        loop_linker->RegisterMelo(hemisphere);
+
         ForEachChannel(ch)
         {
             // CV modulation of modulo value
             pigeons[ch].mod_v = pigeons[ch].mod;
             Modulate(pigeons[ch].mod_v, ch, 1, 64);
 
-            if (Clock(ch)) {
+            if (loop_linker->TrigPop(ch) || Clock(ch)) {
                 int signal = QuantizerLookup(ch, pigeons[ch].Bump() + 64) + (root_note << 7);
                 Out(ch, signal);
 
