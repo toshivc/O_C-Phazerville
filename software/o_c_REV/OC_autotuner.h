@@ -85,6 +85,7 @@ enum AUTO_MENU_ITEMS {
 enum AT_STATUS {
    AT_OFF,
    AT_READY,
+   AT_WAIT,
    AT_RUN,
    AT_ERROR,
    AT_DONE,
@@ -95,6 +96,7 @@ enum AUTO_CALIBRATION_STEP {
   DAC_VOLT_0_ARM,
   DAC_VOLT_0_BASELINE,
   DAC_VOLT_TARGET_FREQUENCIES,
+  DAC_VOLT_WAIT,
   DAC_VOLT_3m, 
   DAC_VOLT_2m, 
   DAC_VOLT_1m, 
@@ -327,6 +329,7 @@ private:
     switch(autotuner_step_) {
 
       case OC::DAC_VOLT_0_ARM:
+      case OC::DAC_VOLT_WAIT:
       // do nothing
       break;
       case OC::DAC_VOLT_0_BASELINE:
@@ -348,6 +351,8 @@ private:
           // reset step, and proceed:
           auto_reset_step();
           autotuner_step_++;
+          // wait for user to patch output to oscillator V/Oct
+          auto_tune_running_status_ = AT_WAIT;
         }
         else if (_update) 
           auto_num_passes_++;
@@ -510,6 +515,7 @@ private:
       OC::DAC::set(channel_, OC::calibration_data.dac.calibrated_octaves[channel_][OC::DAC::kOctaveZero]);
       break;
       case OC::DAC_VOLT_TARGET_FREQUENCIES:
+      case OC::DAC_VOLT_WAIT:
       case OC::AUTO_CALIBRATION_STEP_LAST:
       // do nothing
       break;
@@ -531,6 +537,16 @@ private:
           measure_frequency_and_calc_error();
           ticks_since_last_freq_++;
       }
+
+    if (auto_error_) {
+      auto_tune_running_status_ = AT_ERROR;
+      reset_autotuner();
+    }
+    else if (autotune_completed_) {
+      auto_tune_running_status_ = AT_DONE;
+      autotuner_reset_completed();
+    }
+    
   }
 
   template <typename Owner>
@@ -548,15 +564,6 @@ private:
 
     x = 16; y = 15;
 
-    if (auto_error_) {
-      auto_tune_running_status_ = AT_ERROR;
-      reset_autotuner();
-    }
-    else if (autotune_completed_) {
-      auto_tune_running_status_ = AT_DONE;
-      autotuner_reset_completed();
-    }
-    
     for (size_t i = 0; i < (AUTO_MENU_ITEMS_LAST - 0x1); ++i, y += 20) {
         //
       graphics.setPrintPos(x + 2, y + 4);
@@ -596,6 +603,10 @@ private:
           graphics.printf("%5u.%03u", value, cents);
         }
         }
+        break;
+        case AT_WAIT:
+        graphics.print("Patch V/Oct");
+        graphics.print(" now!");
         break;
         case AT_RUN:
         {
@@ -772,15 +783,22 @@ private:
   
   template <typename Owner>
   void Autotuner<Owner>::handleButtonDown(const UI::Event &event) {
-    
-    if (cursor_pos_ == AUTOTUNE && auto_tune_running_status_ == AT_READY) {
-      autotuner_run();
-      auto_tune_running_status_ = AT_RUN;
-    }
-    else if (auto_tune_running_status_ == AT_ERROR) {
+    if (auto_tune_running_status_ == AT_ERROR) {
       reset_autotuner();
       auto_tune_running_status_ = AT_OFF;
+      return;
     }  
+    
+    if (cursor_pos_ == AUTOTUNE) {
+        if (auto_tune_running_status_ == AT_READY) {
+          autotuner_run();
+          auto_tune_running_status_ = AT_RUN;
+        }
+        else if (auto_tune_running_status_ == AT_WAIT) {
+          auto_tune_running_status_ = AT_RUN;
+          autotuner_step_++;
+        }
+    }
   }
   
   template <typename Owner>
