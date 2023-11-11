@@ -437,7 +437,8 @@ public:
     }
 
     bool Gate(int ch) {
-        return frame.gate_high[ch + io_offset];
+        const int t = trigger_mapping[ch + io_offset];
+        return t ? frame.gate_high[t - 1] : false;
     }
 
     void GateOut(int ch, bool high) {
