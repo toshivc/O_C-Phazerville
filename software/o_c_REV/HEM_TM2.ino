@@ -89,8 +89,7 @@ public:
         reg[0] = random(0, 65535);
         reg[1] = ~reg[0];
 
-        quantizer = GetQuantizer(0);
-        quantizer->Configure(OC::Scales::GetScale(scale), 0xffff); // Semi-tone
+        QuantizerConfigure(0, scale);
     }
 
     void Controller() {
@@ -172,14 +171,14 @@ public:
               int x = constrain(note_trans[2], -range_mod, range_mod);
               int y = range_mod;
               int n = (note * (y + x) + note2 * (y - x)) / (2*y);
-              slew(Output[ch], quantizer->Lookup(n) + (root_note << 7));
+              slew(Output[ch], QuantizerLookup(0, n) + (root_note << 7));
               break;
               }
             case PITCH1:
-              slew(Output[ch], quantizer->Lookup(note + note_trans[0]) + (root_note << 7));
+              slew(Output[ch], QuantizerLookup(0, note + note_trans[0]) + (root_note << 7));
               break;
             case PITCH2:
-              slew(Output[ch], quantizer->Lookup(note2 + note_trans[1]) + (root_note << 7));
+              slew(Output[ch], QuantizerLookup(0, note2 + note_trans[1]) + (root_note << 7));
               break;
             case MOD1: // 8-bit bi-polar proportioned CV
               slew(Output[ch], Proportion( int(reg[0] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
@@ -244,7 +243,7 @@ public:
             scale += direction;
             if (scale >= TM2_MAX_SCALE) scale = 0;
             if (scale < 0) scale = TM2_MAX_SCALE - 1;
-            quantizer->Configure(OC::Scales::GetScale(scale), 0xffff);
+            QuantizerConfigure(0, scale);
             break;
         case ROOT_NOTE:
             root_note = constrain(root_note + direction, 0, 11);
@@ -297,7 +296,7 @@ public:
         outmode[0] = (OutputMode) Unpack(data, PackLocation {17,4});
         outmode[1] = (OutputMode) Unpack(data, PackLocation {21,4});
         scale = Unpack(data, PackLocation {25,8});
-        quantizer->Configure(OC::Scales::GetScale(scale), 0xffff);
+        QuantizerConfigure(0, scale);
         cvmode[0] = (InputMode) Unpack(data, PackLocation {33,4});
         cvmode[1] = (InputMode) Unpack(data, PackLocation {37,4});
         smoothing = Unpack(data, PackLocation {41,6});
@@ -318,7 +317,6 @@ protected:
 private:
     int cursor; // TM2Cursor
 
-    braids::Quantizer* quantizer;
     int scale = OC::Scales::SCALE_SEMI; // Scale used for quantized output
     int root_note = 0;
 

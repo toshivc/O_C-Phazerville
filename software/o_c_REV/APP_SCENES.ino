@@ -477,7 +477,7 @@ private:
     }
 };
 
-// TOTAL EEPROM SIZE: ??
+// TOTAL EEPROM SIZE: 264 bytes
 SETTINGS_DECLARE(ScenesAppPreset, SCENES_SETTING_LAST) {
     {0, 0, 255, "Flags", NULL, settings::STORAGE_TYPE_U8},
 

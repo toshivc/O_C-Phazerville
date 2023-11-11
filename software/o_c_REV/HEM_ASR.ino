@@ -33,8 +33,7 @@ public:
         scale = OC::Scales::SCALE_SEMI;
         buffer_m.SetIndex(1);
         ForEachChannel(ch) {
-            quantizer[ch] = GetQuantizer(ch);
-            quantizer[ch]->Configure(OC::Scales::GetScale(scale), 0xffff); // Semi-tone
+            QuantizerConfigure(ch, scale);
         }
     }
 
@@ -60,7 +59,7 @@ public:
         ForEachChannel(ch)
         {
             int cv = buffer_m.ReadValue(ch + secondary*2, index_mod);
-            int quantized = quantizer[ch]->Process(cv, 0, 0);
+            int quantized = Quantize(ch, cv, 0, 0);
             Out(ch, quantized);
         }
     }
@@ -90,7 +89,7 @@ public:
             if (scale >= OC::Scales::NUM_SCALES) scale = 0;
             if (scale < 0) scale = OC::Scales::NUM_SCALES - 1;
             ForEachChannel(ch)
-                quantizer[ch]->Configure(OC::Scales::GetScale(scale), 0xffff);
+                QuantizerConfigure(ch, scale);
         }
     }
         
@@ -119,8 +118,6 @@ protected:
     
 private:
     int cursor;
-    // HS::RingBufferManager *buffer_m = buffer_m->get();
-    braids::Quantizer* quantizer[2];
     int scale;
     int index_mod; // Effect of modulation
     

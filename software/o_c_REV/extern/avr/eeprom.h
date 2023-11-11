@@ -24,7 +24,7 @@
 // https://forum.pjrc.com/threads/34537-Teensy-LC-Increase-EEPROM-Size/page2
 
 // modified version for Phazerville Suite
-// This is a combo of the T3 and T4 versions of this file, with the 4.0 value bumped up to 2047
+// This is a combo of the T3 and T4 versions of this file, with the 4.0 value bumped up to 3071
 
 #ifndef _AVR_EEPROM_H_
 #define _AVR_EEPROM_H_ 1
@@ -35,7 +35,7 @@
 #include "avr_functions.h"
 
 #if defined(ARDUINO_TEENSY40)
-  #define E2END 0x7FF // 0x437
+  #define E2END 0xBFF // 0x437
 #elif defined(ARDUINO_TEENSY41)
   #define E2END 0x10BB
 #elif defined(ARDUINO_TEENSY_MICROMOD)
