@@ -335,8 +335,8 @@ public:
 
     void gfxHeader(const char *str) {
         gfxPrint(1, 2, str);
-        gfxLine(0, 10, 62, 10);
-        gfxLine(0, 11, 62, 11);
+        gfxDottedLine(0, 10, 62, 10);
+        //gfxLine(0, 11, 62, 11);
     }
 
     //////////////// Offset I/O methods

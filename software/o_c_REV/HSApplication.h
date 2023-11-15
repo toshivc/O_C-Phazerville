@@ -93,7 +93,7 @@ public:
 
     // general screensaver view, visualizing inputs and outputs
     void BaseScreensaver(bool notenames = 0) {
-        gfxDottedLine(0, 32, 127, 32); // horizontal baseline
+        gfxDottedLine(0, 32, 127, 32, 3); // horizontal baseline
         for (int ch = 0; ch < 4; ++ch)
         {
             if (notenames) {
@@ -114,9 +114,9 @@ public:
             y = constrain(32 - height, 0, 32);
             gfxInvert(11 + (32 * ch), y, 12, abs(height));
 
-            gfxLine(32 * ch, 0, 32*ch, 63); // vertical divider, left side
+            gfxDottedLine(32 * ch, 0, 32*ch, 63, 3); // vertical divider, left side
         }
-        gfxLine(127, 0, 127, 63); // vertical line, right side
+        gfxDottedLine(127, 0, 127, 63, 3); // vertical line, right side
     }
 
     //////////////// Hemisphere-like IO methods

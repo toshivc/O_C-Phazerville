@@ -246,10 +246,7 @@ private:
         // needs to extend across the screen
         graphics.setPrintPos(1, 2);
         graphics.print("Clocks/Triggers");
-        //gfxLine(0, 10, 62, 10);
-        //gfxLine(0, 12, 62, 12);
-        graphics.drawLine(0, 10, 127, 10);
-        //graphics.drawLine(0, 12, 127, 12);
+        gfxLine(0, 10, 127, 10);
 
         int y = 14;
         // Clock State
@@ -282,7 +279,7 @@ private:
             }
 
             // Physical trigger input mappings
-            gfxPrint(1 + x, y + 11, OC::Strings::trigger_input_names_none[ HS::trigger_mapping[ch] ] );
+            gfxPrint(1 + x, y + 13, OC::Strings::trigger_input_names_none[ HS::trigger_mapping[ch] ] );
 
             // Manual trigger buttons
             gfxIcon(4 + x, 47, (button_ticker && ch == cursor-BOOP1)?BTN_ON_ICON:BTN_OFF_ICON);
@@ -291,6 +288,9 @@ private:
             gfxIcon(4 + x, 54, DOWN_BTN_ICON);
             if (flash_ticker[ch]) gfxInvert(3 + x, 56, 9, 8);
         }
+
+        y += 10;
+        gfxDottedLine(0, y, 127, y, 3);
 
         switch ((ClockSetupCursor)cursor) {
         case PLAY_STOP:
@@ -314,7 +314,7 @@ private:
         case TRIG2:
         case TRIG3:
         case TRIG4:
-            gfxCursor(1 + 32*(cursor-TRIG1), 43, 19);
+            gfxCursor(1 + 32*(cursor-TRIG1), 45, 19);
             break;
 
         case BOOP1:
