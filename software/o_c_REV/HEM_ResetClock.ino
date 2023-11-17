@@ -86,7 +86,7 @@ public:
         offset %= length;
         break;
       case 1: // offset
-        UpdateOffset(offset, offset + direction);
+        offset = constrain(offset + direction, 0, length - 1);
         break;
       case 2: // spacing
         spacing = constrain(spacing + direction, RC_MIN_SPACING, 100);
