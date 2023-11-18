@@ -432,8 +432,8 @@ public:
         return clocked;
     }
 
-    void ClockOut(const int ch, const int ticks = HEMISPHERE_CLOCK_TICKS) {
-        frame.ClockOut( (DAC_CHANNEL)(io_offset + ch), ticks * trig_length);
+    void ClockOut(const int ch, const int ticks = HEMISPHERE_CLOCK_TICKS * trig_length) {
+        frame.ClockOut( (DAC_CHANNEL)(io_offset + ch), ticks);
     }
 
     bool Gate(int ch) {

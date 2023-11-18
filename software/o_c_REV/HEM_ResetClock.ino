@@ -53,9 +53,9 @@ public:
         if (Clock(0)) pending_clocks++;
 
         if (pending_clocks && (ticks_since_clock > spacing * RC_TICKS_PER_MS)) {
-            ClockOut(0);
+            ClockOut(0, (spacing * RC_TICKS_PER_MS)/2);
             if (pending_clocks==1) {
-                ClockOut(1);
+                ClockOut(1, (spacing * RC_TICKS_PER_MS)/2);
             }
             ticks_since_clock = 0;
             position = (position + 1) % length;
