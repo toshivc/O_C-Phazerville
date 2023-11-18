@@ -554,6 +554,7 @@ private:
 
         gfxPrint(1, 35, "Trig Length: ");
         gfxPrint(HS::trig_length);
+        gfxPrint("ms");
 
         const char * cursor_mode_name[3] = { "legacy", "modal", "modal+wrap" };
         gfxPrint(1, 45, "Cursor:  ");
