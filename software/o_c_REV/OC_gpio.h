@@ -3,6 +3,10 @@
 
 #include "OC_options.h"
 
+// Teensy 3.2 or Teensy 4.0 have fixed pinout
+//
+#if defined(__MK20DX256__) || (defined(__IMXRT1062__) && defined(ARDUINO_TEENSY40))
+
 #ifdef FLIP_180
   #define CV4 19
   #define CV3 18
@@ -35,10 +39,6 @@
 #define OLED_RST 7
 #define OLED_CS 8
 
-// OLED CS is active low
-#define OLED_CS_ACTIVE LOW
-#define OLED_CS_INACTIVE HIGH
-
 #define DAC_CS 10
 
 #ifdef VOR
@@ -69,6 +69,26 @@
 // NOTE: back side :(
 #define OC_GPIO_DEBUG_PIN1 24
 #define OC_GPIO_DEBUG_PIN2 25
+
+#endif // Teensy 3.2 or Teensy 4.0
+
+// Teensy 4.1 has different pinouts depending on voltage at pin 41/A17
+//
+#if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
+
+extern uint8_t CV1, CV2, CV3, CV4;
+extern uint8_t TR1, TR2, TR3, TR4;
+extern uint8_t OLED_DC, OLED_RST, OLED_CS;
+extern uint8_t DAC_CS, DAC_RST;
+extern uint8_t encL1, encL2, butL, encR1, encR2, butR;
+extern uint8_t but_top, but_bot, but_mid, but_top2, but_bot2;
+extern uint8_t OC_GPIO_DEBUG_PIN1, OC_GPIO_DEBUG_PIN2;
+
+#endif
+
+// OLED CS is active low
+#define OLED_CS_ACTIVE LOW
+#define OLED_CS_INACTIVE HIGH
 
 #define OC_GPIO_BUTTON_PINMODE INPUT_PULLUP
 #define OC_GPIO_TRx_PINMODE INPUT_PULLUP
@@ -119,6 +139,9 @@ void inline pinMode(uint8_t pin, uint8_t mode) {
     ::pinMode(pin, mode); // for Teensy 4.x, just use normal pinMode
 #endif
   }
+
+void Pinout_Detect();
+
 }
 
 #endif // OC_GPIO_H_

@@ -105,6 +105,7 @@ void setup() {
     Serial.println(CrashReport);
     delay(1500);
   }
+  OC::Pinout_Detect();
 #endif
 #if defined(__MK20DX256__)
   NVIC_SET_PRIORITY(IRQ_PORTB, 0); // TR1 = 0 = PTB16

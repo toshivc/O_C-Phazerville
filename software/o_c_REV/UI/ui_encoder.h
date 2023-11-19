@@ -27,7 +27,11 @@
 
 namespace UI {
 
+#if defined(__MK20DX256__) // Teensy 3.2
 template <uint8_t PINA, uint8_t PINB, bool acceleration_enabled = false>
+#elif defined(__IMXRT1062__) // Teensy 4.0 or 4.1
+template <uint8_t& PINA, uint8_t& PINB, bool acceleration_enabled = false>
+#endif
 class Encoder {
 public:
 
