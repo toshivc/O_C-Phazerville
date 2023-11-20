@@ -81,6 +81,8 @@ public:
 
   static void CalibratePitch(int32_t c2, int32_t c4);
 
+  static float Read_ID_Voltage();
+
 private:
 
   template <ADC_CHANNEL channel>
