@@ -27,10 +27,10 @@
 
 namespace UI {
 
-#if defined(__MK20DX256__) // Teensy 3.2
-template <uint8_t PINA, uint8_t PINB, bool acceleration_enabled = false>
-#elif defined(__IMXRT1062__) // Teensy 4.0 or 4.1
+#if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41) // Teensy 4.1 has dynamic pins
 template <uint8_t& PINA, uint8_t& PINB, bool acceleration_enabled = false>
+#else // default are macros (Teensy 3.2 or 4.0)
+template <uint8_t PINA, uint8_t PINB, bool acceleration_enabled = false>
 #endif
 class Encoder {
 public:

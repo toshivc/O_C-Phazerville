@@ -105,7 +105,9 @@ void setup() {
     Serial.println(CrashReport);
     delay(1500);
   }
+  #if defined(ARDUINO_TEENSY41)
   OC::Pinout_Detect();
+  #endif
 #endif
 #if defined(__MK20DX256__)
   NVIC_SET_PRIORITY(IRQ_PORTB, 0); // TR1 = 0 = PTB16

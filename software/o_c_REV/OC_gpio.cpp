@@ -5,7 +5,8 @@
 #include "OC_ADC.h"
 //#include "OC_options.h"
 
-#if defined(__IMXRT1062__)
+// custom pins only for Teensy 4.1
+#if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
 
 // default settings for traditional O_C hardware wired for Teensy 3.2
 uint8_t CV1=19, CV2=18, CV3=20, CV4=17;
@@ -25,7 +26,6 @@ bool MIDI_Uses_Serial8=false;
 
 FLASHMEM
 void OC::Pinout_Detect() {
-#if defined(ARDUINO_TEENSY41)
   float id_voltage = OC::ADC::Read_ID_Voltage();
   Serial.printf("ID voltage (pin A17) = %.3f\n", id_voltage);
 
@@ -65,7 +65,6 @@ void OC::Pinout_Detect() {
     MIDI_Uses_Serial8 = true;     // pins 34=IN, 35=OUT
   }
 
-#endif // ARDUINO_TEENSY41
 }
 
-#endif // __IMXRT1062__
+#endif // __IMXRT1062__ && ARDUINO_TEENSY41
