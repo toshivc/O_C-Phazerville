@@ -490,6 +490,7 @@ private:
     enum HEMConfigCursor {
         LOAD_PRESET, SAVE_PRESET,
         TRIG_LENGTH,
+        SCREENSAVER_MODE,
         CURSOR_MODE,
 
         MAX_CURSOR = CURSOR_MODE
@@ -503,11 +504,17 @@ private:
             return;
         }
 
-        if (config_cursor == TRIG_LENGTH) {
+        switch (config_cursor) {
+        case TRIG_LENGTH:
             HS::trig_length = (uint32_t) constrain( int(HS::trig_length + dir), 1, 127);
-        }
-        else if (config_cursor == SAVE_PRESET || config_cursor == LOAD_PRESET) {
+            break;
+        //case SCREENSAVER_MODE:
+            // TODO?
+            //break;
+        case SAVE_PRESET:
+        case LOAD_PRESET:
             preset_cursor = constrain(preset_cursor + dir, 1, HEM_NR_OF_PRESETS);
+            break;
         }
     }
     void ConfigButtonPush(int h) {
@@ -534,6 +541,10 @@ private:
             isEditing = !isEditing;
             break;
 
+        case SCREENSAVER_MODE:
+            ++HS::screensaver_mode %= 4;
+            break;
+
         case CURSOR_MODE:
             HS::CycleEditMode();
             break;
@@ -556,8 +567,12 @@ private:
         gfxPrint(HS::trig_length);
         gfxPrint("ms");
 
+        const char * ssmodes[4] = { "[blank]", "Meters", "Zaps", "Stars" };
+        gfxPrint(1, 45, "Screensaver:  ");
+        gfxPrint( ssmodes[HS::screensaver_mode] );
+
         const char * cursor_mode_name[3] = { "legacy", "modal", "modal+wrap" };
-        gfxPrint(1, 45, "Cursor:  ");
+        gfxPrint(1, 55, "Cursor:  ");
         gfxPrint(cursor_mode_name[HS::modal_edit_mode]);
         
         switch (config_cursor) {
@@ -570,8 +585,11 @@ private:
             if (isEditing) gfxInvert(79, 34, 25, 9);
             else gfxCursor(80, 43, 24);
             break;
+        case SCREENSAVER_MODE:
+            gfxIcon(73, 45, RIGHT_ICON);
+            break;
         case CURSOR_MODE:
-            gfxIcon(43, 45, RIGHT_ICON);
+            gfxIcon(43, 55, RIGHT_ICON);
             break;
         }
     }
@@ -681,8 +699,69 @@ void HEMISPHERE_menu() {
     manager.View();
 }
 
+typedef struct {
+    int x = 0;
+    int y = 0;
+    int x_v = 6;
+    int y_v = 3;
+
+    void Move(bool stars) {
+        x += x_v;
+        y += y_v;
+        if (x > 12700 || x < 0 || y > 6300 || y < 0) {
+            if (stars) {
+                x = 6300;
+                y = 3100;
+            } else {
+                x = random(12700);
+                y = random(6300);
+            }
+            x_v = random(30) - 15;
+            y_v = random(30) - 15;
+            if (x_v == 0) ++x_v;
+            if (y_v == 0) ++y_v;
+        }
+    }
+} Zap;
+static constexpr int HOW_MANY_ZAPS = 25;
+static Zap zaps[HOW_MANY_ZAPS];
+static void ZapScreensaver(const bool stars = false) {
+  static int frame_delay = 0;
+  for (int i = 0; i < (stars ? HOW_MANY_ZAPS : 5); i++) {
+    if (frame_delay & 0x1)
+        zaps[i].Move(stars);
+
+    if (stars && frame_delay == 0) {
+      // accel
+      zaps[i].x_v *= 2;
+      zaps[i].y_v *= 2;
+      /*
+      zaps[i].x_v += zaps[i].x_v > 0 ? 1 : -1;
+      zaps[i].y_v += zaps[i].y_v > 0 ? 1 : -1;
+      */
+    }
+
+    if (stars)
+      gfxPixel(zaps[i].x/100, zaps[i].y/100);
+    else
+      gfxIcon(zaps[i].x/100, zaps[i].y/100, ZAP_ICON);
+  }
+  if (--frame_delay < 0) frame_delay = 55;
+}
+
 void HEMISPHERE_screensaver() {
-    manager.BaseScreensaver(true); // show note names
+    switch (HS::screensaver_mode) {
+    case 0x3: // Stars
+        ZapScreensaver(true);
+        break;
+    case 0x2: // Zaps
+        ZapScreensaver();
+        break;
+    case 0x1: // Meters
+        manager.BaseScreensaver(true); // show note names
+        break;
+    default: break; // blank screen
+    }
 }
 
 void HEMISPHERE_handleButtonEvent(const UI::Event &event) {

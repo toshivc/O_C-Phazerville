@@ -181,7 +181,7 @@ public:
         Pack(data, PackLocation { 52, 7 }, HS::trig_length);
         // --- PackLocation { 59, 1 } ---
         Pack(data, PackLocation { 60, 2 }, HS::modal_edit_mode);
-        // --- PackLocation { 62, 2 } ---
+        Pack(data, PackLocation { 62, 2 }, HS::screensaver_mode);
 
         return data;
     }
@@ -208,6 +208,7 @@ public:
         }
 
         HS::trig_length = constrain( Unpack(data, PackLocation { 52, 7 }), 1, 127);
+        HS::screensaver_mode = Unpack(data, PackLocation { 62, 2 });
     }
 
 protected:
