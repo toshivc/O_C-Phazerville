@@ -197,6 +197,7 @@ public:
             clock_m->SetMultiply(Unpack(data, PackLocation { 16+i*6, 6 })-32, i);
         }
 
+        HS::modal_edit_mode = Unpack(data, PackLocation { 60, 2 });
         for (size_t i = 0; i < 4; ++i) {
             uint8_t t = Unpack(data, PackLocation { 40+i*3, 3 });
             if (t) HS::trigger_mapping[i] = t - 1;
