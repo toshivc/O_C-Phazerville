@@ -38,8 +38,7 @@ public:
         for (uint8_t i = 0; i < MS_QUANT_SCALES_COUNT; i++) {
             scale_mask[i] = 0x0001;
         }
-        quantizer.Init();
-        quantizer.Configure(OC::Scales::GetScale(5), scale_mask[0]);
+        QuantizerConfigure(0, 5, scale_mask[0]);
     }
 
     void Controller() {
@@ -52,7 +51,7 @@ public:
         }
         if (scale != current_scale) {
             current_scale = scale;
-            quantizer.Configure(OC::Scales::GetScale(5), scale_mask[current_scale]);
+            QuantizerConfigure(0, 5, scale_mask[current_scale]);
             ClockOut(1); // send clock at second output
         }
 
@@ -62,44 +61,47 @@ public:
             StartADCLag(0);
         }
 
-        if (continuous || EndOfADCLag(0)) {
+        // Unclock
+        if (Gate(1)) {
+            continuous = true;
+        }
 
-            int32_t pitch = In(0);
-            int32_t quantized = quantizer.Process(pitch, 0, 0);
+        if (continuous || EndOfADCLag(0)) {
+            int32_t quantized = Quantize(0, In(0), 0, 0);
             Out(0, quantized);
         }
     }
 
     void View() {
-        gfxHeader(applet_name());
         DrawKeyboard();
         DrawIndicators();
     }
 
+    void ToggleBit(const uint8_t bit) {
+        scale_mask[scale_page] ^= (0x01 << bit); // togle bit at position
+        if (scale_page == current_scale) {
+            QuantizerConfigure(0, 5, scale_mask[current_scale]);
+        }
+    }
     void OnButtonPress() {
         if (cursor == 0) { // scale page selection mode
-            change_page = !change_page;
+            CursorAction(cursor, 12);
         } else { // scale note edit mode
-            uint8_t bit = cursor - 1;
-            scale_mask[scale_page] ^= (0x01 << bit); // togle bit at position
-            if (scale_page == current_scale) {
-                quantizer.Configure(OC::Scales::GetScale(5), scale_mask[current_scale]);
-            }
+            const uint8_t bit = cursor - 1;
+            ToggleBit(bit);
         }
 
     }
 
     void OnEncoderMove(int direction) {
-        if (change_page) {
-            // select page
-            scale_page = constrain(scale_page + direction, 0, MS_QUANT_SCALES_COUNT - 1);
-        } else {
+        if (!EditMode()) {
             // move cursor along the "keyboard"
-            cursor += direction;
-            if (cursor > 12) cursor = 0;
-            if (cursor < 0) cursor = 12;
+            MoveCursor(cursor, direction, 12);
+            return;
         }
-        ResetCursor();
+
+        // select page
+        scale_page = constrain(scale_page + direction, 0, MS_QUANT_SCALES_COUNT - 1);
     }
         
     uint64_t OnDataRequest() {
@@ -116,13 +118,13 @@ public:
         scale_mask[1] = Unpack(data, PackLocation {12, 12});
         scale_mask[2] = Unpack(data, PackLocation {24, 12});
         scale_mask[3] = Unpack(data, PackLocation {36, 12});
-        quantizer.Configure(OC::Scales::GetScale(5), scale_mask[0]);
+        QuantizerConfigure(0, 5, scale_mask[0]);
     }
 
 protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
-        help[HEMISPHERE_HELP_DIGITALS] = "1=Clock";
+        help[HEMISPHERE_HELP_DIGITALS] = "1=Clock  2=Unclock";
         help[HEMISPHERE_HELP_CVS]      = "1=CV     2=Scale";
         help[HEMISPHERE_HELP_OUTS]     = "A=Pitch  B=Gate";
         help[HEMISPHERE_HELP_ENCODER]  = "Edit Scales";
@@ -130,18 +132,13 @@ protected:
     }
     
 private:
-    braids::Quantizer quantizer;
+    int cursor = 0;
+    bool continuous = true;
     uint16_t scale_mask[MS_QUANT_SCALES_COUNT];
 
-    bool continuous = true;
-
     int8_t current_scale = 0;
-    int8_t cursor = 0;
     int8_t scale_page = 0;
-    bool change_page = 0;
 
-    #define X_ 4
-    
     void DrawKeyboard() {
         gfxFrame(4, 27, 56, 32);
 
@@ -159,21 +156,17 @@ private:
         }
 
         gfxBitmap(1, 14, 8, PLAY_ICON);
-        gfxPrint(12, 15, current_scale);
+        gfxPrint(12, 15, current_scale + 1);
 
         gfxBitmap(32, 14, 8, EDIT_ICON);
-        gfxPrint(43, 15, scale_page);
+        gfxPrint(43, 15, scale_page + 1);
         
     }
 
     void DrawIndicators() {
         if (cursor == 0) {
             // draw cursor at scale page text
-            if (change_page) {
-                gfxInvert(31, 13, 20, 10);
-            } else {
-                gfxCursor(31, 23, 20);
-            }
+            gfxCursor(31, 23, 20);
         }
         uint8_t x[12] = {2, 7, 10, 15, 18, 26, 31, 34, 39, 42, 47, 50};
         uint8_t p[12] = {0, 1,  0,  1,  0,  0,  1,  0,  1,  0,  1,  0};
@@ -202,5 +195,5 @@ void MultiScale_View(bool hemisphere) {MultiScale_instance[hemisphere].BaseView(
 void MultiScale_OnButtonPress(bool hemisphere) {MultiScale_instance[hemisphere].OnButtonPress();}
 void MultiScale_OnEncoderMove(bool hemisphere, int direction) {MultiScale_instance[hemisphere].OnEncoderMove(direction);}
 void MultiScale_ToggleHelpScreen(bool hemisphere) {MultiScale_instance[hemisphere].HelpScreen();}
-uint32_t MultiScale_OnDataRequest(bool hemisphere) {return MultiScale_instance[hemisphere].OnDataRequest();}
-void MultiScale_OnDataReceive(bool hemisphere, uint32_t data) {MultiScale_instance[hemisphere].OnDataReceive(data);}
+uint64_t MultiScale_OnDataRequest(bool hemisphere) {return MultiScale_instance[hemisphere].OnDataRequest();}
+void MultiScale_OnDataReceive(bool hemisphere, uint64_t data) {MultiScale_instance[hemisphere].OnDataReceive(data);}

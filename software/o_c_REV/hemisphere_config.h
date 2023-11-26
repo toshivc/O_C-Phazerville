@@ -47,7 +47,7 @@
     DECLARE_APPLET(150, 0x20, hMIDIIn), \
     DECLARE_APPLET( 27, 0x20, hMIDIOut), \
     DECLARE_APPLET( 33, 0x10, MixerBal), \
-    DECLARE_APPLET( 72, 0x08, MultiScale), \
+    DECLARE_APPLET( 73, 0x08, MultiScale), \
     DECLARE_APPLET( 20, 0x02, Palimpsest), \
     DECLARE_APPLET( 71, 0x02, Pigeons), \
     DECLARE_APPLET( 59, 0x04, ProbabilityDivider), \
