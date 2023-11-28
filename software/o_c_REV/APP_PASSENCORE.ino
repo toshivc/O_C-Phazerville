@@ -22,6 +22,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#ifdef ENABLE_APP_PASSENCORE
+
 #include <algorithm>
 
 #include "OC_apps.h"
@@ -211,6 +213,7 @@ struct PassenChord {
   }
 };
 
+namespace menu = OC::menu;
 
 class PASSENCORE : public settings::SettingsBase<PASSENCORE, PASSENCORE_SETTING_LAST> {
   public:
@@ -248,7 +251,7 @@ class PASSENCORE : public settings::SettingsBase<PASSENCORE, PASSENCORE_SETTING_
     }
 
     void update_scale_mask(uint16_t mask, uint8_t scale_select) {
-      apply_value(CHORDS_SETTING_MASK, mask);
+      apply_value(PASSENCORE_SETTING_MASK, mask);
       last_mask_ = mask;
       force_update_ = true;
     }
@@ -339,7 +342,7 @@ class PASSENCORE : public settings::SettingsBase<PASSENCORE, PASSENCORE_SETTING_
       uint16_t mask = get_mask();
 
       if (mask_rotate)
-        mask = OC::ScaleEditor<Chords>::RotateMask(mask, OC::Scales::GetScale(scale).num_notes, mask_rotate);
+        mask = OC::ScaleEditor<PASSENCORE>::RotateMask(mask, OC::Scales::GetScale(scale).num_notes, mask_rotate);
 
       if (force || (last_scale_ != scale || last_mask_ != mask)) {
         last_scale_ = scale;
@@ -944,6 +947,7 @@ class PassencoreState {
 };
 
 
+// TOTAL EEPROM SIZE: 17 bytes
 SETTINGS_DECLARE(PASSENCORE, PASSENCORE_SETTING_LAST) {
   //PASSENCORE_SETTING_SCALE,
   { OC::Scales::SCALE_SEMI + 1, OC::Scales::SCALE_SEMI + 1, OC::Scales::SCALE_SEMI + 14, "scale", OC::scale_names, settings::STORAGE_TYPE_U8 },
@@ -1110,4 +1114,4 @@ size_t PASSENCORE_restore(const void *storage) {
   return storage_size;
 }
 
-
+#endif // ENABLE_APP_PASSENCORE
