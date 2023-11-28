@@ -567,7 +567,13 @@ private:
         gfxPrint(HS::trig_length);
         gfxPrint("ms");
 
-        const char * ssmodes[4] = { "[blank]", "Meters", "Zaps", "Stars" };
+        const char * ssmodes[4] = { "[blank]", "Meters", "Zaps",
+        #if defined(__IMXRT1062__)
+        "Stars"
+        #else
+        "Zips"
+        #endif
+        };
         gfxPrint(1, 45, "Screensaver:  ");
         gfxPrint( ssmodes[HS::screensaver_mode] );
 
@@ -706,16 +712,23 @@ typedef struct {
     int y_v = 3;
 
     void Move(bool stars) {
+        if (stars) Move(6100, 2900);
+        else Move();
+    }
+    void Move(int target_x = -1, int target_y = -1) {
         x += x_v;
         y += y_v;
         if (x > 12700 || x < 0 || y > 6300 || y < 0) {
-            if (stars) {
-                x = 6300;
-                y = 3100;
-            } else {
+            if (target_x < 0 || target_y < 0) {
                 x = random(12700);
                 y = random(6300);
+            } else {
+                x = target_x + random(400);
+                y = target_y + random(400);
+                CONSTRAIN(x, 0, 12700);
+                CONSTRAIN(y, 0, 6300);
             }
+
             x_v = random(30) - 15;
             y_v = random(30) - 15;
             if (x_v == 0) ++x_v;
@@ -723,22 +736,25 @@ typedef struct {
         }
     }
 } Zap;
-static constexpr int HOW_MANY_ZAPS = 25;
+static constexpr int HOW_MANY_ZAPS = 30;
 static Zap zaps[HOW_MANY_ZAPS];
 static void ZapScreensaver(const bool stars = false) {
   static int frame_delay = 0;
   for (int i = 0; i < (stars ? HOW_MANY_ZAPS : 5); i++) {
-    if (frame_delay & 0x1)
-        zaps[i].Move(stars);
+    if (frame_delay & 0x1) {
+        #if defined(__IMXRT1062__)
+        zaps[i].Move(stars); // centered starfield
+        #else
+        // Zips respawn from their previous sibling
+        if (0 == i) zaps[0].Move();
+        else zaps[i].Move(zaps[i-1].x, zaps[i-1].y);
+        #endif
+    }
 
     if (stars && frame_delay == 0) {
       // accel
       zaps[i].x_v *= 2;
       zaps[i].y_v *= 2;
-      /*
-      zaps[i].x_v += zaps[i].x_v > 0 ? 1 : -1;
-      zaps[i].y_v += zaps[i].y_v > 0 ? 1 : -1;
-      */
     }
 
     if (stars)
@@ -746,12 +762,12 @@ static void ZapScreensaver(const bool stars = false) {
     else
       gfxIcon(zaps[i].x/100, zaps[i].y/100, ZAP_ICON);
   }
-  if (--frame_delay < 0) frame_delay = 55;
+  if (--frame_delay < 0) frame_delay = 100;
 }
 
 void HEMISPHERE_screensaver() {
     switch (HS::screensaver_mode) {
-    case 0x3: // Stars
+    case 0x3: // Zips or Stars
         ZapScreensaver(true);
         break;
     case 0x2: // Zaps
