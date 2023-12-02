@@ -113,7 +113,7 @@ int32_t Quantizer::Process(int32_t pitch, int32_t root, int32_t transpose) {
     }
 
     // set final values
-    note_number_ = octave * num_notes_ + q;
+    note_number_ = (octave + 2) * num_notes_ + q + 64; // 64 is C2
     codeword_ = notes_[q] + octave * span_;
 
     transpose_ = transpose;
@@ -130,8 +130,12 @@ int32_t Quantizer::Process(int32_t pitch, int32_t root, int32_t transpose) {
 
 int32_t Quantizer::Lookup(int32_t index) const {
   index -= 64;
-  int16_t octave = index / num_notes_ - (index < 0 ? 1 : 0);
-  int16_t rel_ix = index - octave * num_notes_;
+  int16_t octave = index / num_notes_;
+  int16_t rel_ix = index % num_notes_;
+  if (rel_ix < 0) {
+    octave--;
+    rel_ix += num_notes_;
+  }
   int32_t pitch = notes_[rel_ix] + octave * span_;
   return pitch;
 }
