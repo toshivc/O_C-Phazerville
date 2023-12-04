@@ -31,7 +31,9 @@ namespace menu = OC::menu;
 #include "HSMIDI.h"
 #include "HSClockManager.h"
 
-// The settings specify the selected applets, and 64 bits of data for each applet
+// The settings specify the selected applets, and 64 bits of data for each applet,
+// plus 64 bits of data for the ClockSetup applet (which includes some misc config).
+// This is the structure of a HemispherePreset in eeprom.
 enum HEMISPHERE_SETTINGS {
     HEMISPHERE_SELECTED_LEFT_ID,
     HEMISPHERE_SELECTED_RIGHT_ID,
@@ -72,15 +74,13 @@ public:
         return values_[HEMISPHERE_SELECTED_LEFT_ID] != 0;
     }
 
-    // restore state by setting applets and giving them data
-    void LoadClockData() {
-        HS::clock_setup_applet.OnDataReceive(0, (uint64_t(values_[HEMISPHERE_CLOCK_DATA4]) << 48) |
-                                                (uint64_t(values_[HEMISPHERE_CLOCK_DATA3]) << 32) |
-                                                (uint64_t(values_[HEMISPHERE_CLOCK_DATA2]) << 16) |
-                                                 uint64_t(values_[HEMISPHERE_CLOCK_DATA1]));
+    uint64_t GetClockData() {
+        return ( (uint64_t(values_[HEMISPHERE_CLOCK_DATA4]) << 48) |
+                 (uint64_t(values_[HEMISPHERE_CLOCK_DATA3]) << 32) |
+                 (uint64_t(values_[HEMISPHERE_CLOCK_DATA2]) << 16) |
+                  uint64_t(values_[HEMISPHERE_CLOCK_DATA1]) );
     }
-    void StoreClockData() {
-        uint64_t data = HS::clock_setup_applet.OnDataRequest(0);
+    void SetClockData(const uint64_t data) {
         apply_value(HEMISPHERE_CLOCK_DATA1, data & 0xffff);
         apply_value(HEMISPHERE_CLOCK_DATA2, (data >> 16) & 0xffff);
         apply_value(HEMISPHERE_CLOCK_DATA3, (data >> 32) & 0xffff);
@@ -148,7 +148,6 @@ public:
             values_[HEMISPHERE_RIGHT_DATA_B3] = ((uint16_t)V[13] << 8) + V[12];
             values_[HEMISPHERE_LEFT_DATA_B4] = ((uint16_t)V[15] << 8) + V[14];
             values_[HEMISPHERE_RIGHT_DATA_B4] = ((uint16_t)V[17] << 8) + V[16];
-            //LoadClockData();
         }
     }
 
@@ -190,23 +189,41 @@ public:
     }
     void Suspend() {
         if (hem_active_preset) {
-            // Preset A will auto-save
-            if (preset_id == 0) StoreToPreset(0);
+            if (HS::auto_save_enabled) StoreToPreset(preset_id);
             hem_active_preset->OnSendSysEx();
         }
     }
 
     void StoreToPreset(HemispherePreset* preset) {
+        bool doSave = (preset != hem_active_preset);
+
         hem_active_preset = preset;
         for (int h = 0; h < 2; h++)
         {
             int index = my_applet[h];
+            if (hem_active_preset->GetAppletId(h) != HS::available_applets[index].id)
+                doSave = 1;
             hem_active_preset->SetAppletId(h, HS::available_applets[index].id);
 
             uint64_t data = HS::available_applets[index].OnDataRequest(h);
+            if (data != applet_data[h]) doSave = 1;
+            applet_data[h] = data;
             hem_active_preset->SetData(h, data);
         }
-        hem_active_preset->StoreClockData();
+        uint64_t data = HS::clock_setup_applet.OnDataRequest(0);
+        if (data != clock_data) doSave = 1;
+        clock_data = data;
+        hem_active_preset->SetClockData(data);
+
+        // initiate actual EEPROM save - ONLY if necessary!
+        if (doSave) {
+            OC::CORE::app_isr_enabled = false;
+            delay(1);
+            OC::save_app_data();
+            delay(1);
+            OC::CORE::app_isr_enabled = true;
+        }
+
     }
     void StoreToPreset(int id) {
         StoreToPreset( (HemispherePreset*)(hem_presets + id) );
@@ -215,12 +232,15 @@ public:
     void LoadFromPreset(int id) {
         hem_active_preset = (HemispherePreset*)(hem_presets + id);
         if (hem_active_preset->is_valid()) {
-            hem_active_preset->LoadClockData();
+            clock_data = hem_active_preset->GetClockData();
+            HS::clock_setup_applet.OnDataReceive(0, clock_data);
+
             for (int h = 0; h < 2; h++)
             {
                 int index = get_applet_index_by_id( hem_active_preset->GetAppletId(h) );
+                applet_data[h] = hem_active_preset->GetData(h);
                 SetApplet(h, index);
-                HS::available_applets[index].OnDataReceive(h, hem_active_preset->GetData(h));
+                HS::available_applets[index].OnDataReceive(h, applet_data[h]);
             }
         }
         preset_id = id;
@@ -477,6 +497,7 @@ private:
     int preset_id = 0;
     int preset_cursor = 0;
     int my_applet[2]; // Indexes to available_applets
+    uint64_t clock_data, applet_data[2]; // cache of applet data
     bool clock_setup;
     bool config_menu;
     bool isEditing = false;
@@ -489,6 +510,7 @@ private:
 
     enum HEMConfigCursor {
         LOAD_PRESET, SAVE_PRESET,
+        AUTO_SAVE,
         TRIG_LENGTH,
         SCREENSAVER_MODE,
         CURSOR_MODE,
@@ -537,6 +559,10 @@ private:
             preset_cursor = preset_id + 1;
             break;
 
+        case AUTO_SAVE:
+            HS::auto_save_enabled = !HS::auto_save_enabled;
+            break;
+
         case TRIG_LENGTH:
             isEditing = !isEditing;
             break;
@@ -561,7 +587,9 @@ private:
         // --- Config Selection
         gfxHeader("Hemisphere Config");
         gfxPrint(1, 15, "Preset: ");
-        gfxPrint(48, 15, "Load / Save");
+        gfxPrint(48, 15, "Load");
+        gfxIcon(100, 15, HS::auto_save_enabled ? CHECK_ON_ICON : CHECK_OFF_ICON );
+        gfxPrint(48, 25, "Save   (auto)");
 
         gfxPrint(1, 35, "Trig Length: ");
         gfxPrint(HS::trig_length);
@@ -584,7 +612,11 @@ private:
         switch (config_cursor) {
         case LOAD_PRESET:
         case SAVE_PRESET:
-            gfxIcon(55 + (config_cursor - LOAD_PRESET)*45, 25, UP_ICON);
+            gfxIcon(73, 15 + (config_cursor - LOAD_PRESET)*10, LEFT_ICON);
+            break;
+
+        case AUTO_SAVE:
+            gfxIcon(90, 15, RIGHT_ICON);
             break;
 
         case TRIG_LENGTH:
@@ -694,8 +726,16 @@ void FASTRUN HEMISPHERE_isr() {
 }
 
 void HEMISPHERE_handleAppEvent(OC::AppEvent event) {
-    if (event == OC::APP_EVENT_SUSPEND) {
+    switch (event) {
+    case OC::APP_EVENT_RESUME:
+        break;
+
+    case OC::APP_EVENT_SCREENSAVER_ON:
+    case OC::APP_EVENT_SUSPEND:
         manager.Suspend();
+        break;
+
+    default: break;
     }
 }
 

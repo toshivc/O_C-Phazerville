@@ -179,7 +179,7 @@ public:
         }
 
         Pack(data, PackLocation { 52, 7 }, HS::trig_length);
-        // --- PackLocation { 59, 1 } ---
+        Pack(data, PackLocation { 59, 1 }, HS::auto_save_enabled);
         Pack(data, PackLocation { 60, 2 }, HS::modal_edit_mode);
         Pack(data, PackLocation { 62, 2 }, HS::screensaver_mode);
 
@@ -209,6 +209,7 @@ public:
         }
 
         HS::trig_length = constrain( Unpack(data, PackLocation { 52, 7 }), 1, 127);
+        HS::auto_save_enabled = Unpack(data, PackLocation { 59, 1 });
         HS::screensaver_mode = Unpack(data, PackLocation { 62, 2 });
     }
 
