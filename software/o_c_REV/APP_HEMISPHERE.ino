@@ -274,6 +274,12 @@ public:
                 continue;
             }
 
+            if (message == usbMIDI.ProgramChange) {
+                int slot = usbMIDI.getData1();
+                if (slot < 4) LoadFromPreset(slot);
+                continue;
+            }
+
             f.MIDIState.ProcessMIDIMsg(usbMIDI.getChannel(), message, data1, data2);
         }
     }
