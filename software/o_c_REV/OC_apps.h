@@ -84,6 +84,9 @@ namespace apps {
 
 }; // namespace apps
 
+void draw_save_message(uint8_t c);
+void save_app_data();
+
 }; // namespace OC
 
 #endif // OC_APP_H_

@@ -36,10 +36,6 @@
 #include "src/drivers/FreqMeasure/OC_FreqMeasure.h"
 #include "HemisphereApplet.h"
 
-namespace OC {
-  void save_app_data();
-}
-
 #define CAL8_MAX_TRANSPOSE 60
 const int CAL8OR_PRECISION = 10000;
 
@@ -215,6 +211,7 @@ public:
 
         // initiate actual EEPROM save
         OC::CORE::app_isr_enabled = false;
+        OC::draw_save_message(60);
         delay(1);
         OC::save_app_data();
         delay(1);

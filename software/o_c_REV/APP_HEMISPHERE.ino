@@ -218,6 +218,7 @@ public:
         // initiate actual EEPROM save - ONLY if necessary!
         if (doSave) {
             OC::CORE::app_isr_enabled = false;
+            OC::draw_save_message(60);
             delay(1);
             OC::save_app_data();
             delay(1);
