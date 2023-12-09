@@ -37,13 +37,6 @@ const char* const scale_names_short[] = {
     "MIXO",
     "AEOL",
     "LOCR",
-    "HMIN",
-    "LOn6",
-    "IAUG",
-    "MBKH",
-    "FREY",
-    "LY#9",
-    "UTLO", 
     "BLU+",
     "BLU-",
     "PEN+",
@@ -177,7 +170,14 @@ const char* const scale_names_short[] = {
     "5th", // Fifth, 
     "3b+", // major triad (Triad), 
     "3b-", // minor triad (3b+5), 
-    "HAR-",// Harmonic Minor (Harm Minor),
+    "HAR-",// Harmonic Minor (Harm Minor), aka "HMIN"
+
+    "LOn6",
+    "IAUG",
+    "MBKH",
+    "FREY",
+    "LY#9",
+    "UTLO", 
     
     };
 
@@ -195,13 +195,6 @@ const char* const scale_names[] = {
     "Mixolydian",
     "Aeolian",
     "Locrian",
-    "Harmonic minor",
-    "Locrian n6",
-    "Ionian aug",
-    "Misheberakh",
-    "Freygish",
-    "Lydian #9",
-    "Ultralocrian",
     "Blues major",
     "Blues minor",
     "Pentatonic maj",
@@ -336,6 +329,13 @@ const char* const scale_names[] = {
     "TriadMaj", // major triad (Triad), 
     "TriadMin",// minor triad (3b+5), 
     "HarmonicMin",// Harmonic Minor (Harm Minor),
+
+    "Locrian n6",
+    "Ionian aug",
+    "Misheberakh",
+    "Freygish",
+    "Lydian #9",
+    "Ultralocrian",
 
     };
 
