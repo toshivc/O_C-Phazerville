@@ -31,10 +31,12 @@ public:
     }
 
     void Controller() {
+        p_mod = p;
+        Modulate(p_mod, 0, 0, 100);
+
         // handles physical and logical clock
         if (Clock(0)) {
-            int prob = p + Proportion(DetentedIn(0), HEMISPHERE_MAX_INPUT_CV, 100);
-            choice = (random(1, 100) <= prob) ? 0 : 1;
+            choice = (random(1, 100) <= p_mod) ? 0 : 1;
 
             // will be true only for logical clocks
             clocked = !Gate(0);
@@ -81,16 +83,17 @@ protected:
     }
 
 private:
-	int p;
+	int p, p_mod;
 	int choice;
     bool clocked; // indicates a logical clock without a physical gate
 
 	void DrawInterface() {
         // Show the probability in the middle
         gfxPrint(1, 15, "p=");
-        gfxPrint(15 + pad(100, p), 15, p);
-        gfxPrint(33, 15, hemisphere ? "% C" : "% A");
+        gfxPrint(15 + pad(100, p_mod), 15, p_mod);
+        gfxPrint(33, 15, hemisphere ? "%  C" : "%  A");
         gfxCursor(15, 23, 18);
+        if (p != p_mod) gfxIcon(39, 12, CV_ICON);
 
         gfxPrint(12, 45, hemisphere ? "C" : "A");
         gfxPrint(44, 45, hemisphere ? "D" : "B");
