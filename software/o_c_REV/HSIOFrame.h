@@ -15,7 +15,7 @@ int root_note[4];
 
 bool auto_save_enabled = false;
 int trigger_mapping[] = { 1, 2, 3, 4 };
-uint8_t trig_length = 2; // multiplier for HEMISPHERE_CLOCK_TICKS
+uint8_t trig_length = 10; // in ms, multiplier for HEMISPHERE_CLOCK_TICKS
 uint8_t screensaver_mode = 2; // 0 = blank, 1 = Meters, 2 = Zaps
 
 typedef struct MIDILogEntry {
