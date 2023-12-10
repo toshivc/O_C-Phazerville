@@ -216,6 +216,7 @@ public:
         mode[0] = Unpack(data, PackLocation {40,8});
         mode[1] = Unpack(data, PackLocation {48,8});
         cv_mode = Unpack(data, PackLocation {56,8});
+        Reset();
     }
 
 protected:

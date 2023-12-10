@@ -54,8 +54,7 @@ public:
         else cv2_gate = 0;
 
         if (Clock(1)) { // reset
-            step = 0;
-            reset = true;
+            Reset();
         }
         if (Clock(0)) { // clock
 
@@ -113,6 +112,7 @@ public:
             note[s] = Unpack(data, PackLocation {uint8_t(s * 5),5});
         }
         muted = Unpack(data, PackLocation {SEQX_STEPS * 5, SEQX_STEPS});
+        Reset();
     }
 
 protected:
@@ -137,6 +137,11 @@ private:
         if (++step == SEQX_STEPS) step = 0;
         // If all the steps have been muted, stay where we were
         if (step_is_muted(step) && step != starting_point) Advance(starting_point);
+    }
+
+    void Reset() {
+        step = 0;
+        reset = true;
     }
 
     void DrawPanel() {

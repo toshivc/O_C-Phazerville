@@ -189,6 +189,7 @@ public:
             actual_padding[ch] = padding[ch] = Unpack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE});
             cv_dest[ch] = (EuclidXParam) Unpack(data, PackLocation {idx++ * PARAM_SIZE, PARAM_SIZE});
         }
+        step = 0; // reset
     }
 
 protected:
