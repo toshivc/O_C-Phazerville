@@ -139,7 +139,7 @@ public:
         //if (!IsRunning()) return;
         if (hard_reset) Reset();
 
-        uint32_t now = OC::CORE::ticks;
+        const uint32_t now = OC::CORE::ticks;
 
         // Reset only when all multipliers have been met
         bool reset = 1;
@@ -159,7 +159,7 @@ public:
             } else { // division: -1 becomes /2, -2 becomes /3, etc.
                 int div = 1 - tocks_per_beat[ch];
                 uint32_t next_beat = beat_tick + (count[ch] ? ticks_per_beat : 0);
-                bool beat_exceeded = (now > next_beat);
+                bool beat_exceeded = (now >= next_beat);
                 if (beat_exceeded) {
                     ++count[ch];
                     tock[ch] = (count[ch] % div) == 1;
