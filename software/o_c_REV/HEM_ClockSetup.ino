@@ -191,7 +191,8 @@ public:
         // bit 1 - backward compatibility with Clock Forwarding 
         if (Unpack(data, PackLocation { 1, 1 })) HS::trigger_mapping[2] = 1;
 
-        clock_m->SetTempoBPM(Unpack(data, PackLocation { 2, 9 }));
+        if (!clock_m->IsRunning())
+            clock_m->SetTempoBPM(Unpack(data, PackLocation { 2, 9 }));
         clock_m->SetClockPPQN(Unpack(data, PackLocation { 11, 5 }));
         for (size_t i = 0; i < 4; ++i) {
             clock_m->SetMultiply(Unpack(data, PackLocation { 16+i*6, 6 })-32, i);
