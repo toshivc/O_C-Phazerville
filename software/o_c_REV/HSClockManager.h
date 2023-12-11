@@ -24,9 +24,7 @@
 #ifndef CLOCK_MANAGER_H
 #define CLOCK_MANAGER_H
 
-#define CLOCK_PPQN 4
-
-static constexpr uint16_t CLOCK_TEMPO_MIN = 10;
+static constexpr uint16_t CLOCK_TEMPO_MIN = 1;
 static constexpr uint16_t CLOCK_TEMPO_MAX = 300;
 static constexpr uint32_t CLOCK_TICKS_MIN = 1000000 / CLOCK_TEMPO_MAX;
 static constexpr uint32_t CLOCK_TICKS_MAX = 1000000 / CLOCK_TEMPO_MIN;
