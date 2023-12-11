@@ -950,9 +950,9 @@ class PassencoreState {
 // TOTAL EEPROM SIZE: 17 bytes
 SETTINGS_DECLARE(PASSENCORE, PASSENCORE_SETTING_LAST) {
   //PASSENCORE_SETTING_SCALE,
-  { OC::Scales::SCALE_SEMI + 1, OC::Scales::SCALE_SEMI + 1, OC::Scales::SCALE_SEMI + 14, "scale", OC::scale_names, settings::STORAGE_TYPE_U8 },
+  { OC::Scales::SCALE_SEMI + 1, OC::Scales::SCALE_SEMI, OC::Scales::NUM_SCALES - 1, "scale", OC::scale_names, settings::STORAGE_TYPE_U8 },
   //PASSENCORE_SETTING_MASK,
-  { 65535, 1, 65535, "scale  -->", NULL, settings::STORAGE_TYPE_U16 }, // mask
+  { 65535, 1, 65535, "mask  -->", NULL, settings::STORAGE_TYPE_U16 }, // mask
   //PASSENCORE_SETTING_SAMPLE_TRIGGER,
   { 0, 0, 3, "sample trigger", OC::Strings::trigger_input_names, settings::STORAGE_TYPE_U4},
   //PASSENCORE_SETTING_TARGET_TRIGGER,
@@ -1050,7 +1050,15 @@ void PASSENCORE_menu() {
   {
     const int current = settings_list.Next(list_item);
     const int value = passencore_instance.get_value(current);
-    list_item.DrawDefault(value, PASSENCORE::value_attr(current));
+    if (current == PASSENCORE_SETTING_MASK) {
+        menu::DrawMask<false, 16, 8, 1>(menu::kDisplayWidth, list_item.y, passencore_instance.get_mask(), OC::Scales::GetScale(passencore_instance.get_scale(DUMMY)).num_notes);
+        list_item.DrawNoValue<false>(value, PASSENCORE::value_attr(current));
+    } else {
+        list_item.DrawDefault(value, PASSENCORE::value_attr(current));
+    }
+
+   if (passencore_state.scale_editor.active())
+     passencore_state.scale_editor.Draw();
   }
 }
 
@@ -1079,7 +1087,13 @@ void PASSENCORE_handleButtonEvent(const UI::Event & event) {
         PASSENCORE_leftButton();
         break;
       case OC::CONTROL_BUTTON_R:
-        passencore_state.cursor.toggle_editing();
+        if (passencore_state.cursor_pos() == PASSENCORE_SETTING_MASK) {
+          int scale = passencore_instance.get_scale(DUMMY);
+          if (OC::Scales::SCALE_NONE != scale)
+            passencore_state.scale_editor.Edit(&passencore_instance, scale);
+        } else {
+          passencore_state.cursor.toggle_editing();
+        }
         break;
     }
   }
@@ -1096,7 +1110,7 @@ void PASSENCORE_handleEncoderEvent(const UI::Event & event) {
   //}
   if (OC::CONTROL_ENCODER_L == event.control) {
     int value = passencore_state.left_encoder_value + event.value;
-    CONSTRAIN(value, OC::Scales::SCALE_SEMI + 1, OC::Scales::SCALE_SEMI + 14);
+    CONSTRAIN(value, OC::Scales::SCALE_SEMI, OC::Scales::NUM_SCALES - 1);
     passencore_state.left_encoder_value = value;
   } else if (OC::CONTROL_ENCODER_R == event.control) {
     if (passencore_state.cursor.editing()) {
