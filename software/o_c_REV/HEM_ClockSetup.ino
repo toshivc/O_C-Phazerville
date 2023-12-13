@@ -24,6 +24,7 @@ public:
     enum ClockSetupCursor {
         PLAY_STOP,
         TEMPO,
+        SHUFFLE,
         EXT_PPQN,
         MULT1,
         MULT2,
@@ -156,6 +157,9 @@ public:
         case TEMPO:
             clock_m->SetTempoBPM(clock_m->GetTempo() + direction);
             break;
+        case SHUFFLE:
+            clock_m->SetShuffle(clock_m->GetShuffle() + direction);
+            break;
 
         case MULT1:
         case MULT2:
@@ -265,10 +269,17 @@ private:
 
         // Tempo
         gfxPrint(22 + pad(100, clock_m->GetTempo()), y, clock_m->GetTempo());
-        gfxPrint(" BPM");
+        if (cursor != SHUFFLE)
+            gfxPrint(" BPM");
+        else {
+            // Shuffle
+            gfxIcon(44, y, METRO_R_ICON);
+            gfxPrint(52 + pad(10, clock_m->GetShuffle()), y, clock_m->GetShuffle());
+            gfxPrint("%");
+        }
 
         // Input PPQN
-        gfxPrint(73, y, "Sync=x");
+        gfxPrint(79, y, "Sync=");
         gfxPrint(clock_m->GetClockPPQN());
 
         y += 10;
@@ -302,6 +313,9 @@ private:
             break;
         case TEMPO:
             gfxCursor(22, 22, 19);
+            break;
+        case SHUFFLE:
+            gfxCursor(52, 22, 13);
             break;
         case EXT_PPQN:
             gfxCursor(109,22, 13);

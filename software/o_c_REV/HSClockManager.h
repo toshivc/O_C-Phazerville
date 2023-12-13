@@ -56,6 +56,7 @@ class ClockManager {
     bool tock[NR_OF_CLOCKS] = {0,0,0,0,0}; // The current tock value
     int16_t tocks_per_beat[NR_OF_CLOCKS] = {4,0, 8,0, MIDI_OUT_PPQN}; // Multiplier
     int count[NR_OF_CLOCKS] = {0,0,0,0,0}; // Multiple counter, 0 is a special case when first starting the clock
+    int8_t shuffle = 0; // 0 to 100
 
     int clock_ppqn = 4; // external clock multiple
     bool cycle = 0; // Alternates for each tock, for display purposes
@@ -110,6 +111,9 @@ public:
     int GetMultiply(int ch = 0) {return tocks_per_beat[ch];}
     int GetClockPPQN() { return clock_ppqn; }
 
+    void SetShuffle(int8_t sh_) { shuffle = constrain(sh_, 0, 99); }
+    int8_t GetShuffle() { return shuffle; }
+
     /* Gets the current tempo. This can be used between client processes, like two different
      * hemispheres.
      */
@@ -150,6 +154,9 @@ public:
 
             if (tocks_per_beat[ch] > 0) { // multiply
                 uint32_t next_tock_tick = beat_tick + count[ch]*ticks_per_beat / static_cast<uint32_t>(tocks_per_beat[ch]);
+                if (shuffle && MIDI_CLOCK != ch && count[ch] % 2 == 1 && count[ch] < tocks_per_beat[ch])
+                    next_tock_tick += shuffle * ticks_per_beat / 100 / static_cast<uint32_t>(tocks_per_beat[ch]);
+
                 tock[ch] = now >= next_tock_tick;
                 if (tock[ch]) ++count[ch]; // increment multiplier counter
 
