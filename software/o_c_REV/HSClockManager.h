@@ -51,7 +51,8 @@ class ClockManager {
     bool paused = 0; // Specifies whethr the clock is paused
     bool midi_out_enabled = 1;
 
-    uint32_t clock_tick = 0; // tick when a physical clock was received on DIGITAL 1
+    bool tickno = 0;
+    uint32_t clock_tick[2] = {0,0}; // previous ticks when a physical clock was received on DIGITAL 1
     uint32_t beat_tick = 0; // The tick to count from
     bool tock[NR_OF_CLOCKS] = {0,0,0,0,0}; // The current tock value
     int16_t tocks_per_beat[NR_OF_CLOCKS] = {4,0, 8,0, MIDI_OUT_PPQN}; // Multiplier
@@ -122,6 +123,10 @@ public:
     // Reset - Resync multipliers, optionally skipping the first tock
     void Reset(bool count_skip = 0) {
         beat_tick = OC::CORE::ticks;
+        if (0 == count_skip) {
+            clock_tick[0] = 0;
+            clock_tick[1] = 0;
+        }
         for (int ch = 0; ch < NR_OF_CLOCKS; ch++) {
             if (tocks_per_beat[ch] > 0 || 0 == count_skip) count[ch] = count_skip;
         }
@@ -181,15 +186,22 @@ public:
         if (reset) Reset(1); // skip the one we're already on
 
         // handle syncing to physical clocks
-        if (clocked && clock_tick && clock_ppqn) {
+        if (clocked && clock_tick[tickno] && clock_ppqn) {
 
-            uint32_t clock_diff = now - clock_tick;
-            if (clock_ppqn * clock_diff > CLOCK_TICKS_MAX) clock_tick = 0; // too slow, reset clock tracking
+            uint32_t clock_diff = now - clock_tick[tickno];
 
-            // if there is a previous clock tick, update tempo and sync
-            if (clock_tick && clock_diff) {
+            // too slow, reset clock tracking
+            if (clock_ppqn * clock_diff > CLOCK_TICKS_MAX) {
+                clock_tick[0] = 0;
+                clock_tick[1] = 0;
+            }
+
+            // if there are two previous clock ticks, update tempo and sync
+            if (clock_tick[1-tickno] && clock_diff) {
+                uint32_t avg_diff = (clock_diff + (clock_tick[tickno] - clock_tick[1-tickno])) / 2;
+
                 // update the tempo
-                ticks_per_beat = constrain(clock_ppqn * clock_diff, CLOCK_TICKS_MIN, CLOCK_TICKS_MAX); // time since last clock is new tempo
+                ticks_per_beat = constrain(clock_ppqn * avg_diff, CLOCK_TICKS_MIN, CLOCK_TICKS_MAX);
                 tempo = 1000000 / ticks_per_beat; // imprecise, for display purposes
 
                 int ticks_per_clock = ticks_per_beat / clock_ppqn; // rounded down
@@ -207,8 +219,10 @@ public:
             }
         }
         // clock has been physically ticked
-        if (clocked) clock_tick = now;
-
+        if (clocked) {
+            tickno = 1 - tickno;
+            clock_tick[tickno] = now;
+        }
     }
 
     void Start(bool p = 0) {
