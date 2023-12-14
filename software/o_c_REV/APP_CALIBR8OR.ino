@@ -267,7 +267,9 @@ public:
                 c.last_note = quantized;
             }
 
-            int output_cv = c.last_note * (CAL8OR_PRECISION + c.scale_factor) / CAL8OR_PRECISION;
+            int output_cv = c.last_note;
+            if ( OC::DAC::calibration_data_used( DAC_CHANNEL(sel_chan) ) != 0x01 ) // not autotuned
+                output_cv *= (CAL8OR_PRECISION + c.scale_factor) / CAL8OR_PRECISION;
             output_cv += c.offset;
 
             Out(ch, output_cv);
@@ -433,7 +435,9 @@ public:
             while (channel[sel_chan].transpose > CAL8_MAX_TRANSPOSE) channel[sel_chan].transpose -= s;
             while (channel[sel_chan].transpose < -CAL8_MAX_TRANSPOSE) channel[sel_chan].transpose += s;
         }
-        else { // Tracking compensation
+        else if ( OC::DAC::calibration_data_used( DAC_CHANNEL(sel_chan) ) != 0x01 ) // not autotuned
+        {
+            // Tracking compensation
             channel[sel_chan].scale_factor = constrain(channel[sel_chan].scale_factor + direction, -500, 500);
         }
     }
@@ -546,19 +550,20 @@ public:
         // Tracking Compensation
         y += 22;
         gfxIcon(9, y, ZAP_ICON);
-        int whole = (channel[sel_chan].scale_factor + CAL8OR_PRECISION) / 100;
-        int decimal = (channel[sel_chan].scale_factor + CAL8OR_PRECISION) % 100;
-        gfxPrint(20 + pad(100, whole), y, whole);
-        gfxPrint(".");
-        if (decimal < 10) gfxPrint("0");
-        gfxPrint(decimal);
-        gfxPrint("% ");
 
+        if ( OC::DAC::calibration_data_used( DAC_CHANNEL(sel_chan) ) == 0x01 ) {
+            gfxPrint(20, y, "(auto) ");
+        } else {
+            int whole = (channel[sel_chan].scale_factor + CAL8OR_PRECISION) / 100;
+            int decimal = (channel[sel_chan].scale_factor + CAL8OR_PRECISION) % 100;
+            gfxPrint(20 + pad(100, whole), y, whole);
+            gfxPrint(".");
+            if (decimal < 10) gfxPrint("0");
+            gfxPrint(decimal);
+            gfxPrint("% ");
+        }
         if (channel[sel_chan].offset >= 0) gfxPrint("+");
         gfxPrint(channel[sel_chan].offset);
-
-        if ( OC::DAC::calibration_data_used( DAC_CHANNEL(sel_chan) ) == 0x01 )
-            gfxPrint(" (auto)");
 
         // mode indicator
         if (!scale_edit)
