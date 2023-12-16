@@ -1,17 +1,20 @@
-"What's the worst that could happen?"
+[![PlatformIO CI](https://github.com/djphazer/O_C-BenisphereSuite/actions/workflows/firmware.yml/badge.svg)](https://github.com/djphazer/O_C-BenisphereSuite/actions/workflows/firmware.yml)
+
+Phazerville Suite - an active o_C firmware fork
 ===
+[![SynthDad's video overview](http://img.youtube.com/vi/XRGlAmz3AKM/0.jpg)](http://www.youtube.com/watch?v=XRGlAmz3AKM "Phazerville; newest firmware for Ornament and Crime. Tutorial and patch ideas")
 
-Watch SynthDad's [**video overview**](https://www.youtube.com/watch?v=XRGlAmz3AKM) and check the [**Wiki**](https://github.com/djphazer/O_C-BenisphereSuite/wiki) for more info. [Download it here](https://github.com/djphazer/O_C-BenisphereSuite/releases).
+Watch SynthDad's **video overview** (above) or check the [**Wiki**](https://github.com/djphazer/O_C-BenisphereSuite/wiki) for more info. [Download it here](https://github.com/djphazer/O_C-BenisphereSuite/releases).
 
-## Phazerville Suite - an active o_C firmware fork
+## Stolen Ornaments
 
-Using [**Benisphere**](https://github.com/benirose/O_C-BenisphereSuite) as a starting point, this branch takes the **Hemisphere Suite** in new directions, with several new applets and enhancements to existing ones. I've merged bleeding-edge features from other clever developers, with the goal of cramming as much functionality and flexibility into the nifty dual-applet design as possible!
+Using [**Benisphere**](https://github.com/benirose/O_C-BenisphereSuite) as a starting point, this branch takes the **Hemisphere Suite** in new directions, with several new applets and enhancements to existing ones. I wanted to collect all the bleeding-edge features from other clever developers, with the goal of cramming as much functionality and flexibility into the nifty dual-applet design as possible!
 
 I've also included **all of the stock O&C firmware apps**, but they don't all fit in one .hex. As a courtesy, I provide **3 different build choices** with various combinations of Apps in my [**Releases**](https://github.com/djphazer/O_C-BenisphereSuite/releases). I think of it like the boxed set of a movie trilogy or whatever. The O&C Saga. 4 different hardware format options. Free and Open Source, baby!
 
 You can also customize the `platformio.ini` file to mix & match for yourself ;-)
 
-### Notable Features in this branch:
+### New Crimes I've Committed
 
 * 4 Presets in the new [**Hemisphere Config**](https://github.com/djphazer/O_C-BenisphereSuite/wiki/Hemisphere-Config)
 * Modal-editing style cursor navigation (and other usability tweaks)
@@ -25,24 +28,21 @@ You can also customize the `platformio.ini` file to mix & match for yourself ;-)
 
 Plus lots of other small tweaks + experimental applets.
 
-### How do I try it?
+### How To Get It
 
-Check the [Releases](https://github.com/djphazer/O_C-BenisphereSuite/releases) section for a .hex file, or clone the repository and build it yourself! I think the beauty of this module is the fact that it's relatively easy to modify and build the source code to reprogram it. You are free to customize the firmware, similar to how you've no doubt already selected a custom set of physical modules.
+Check the [Releases](https://github.com/djphazer/O_C-BenisphereSuite/releases) section for a .hex file (to be used with the Teensy loader app), or clone the repository and build it yourself! I think the beauty of this module is the fact that it's relatively easy to modify and build the source code to reprogram it. You are free to customize the firmware, similar to how you've no doubt already selected a custom set of physical modules.
 
-### How do I build it?
+### How To Change It
 
-I've abandoned the old Arduino IDE in favor of Platform IO, a Python-based build toolchain, available as either a [standalone CLI](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html):
-```
-wget https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py -O get-platformio.py
-python3 get-platformio.py
-```
-...or as a [a full-featured IDE](https://platformio.org/install/ide), as well as a plugin for VSCode and other existing IDEs.
+This firmware fork is built using Platform IO, a Python-based build toolchain, available as either a [standalone CLI](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html) or a [full-featured IDE](https://platformio.org/install/ide), as well as a plugin for VSCode and other existing IDEs.
 
-This project lives within the `software/o_c_REV` directory. From there, you can Build the desired configuration and Upload via USB to your module:
+The project lives within the `software/o_c_REV` directory. From there, you can Build the desired configuration and Upload via USB to your module:
 ```
 pio run -e oc_stock2_flipped -t upload
 ```
-Alternate build environment configurations exist in `platformio.ini` for VOR, Buchla, flipped screen, etc. To build all the defaults consecutively, simply use `pio run`
+Have a look inside `platformio.ini` for alternative build environment configurations - VOR, Buchla, flipped screen, etc. To build all the defaults consecutively, simply use `pio run`
+
+_**Pro-tip**_: If you decide to fork the project, and enable GitHub Actions on your own repo, GitHub will build the files for you... ;)
 
 ## Credits
 
