@@ -7,6 +7,10 @@ custom_defines = "-DCUSTOM_BUILD"
 
 for item in flags:
     f = item.strip().upper()
+    if f.startswith('FLIP'):
+        custom_defines += " -DFLIP_180"
+    if f.startswith('VOR'):
+        custom_defines += " -DVOR"
     if f.startswith('CALIBR8'):
         custom_defines += " -DENABLE_APP_CALIBR8OR"
     if f.startswith('SCENE'):
