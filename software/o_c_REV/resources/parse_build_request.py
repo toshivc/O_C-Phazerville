@@ -11,6 +11,8 @@ for item in flags:
         custom_defines += " -DENABLE_APP_CALIBR8OR"
     if f.startswith('SCENE'):
         custom_defines += " -DENABLE_APP_SCENES"
+    if f.startswith('PONG'):
+        custom_defines += " -DENABLE_APP_PONG"
     if f.startswith('ENIGMA'):
         custom_defines += " -DENABLE_APP_ENIGMA"
     if f.startswith('CAPTAIN') or f.startswith('MIDI'):
