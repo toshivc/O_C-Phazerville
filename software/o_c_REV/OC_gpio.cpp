@@ -38,10 +38,10 @@ void OC::Pinout_Detect() {
     TR2 = 1;
     TR3 = 23;
     TR4 = 22;
-    but_top = 14;
-    but_top2 = 15;
-    but_bot = 29;
-    but_bot2 = 28;
+    but_top = 29;
+    but_top2 = 28;
+    but_bot = 14;
+    but_bot2 = 15;
     but_mid = 20;
     OLED_Uses_SPI1 = true;   // pins 26=MOSI, 27=SCK
     OLED_DC = 39;
