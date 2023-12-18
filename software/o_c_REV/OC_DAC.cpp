@@ -87,6 +87,18 @@ void DAC::Init(CalibrationData *calibration_data) {
 #elif defined(__IMXRT1062__)
   SPI.begin();
   IOMUXC_SW_MUX_CTL_PAD_GPIO_B0_00 = 3; // DAC CS pin controlled by SPI
+  #if defined(ARDUINO_TEENSY41)
+  if (DAC8568_Uses_SPI) {
+    // DAC8568 not shared with OLED, so we must init settings
+    //Serial.println("Init DAC8568");
+    SPI.beginTransaction(SPISettings(24000000, MSBFIRST, SPI_MODE0));
+    LPSPI4_TCR = (LPSPI4_TCR & 0xF8000000) | LPSPI_TCR_FRAMESZ(31)
+      | LPSPI_TCR_PCS(0) | LPSPI_TCR_RXMSK;
+    delay(1);
+    dac8568_raw_write(0x08000001); // turn on Vref (2.5V ±0.004%), static mode
+    delay(1);
+  }
+  #endif
 #endif
 
   set_all(0xffff);

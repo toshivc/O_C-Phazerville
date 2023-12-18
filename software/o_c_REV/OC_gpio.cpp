@@ -18,7 +18,7 @@ uint8_t but_top=4, but_bot=5, but_mid=255, but_top2=255, but_bot2=255;
 uint8_t OC_GPIO_DEBUG_PIN1=24, OC_GPIO_DEBUG_PIN2=25;
 bool ADC33131D_Uses_FlexIO=false;
 bool OLED_Uses_SPI1=false;
-bool DAC8558_Uses_SPI=false;
+bool DAC8568_Uses_SPI=false;
 bool I2S2_Audio_ADC=false;
 bool I2S2_Audio_DAC=false;
 bool I2C_Expansion=false;
@@ -47,7 +47,7 @@ void OC::Pinout_Detect() {
     OLED_DC = 39;
     OLED_RST = 38;
     OLED_CS = 40;
-    DAC8558_Uses_SPI = true; // pins 10=CS, 11=MOSI, 13=SCK
+    DAC8568_Uses_SPI = true; // pins 10=CS, 11=MOSI, 13=SCK
     DAC_CS = 255;            // pin 10 controlled by SPI hardware
     DAC_RST = 255;
     encR1 = 36;
