@@ -83,6 +83,13 @@ extern uint8_t DAC_CS, DAC_RST;
 extern uint8_t encL1, encL2, butL, encR1, encR2, butR;
 extern uint8_t but_top, but_bot, but_mid, but_top2, but_bot2;
 extern uint8_t OC_GPIO_DEBUG_PIN1, OC_GPIO_DEBUG_PIN2;
+extern bool ADC33131D_Uses_FlexIO;
+extern bool OLED_Uses_SPI1;
+extern bool DAC8568_Uses_SPI;
+extern bool I2S2_Audio_ADC;
+extern bool I2S2_Audio_DAC;
+extern bool I2C_Expansion;
+extern bool MIDI_Uses_Serial8;
 
 #endif
 
