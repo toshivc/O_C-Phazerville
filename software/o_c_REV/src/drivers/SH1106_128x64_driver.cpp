@@ -255,18 +255,26 @@ void SH1106_128x64_Driver::SendPage(uint_fast8_t index, const uint8_t *data) {
   sendpage_state = 0;
   sendpage_src = (const uint32_t *)data; // frame buffer is 32 bit aligned
   sendpage_count = kPageSize >> 2; // number of 32 bit words to write into FIFO
+  #if defined(ARDUINO_TEENSY41)
   if (OLED_Uses_SPI1) {
     // DAC does not use SPI1, so we must forcibly trigger first interrupt
     NVIC_TRIGGER_IRQ(IRQ_LPSPI3);
   } else {
+  #endif
     // don't clear SPI status flags, already cleared before DAC data was loaded into FIFO
     LPSPI4_IER = LPSPI_IER_TCIE; // run spi_sendpage_isr() when DAC data complete
+  #if defined(ARDUINO_TEENSY41)
   }
+  #endif
 }
 
 static void spi_sendpage_isr() {
   DEBUG_PIN_SCOPE(OC_GPIO_DEBUG_PIN2);
+  #if defined(ARDUINO_TEENSY41)
   IMXRT_LPSPI_t *lpspi = (OLED_Uses_SPI1) ? &IMXRT_LPSPI3_S : &IMXRT_LPSPI4_S;
+  #else
+  IMXRT_LPSPI_t *lpspi = &IMXRT_LPSPI4_S;
+  #endif
   uint32_t status = lpspi->SR;
   lpspi->SR = status; // clear interrupt status flags
   if (sendpage_state == 0) {
