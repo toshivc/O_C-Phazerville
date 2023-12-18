@@ -55,6 +55,7 @@ struct Cal8ChannelConfig {
     DAC_CHANNEL get_channel() { return chan_; }
     void ExitAutotune() {
         FreqMeasure.end();
+        OC::DigitalInputs::reInit();
     }
 };
 
