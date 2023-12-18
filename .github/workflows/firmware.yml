@@ -2,8 +2,8 @@ name: PlatformIO CI
 
 on:
   push:
-    branches:
-      - 'dev/**'
+    paths:
+      - 'software/o_c_REV/**'
 
 jobs:
   build:
