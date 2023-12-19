@@ -278,6 +278,35 @@ static void Init_Teensy4_builtin_ADC() {
   dma0.enable();
 }
 
+// Teensyduino defines these starting with 1.59-beta4.  These defines are meant
+// to allow compile with Teensyduino 1.58 and (maybe) even older versions.
+#ifndef FLEXIO_TIMCTL_TRIGGER_EXTERNAL
+#define FLEXIO_TIMCTL_TRIGGER_EXTERNAL(n)                       FLEXIO_TIMCTL_TRGSEL(n)
+#define FLEXIO_TIMCTL_TRIGGER_ACTIVE_LOW                        FLEXIO_TIMCTL_TRGPOL
+#define FLEXIO_TIMCTL_PINMODE_OUTPUT                            FLEXIO_TIMCTL_PINCFG(3)
+#define FLEXIO_TIMCTL_MODE_8BIT_BAUD                            FLEXIO_TIMCTL_TIMOD(1)
+#define FLEXIO_TIMCFG_ENABLE_ON_TRIGGER_RISING                  FLEXIO_TIMCFG_TIMENA(6)
+#define FLEXIO_TIMCFG_OUTPUT_LOW_WHEN_ENABLED                   FLEXIO_TIMCFG_TIMOUT(1)
+#define FLEXIO_TIMCFG_DISABLE_ON_8BIT_MATCH                     FLEXIO_TIMCFG_TIMDIS(2)
+#define FLEXIO_TIMCFG_STOPBIT_ENABLE_ON_TIMER_DISABLE           FLEXIO_TIMCFG_TSTOP(2)
+#define FLEXIO_TIMCTL_PIN_ACTIVE_LOW                            FLEXIO_TIMCTL_PINPOL
+#define FLEXIO_TIMCFG_STARTBIT_ENABLED                          FLEXIO_TIMCFG_TSTART
+#define FLEXIO_TIMCTL_MODE_16BIT                                FLEXIO_TIMCTL_TIMOD(3)
+#define FLEXIO_TIMCFG_OUTPUT_HIGH_WHEN_ENABLED                  FLEXIO_TIMCFG_TIMOUT(0)
+#define FLEXIO_TIMCFG_STOPBIT_ENABLE_ON_TIMER_DISABLE           FLEXIO_TIMCFG_TSTOP(2)
+#define FLEXIO_TIMCFG_ENABLE_WHEN_PRIOR_TIMER_ENABLES           FLEXIO_TIMCFG_TIMENA(1)
+#define FLEXIO_TIMCFG_DISABLE_WHEN_PRIOR_TIMER_DISABLES         FLEXIO_TIMCFG_TIMDIS(1)
+#define FLEXIO_TIMCTL_TRIGGER_ACTIVE_HIGH                       0
+#define FLEXIO_TIMCFG_DEC_ON_TRIGGER_CHANGE_SHIFT_ON_TRIGGER    FLEXIO_TIMCFG_TIMDEC(3)
+#define FLEXIO_TIMCFG_DISABLE_NEVER                             FLEXIO_TIMCFG_TIMDIS(0)
+#define FLEXIO_TIMCFG_ENABLE_ALWAYS                             FLEXIO_TIMCFG_TIMENA(0)
+#define FLEXIO_SHIFTCTL_MODE_TRANSMIT                           FLEXIO_SHIFTCTL_SMOD(2)
+#define FLEXIO_SHIFTCTL_SHIFT_ON_RISING_EDGE                    0
+#define FLEXIO_SHIFTCTL_PINMODE_OUTPUT                          FLEXIO_SHIFTCTL_PINCFG(3)
+#define FLEXIO_SHIFTCTL_MODE_RECEIVE                            FLEXIO_SHIFTCTL_SMOD(1)
+#define FLEXIO_SHIFTCTL_SHIFT_ON_FALLING_EDGE                   FLEXIO_SHIFTCTL_TIMPOL
+#endif
+
 #if defined(ARDUINO_TEENSY41)
 static void Init_Teensy41_ADC33131D_chip() {
   // configure a timer to trigger FlexIO
@@ -448,25 +477,6 @@ static void Init_Teensy41_ADC33131D_chip() {
 }
 
 #elif defined(__IMXRT1062__)
-static void sum_adc(uint32_t *sum, const adcframe_t *n) {
-  sum[0] += n->adc[0];
-  sum[1] += n->adc[1];
-  sum[2] += n->adc[2];
-  sum[3] += n->adc[3];
-}
-#if defined(ARDUINO_TEENSY41)
-static void sum_adc33131(int32_t *sum, const adc33131_frame_t *n) {
-  sum[0] += n->in[0];
-  sum[1] += n->in[1];
-  sum[2] += n->in[2];
-  sum[3] += n->in[3];
-  sum[4] += n->in[4];
-  sum[5] += n->in[5];
-  sum[6] += n->in[6];
-  sum[7] += n->in[7];
-}
-#endif
-
 /*static*/void FASTRUN ADC::Scan_DMA() {
 
   static int old_idx = 0;
@@ -488,7 +498,14 @@ static void sum_adc33131(int32_t *sum, const adc33131_frame_t *n) {
       for (size_t i=0; i < count; i++) {
         const adc33131_frame_t *data = (adc33131_frame_t *)((uint32_t)adc_buffer +
           (poffset + i * sizeof(adc33131_frame_t)) % sizeof(adc_buffer));
-        sum_adc33131(sum, data);
+        sum[0] += data->in[0];
+        sum[1] += data->in[1];
+        sum[2] += data->in[2];
+        sum[3] += data->in[3];
+        sum[4] += data->in[4];
+        sum[5] += data->in[5];
+        sum[6] += data->in[6];
+        sum[7] += data->in[7];
       }
       // ADC33131D is differential, so let's be paranoid and check for negative
       for (size_t j=0; j < 8; j++) {
@@ -518,7 +535,10 @@ static void sum_adc33131(int32_t *sum, const adc33131_frame_t *n) {
   if (count) {
     for (int i=0; i < count ; i++) {
       const adcframe_t *data = &adc_buffer[(idx + i) % adc_buffer_len];
-      sum_adc(sum, data);
+      sum[0] += data->adc[0];
+      sum[1] += data->adc[1];
+      sum[2] += data->adc[2];
+      sum[3] += data->adc[3];
     }
     const int mult = 16;
     update<ADC_CHANNEL_1>(sum[0] * mult / count);
