@@ -23,6 +23,7 @@ DMAMEM static volatile uint16_t __attribute__((aligned(DMA_BUF_SIZE+0))) adcbuff
 
 #elif defined(__IMXRT1062__)
 #define ADC_SAMPLE_RATE 66000.0f
+#define ADC33131_SAMPLE_RATE 300000.0f // TODO: test various input capacitors vs channel crosstalk
 extern "C" void xbar_connect(unsigned int input, unsigned int output);
 DMAChannel dma0(false);
 typedef struct {
@@ -310,7 +311,7 @@ static void Init_Teensy4_builtin_ADC() {
 #if defined(ARDUINO_TEENSY41)
 static void Init_Teensy41_ADC33131D_chip() {
   // configure a timer to trigger FlexIO
-  const int comp1 = ((float)F_BUS_ACTUAL) / (ADC_SAMPLE_RATE / 100) / 2.0f + 0.5f;
+  const int comp1 = ((float)F_BUS_ACTUAL) / (ADC33131_SAMPLE_RATE) / 2.0f + 0.5f;
   TMR4_ENBL &= ~(1<<3);
   TMR4_SCTRL3 = TMR_SCTRL_OEN | TMR_SCTRL_FORCE;
   TMR4_CSCTRL3 = TMR_CSCTRL_CL1(1) | TMR_CSCTRL_TCF1EN;
@@ -354,7 +355,7 @@ static void Init_Teensy41_ADC33131D_chip() {
   const int baud_timer = 0;
   const int cs_timer = 1;
   const int mux_timer = 2;
-  flexio->TIMCMP[baud_timer] = (ADC_SAMPLE_RATE > 420000) ? 0x1F02 : 0x1F04;
+  flexio->TIMCMP[baud_timer] = (ADC33131_SAMPLE_RATE > 350000) ? 0x1F02 : 0x1F03;
   flexio->TIMCTL[baud_timer] =
     FLEXIO_TIMCTL_TRIGGER_EXTERNAL(0) |
     FLEXIO_TIMCTL_TRIGGER_ACTIVE_LOW |
@@ -406,7 +407,7 @@ static void Init_Teensy41_ADC33131D_chip() {
     FLEXIO_SHIFTCTL_PINMODE_OUTPUT |
     FLEXIO_SHIFTCTL_TIMSEL(mux_timer) |
     FLEXIO_SHIFTCTL_PINSEL(a2_flexio_pin);
-  flexio->SHIFTBUF[a2_shifter] = 0x0F0F0F0F;
+  flexio->SHIFTBUF[a2_shifter] = 0xF0F0F0F0;
   flexio->SHIFTCFG[data_shifter] = 0;
   flexio->SHIFTCTL[data_shifter] = FLEXIO_SHIFTCTL_MODE_RECEIVE |
     FLEXIO_SHIFTCTL_SHIFT_ON_FALLING_EDGE |
@@ -478,6 +479,9 @@ static void Init_Teensy41_ADC33131D_chip() {
 
 #elif defined(__IMXRT1062__)
 /*static*/void FASTRUN ADC::Scan_DMA() {
+  static int ratelimit = 0;
+  if (++ratelimit < 3) return; // emulate update 180us update rate of Teensy 3.2
+  ratelimit = 0;
 
   static int old_idx = 0;
   // find the most recently DMA-stored ADC data frame
@@ -490,7 +494,7 @@ static void Init_Teensy41_ADC33131D_chip() {
     // FlexIO DMA separately deposits each 16 bit reading into memory, so we
     // first need to figure out how many full 8 reading frames we have (if any).
     static uint32_t old_poffset = 0;
-    uint32_t poffset = (uint32_t)p - (uint32_t)adc_buffer;
+    uint32_t poffset = ((uint32_t)p - (uint32_t)adc_buffer) & 0xFFF0;
     size_t count = ((poffset - old_poffset) % sizeof(adc_buffer)) / sizeof(adc33131_frame_t);
     if (count > 0) {
       // if we got any full ADC33131D frames, average them together and update
@@ -512,8 +516,10 @@ static void Init_Teensy41_ADC33131D_chip() {
         if (sum[j] < 0) sum[j] = 0;
       }
       #if 0
-      Serial.printf("%2u: ", count);
-      for (size_t j=0; j < 8; j++) Serial.printf("%4x  ", sum[j]);
+      static elapsedMicros usec = 0;
+      Serial.printf("%2u  %02X  %3u: ", count, poffset, (int)usec);
+      usec = 0;
+      for (size_t j=0; j < 8; j++) Serial.printf("%4x  ", sum[j] / count);
       Serial.println();
       #endif
       const int mult = 2;
