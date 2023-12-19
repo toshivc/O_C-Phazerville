@@ -65,6 +65,9 @@ public:
   };
 
   static void Init(CalibrationData *calibration_data);
+  #if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
+  static void DAC8568_Vref_enable();
+  #endif
 
   static uint8_t calibration_data_used(uint8_t channel_id);
   static void set_auto_channel_calibration_data(uint8_t channel_id);

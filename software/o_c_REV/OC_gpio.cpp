@@ -58,7 +58,7 @@ void OC::Pinout_Detect() {
     butL  = 24;
     OC_GPIO_DEBUG_PIN1 = 16;
     OC_GPIO_DEBUG_PIN2 = 17;
-    ADC33131D_Uses_FlexIO = true; // pins 6=A0, 7=A1, 8=SCK, 9=CS, 12=DATA, 32=A2
+    ADC33131D_Uses_FlexIO = true; // pins 7=A0, 6=A1, 8=SCK, 9=CS, 12=DATA, 32=A2
     I2S2_Audio_ADC = true;        // pins 3=LRCLK, 4=BCLK, 5=DATA, 33=MCLK
     I2S2_Audio_DAC = true;        // pins 2=DATA, 3=LRCLK, 4=BCLK, 33=MCLK
     I2C_Expansion = true;         // pins 18=SDA, 19=SCL
