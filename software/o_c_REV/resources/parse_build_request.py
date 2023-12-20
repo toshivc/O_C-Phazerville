@@ -27,13 +27,13 @@ for item in flags:
         custom_defines += " -DENABLE_APP_POLYLFO"
     if f.startswith('HARRING'):
         custom_defines += " -DENABLE_APP_H1200"
-    if f.startswith('BYTE'):
+    if f.startswith('BYTE') or f.startswith('VIZNUT'):
         custom_defines += " -DENABLE_APP_BYTEBEATGEN"
     if f.startswith('NEURAL'):
         custom_defines += " -DENABLE_APP_NEURAL_NETWORK"
     if f.startswith('DARKEST'):
         custom_defines += " -DENABLE_APP_DARKEST_TIMELINE"
-    if f.startswith('LOW-RENT'):
+    if f.startswith('LOW-RENT') or f.startswith('LORENZ'):
         custom_defines += " -DENABLE_APP_LORENZ"
     if f.startswith('COPIER'):
         custom_defines += " -DENABLE_APP_ASR"

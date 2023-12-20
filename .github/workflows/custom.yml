@@ -20,8 +20,7 @@ jobs:
         GH_COMMENT: ${{ github.event.comment.body }}
       run: |
         echo "OC_ARTIFACT_TAG=custom_${GITHUB_ACTOR}-$(software/o_c_REV/resources/oc_build_tag.sh)" | tr '/' '_' >> $GITHUB_ENV
-        echo "CUSTOM_FLAGS=$(python software/o_c_REV/resources/parse_build_request.py)" >> $GITHUB_ENV
-        env | grep ^GITHUB
+        echo "CUSTOM_BUILD_FLAGS=$(python software/o_c_REV/resources/parse_build_request.py)" >> $GITHUB_ENV
 
     - name: Cache PlatformIO
       uses: actions/cache@v3
@@ -41,8 +40,6 @@ jobs:
         pip3 install -r .github/workflows/requirements.txt
 
     - name: Build firmware
-      env:
-        CUSTOM_BUILD_FLAGS: ${{env.CUSTOM_FLAGS}}
       working-directory: software/o_c_REV/
       run: |
         pio run -e custom
