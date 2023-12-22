@@ -274,8 +274,7 @@ public:
      segments[mapping - BYTEBEAT_CV_MAPPING_FIRST] += (cvs[cv_setting - BYTEBEAT_SETTING_CV1] * 65536) >> bytebeat_cv_rshift;
   }
 
-  template <DAC_CHANNEL dac_channel>
-  void Update(uint32_t triggers, const int32_t cvs[ADC_CHANNEL_LAST]) {
+  void Update(uint32_t triggers, const int32_t cvs[ADC_CHANNEL_LAST], DAC_CHANNEL dac_channel) {
 
     int32_t s[kMaxByteBeatParameters];
     s[0] = SCALE8_16(static_cast<int32_t>(get_equation() << 4));
@@ -322,7 +321,7 @@ public:
     #else
       uint32_t value = OC::DAC::get_zero_offset(dac_channel) + (int16_t)b;
     #endif
-    OC::DAC::set<dac_channel>(value);
+    OC::DAC::set(dac_channel, value);
 
 
     b >>= 8;
@@ -413,10 +412,10 @@ public:
     const int32_t cvs[ADC_CHANNEL_LAST] = { cv1.value(), cv2.value(), cv3.value(), cv4.value() };
     uint32_t triggers = OC::DigitalInputs::clocked();
 
-    bytebeats_[0].Update<DAC_CHANNEL_A>(triggers, cvs);
-    bytebeats_[1].Update<DAC_CHANNEL_B>(triggers, cvs);
-    bytebeats_[2].Update<DAC_CHANNEL_C>(triggers, cvs);
-    bytebeats_[3].Update<DAC_CHANNEL_D>(triggers, cvs);
+    bytebeats_[0].Update(triggers, cvs, DAC_CHANNEL_A);
+    bytebeats_[1].Update(triggers, cvs, DAC_CHANNEL_B);
+    bytebeats_[2].Update(triggers, cvs, DAC_CHANNEL_C);
+    bytebeats_[3].Update(triggers, cvs, DAC_CHANNEL_D);
   }
 
   enum LeftEditMode {

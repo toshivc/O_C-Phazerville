@@ -146,8 +146,7 @@ public:
       segments[mapping - BB_CV_MAPPING_GRAVITY] += (cvs[cv_setting - BB_SETTING_CV1]) << (16 - bb_cv_rshift) ;
   }
 
-  template <DAC_CHANNEL dac_channel>
-  void Update(uint32_t triggers, const int32_t cvs[ADC_CHANNEL_LAST]) {
+  void Update(uint32_t triggers, const int32_t cvs[ADC_CHANNEL_LAST], DAC_CHANNEL dac_channel) {
 
     s[0] = SCALE8_16(static_cast<int32_t>(get_gravity()));
     s[1] = SCALE8_16(static_cast<int32_t>(get_bounce_loss()));
@@ -185,7 +184,7 @@ public:
 
     // TODO Scale range or offset?
     uint32_t value = OC::DAC::get_zero_offset(dac_channel) + bb_.ProcessSingleSample(gate_state, OC::DAC::MAX_VALUE - OC::DAC::get_zero_offset(dac_channel));
-    OC::DAC::set<dac_channel>(value);
+    OC::DAC::set(dac_channel, value);
   }
 
 
@@ -252,10 +251,10 @@ public:
     const int32_t cvs[ADC_CHANNEL_LAST] = { cv1.value(), cv2.value(), cv3.value(), cv4.value() };
     uint32_t triggers = OC::DigitalInputs::clocked();
 
-    balls_[0].Update<DAC_CHANNEL_A>(triggers, cvs);
-    balls_[1].Update<DAC_CHANNEL_B>(triggers, cvs);
-    balls_[2].Update<DAC_CHANNEL_C>(triggers, cvs);
-    balls_[3].Update<DAC_CHANNEL_D>(triggers, cvs);
+    balls_[0].Update(triggers, cvs, DAC_CHANNEL_A);
+    balls_[1].Update(triggers, cvs, DAC_CHANNEL_B);
+    balls_[2].Update(triggers, cvs, DAC_CHANNEL_C);
+    balls_[3].Update(triggers, cvs, DAC_CHANNEL_D);
   }
 
   enum LeftEditMode {
