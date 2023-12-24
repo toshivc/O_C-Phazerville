@@ -51,6 +51,8 @@ for item in flags:
         custom_defines += " -DENABLE_APP_AUTOMATONNETZ"
     if f.startswith('DIALECT') or f.startswith('BBGEN'):
         custom_defines += " -DENABLE_APP_BBGEN"
+    if f.startswith('REFS') or f.startswith('REFERENCE'):
+        custom_defines += " -DENABLE_APP_REFERENCES"
     if f.startswith('GRIDS2'):
         custom_defines += " -DDRUMMAP_GRIDS2"
 
