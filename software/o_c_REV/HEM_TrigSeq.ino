@@ -99,6 +99,8 @@ public:
         pattern[1] = Unpack(data, PackLocation {8,8});
         end_step[0] = Unpack(data, PackLocation {16,3});
         end_step[1] = Unpack(data, PackLocation {19,3});
+
+        ForEachChannel(ch) step[ch] = -1;
     }
 
 protected:

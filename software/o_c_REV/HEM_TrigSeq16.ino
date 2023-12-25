@@ -97,6 +97,8 @@ public:
         pattern[0] = Unpack(data, PackLocation {0,8});
         pattern[1] = Unpack(data, PackLocation {8,8});
         end_step = Unpack(data, PackLocation {16,4});
+
+        step = -1;
     }
 
 protected:

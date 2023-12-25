@@ -66,6 +66,11 @@ public:
         */
     }
 
+    void Reset() {
+        curr_step = (dir != 2) ? 0 : steps;  // Go to 0th or last step depending on direction
+        reverse = (dir != 2) ? 0 : 1;  // Reset reverse (really just for up/down mode)
+    }
+
     void Controller() {
 
         int curr_step_pv = curr_step;  // Detect if an input changes the step this update
@@ -94,8 +99,7 @@ public:
         // Digital Input 1: Reset pulse
         reset_gate = Gate(1);  // For display
         if (Clock(1)) {
-            curr_step = (dir != 2) ? 0 : steps;  // Go to 0th or last step depending on direction
-            reverse = (dir != 2) ? 0 : 1;  // Reset reverse (really just for up/down mode)
+            Reset();
             ClockOut(1);  // BOC pulse output
         }
         
@@ -245,6 +249,7 @@ public:
 
         // Init from received data:
         reverse = (dir == 2);  // Set reverse if starting in down direction
+        Reset();
     }
 
 protected:
