@@ -31,6 +31,14 @@ namespace menu = OC::menu;
 #include "HSMIDI.h"
 #include "HSClockManager.h"
 
+ClockManager *ClockManager::instance = 0;
+
+#include "hemisphere_config.h"
+namespace HS {
+Applet available_applets[] = HEMISPHERE_APPLETS;
+Applet clock_setup_applet = DECLARE_APPLET(9999, 0x01, ClockSetup);
+}
+
 // The settings specify the selected applets, and 64 bits of data for each applet,
 // plus 64 bits of data for the ClockSetup applet (which includes some misc config).
 // This is the structure of a HemispherePreset in eeprom.
@@ -212,12 +220,12 @@ public:
                 doSave = 1;
             hem_active_preset->SetAppletId(h, HS::available_applets[index].id);
 
-            uint64_t data = HS::available_applets[index].OnDataRequest(h);
+            uint64_t data = HS::available_applets[index].instance[h].OnDataRequest();
             if (data != applet_data[h]) doSave = 1;
             applet_data[h] = data;
             hem_active_preset->SetData(h, data);
         }
-        uint64_t data = HS::clock_setup_applet.OnDataRequest(0);
+        uint64_t data = HS::clock_setup_applet.instance[0].OnDataRequest();
         if (data != clock_data) doSave = 1;
         clock_data = data;
         hem_active_preset->SetClockData(data);
@@ -241,14 +249,14 @@ public:
         hem_active_preset = (HemispherePreset*)(hem_presets + id);
         if (hem_active_preset->is_valid()) {
             clock_data = hem_active_preset->GetClockData();
-            HS::clock_setup_applet.OnDataReceive(0, clock_data);
+            HS::clock_setup_applet.instance[0].OnDataReceive(clock_data);
 
             for (int h = 0; h < 2; h++)
             {
                 int index = get_applet_index_by_id( hem_active_preset->GetAppletId(h) );
                 applet_data[h] = hem_active_preset->GetData(h);
                 SetApplet(h, index);
-                HS::available_applets[index].OnDataReceive(h, applet_data[h]);
+                HS::available_applets[index].instance[h].OnDataReceive(applet_data[h]);
             }
         }
         preset_id = id;
@@ -258,7 +266,7 @@ public:
     // does not modify the preset, only the manager
     void SetApplet(int hemisphere, int index) {
         my_applet[hemisphere] = index;
-        HS::available_applets[index].Start(hemisphere);
+        HS::available_applets[index].instance[hemisphere].BaseStart(hemisphere);
     }
 
     void ChangeApplet(int h, int dir) {
@@ -298,7 +306,7 @@ public:
         ProcessMIDI();
 
         // Clock Setup applet handles internal clock duties
-        HS::clock_setup_applet.Controller(LEFT_HEMISPHERE, 0);
+        HS::clock_setup_applet.instance[0].Controller();
 
         // execute Applets
         for (int h = 0; h < 2; h++)
@@ -329,7 +337,7 @@ public:
                     }
                 }
             }
-            HS::available_applets[index].Controller(h, 0);
+            HS::available_applets[index].instance[h].BaseController();
         }
     }
 
@@ -365,16 +373,16 @@ public:
             DrawConfigMenu();
         }
         else if (clock_setup) {
-            HS::clock_setup_applet.View(LEFT_HEMISPHERE);
+            HS::clock_setup_applet.instance[0].View();
         }
         else if (help_hemisphere > -1) {
             int index = my_applet[help_hemisphere];
-            HS::available_applets[index].View(help_hemisphere);
+            HS::available_applets[index].instance[help_hemisphere].BaseView();
         } else {
             for (int h = 0; h < 2; h++)
             {
                 int index = my_applet[h];
-                HS::available_applets[index].View(h);
+                HS::available_applets[index].instance[h].BaseView();
             }
 
             if (clock_m->IsRunning()) {
@@ -407,7 +415,7 @@ public:
         // button down
         if (down) {
             // Clock Setup is more immediate for manual triggers
-            if (clock_setup) HS::clock_setup_applet.OnButtonPress(LEFT_HEMISPHERE);
+            if (clock_setup) HS::clock_setup_applet.instance[0].OnButtonPress();
             // TODO: consider a new OnButtonDown handler for applets
             return;
         }
@@ -418,7 +426,7 @@ public:
         } else if (!clock_setup) {
             // regular applets get button release
             int index = my_applet[h];
-            HS::available_applets[index].OnButtonPress(h);
+            HS::available_applets[index].instance[h].OnButtonPress();
         }
     }
 
@@ -495,12 +503,12 @@ public:
         }
 
         if (clock_setup) {
-            HS::clock_setup_applet.OnEncoderMove(LEFT_HEMISPHERE, event.value);
+            HS::clock_setup_applet.instance[0].OnEncoderMove(event.value);
         } else if (select_mode == h) {
             ChangeApplet(h, event.value);
         } else {
             int index = my_applet[h];
-            HS::available_applets[index].OnEncoderMove(h, event.value);
+            HS::available_applets[index].instance[h].OnEncoderMove(event.value);
         }
     }
 
@@ -526,12 +534,12 @@ public:
     void SetHelpScreen(int hemisphere) {
         if (help_hemisphere > -1) { // Turn off the previous help screen
             int index = my_applet[help_hemisphere];
-            HS::available_applets[index].ToggleHelpScreen(help_hemisphere);
+            HS::available_applets[index].instance[help_hemisphere].ToggleHelpScreen();
         }
 
         if (hemisphere > -1) { // Turn on the next hemisphere's screen
             int index = my_applet[hemisphere];
-            HS::available_applets[index].ToggleHelpScreen(hemisphere);
+            HS::available_applets[index].instance[hemisphere].ToggleHelpScreen();
         }
 
         help_hemisphere = hemisphere;
