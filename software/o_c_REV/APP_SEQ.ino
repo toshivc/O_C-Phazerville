@@ -2076,7 +2076,7 @@ void SEQ_init() {
   seq_state.cursor.AdjustEnd(seq_channel[0].num_enabled_settings() - 1);
 }
 
-size_t SEQ_storageSize() {
+constexpr size_t SEQ_storageSize() {
   return NUM_CHANNELS * SEQ_Channel::storageSize();
 }
 

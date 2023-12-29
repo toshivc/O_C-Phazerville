@@ -365,7 +365,7 @@ void Automatonnetz_init() {
   automatonnetz_state.Reset();
 }
 
-size_t Automatonnetz_storageSize() {
+constexpr size_t Automatonnetz_storageSize() {
   return AutomatonnetzState::storageSize() +
     GRID_CELLS * TransformCell::storageSize();
 }

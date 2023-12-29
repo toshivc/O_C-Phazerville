@@ -86,7 +86,7 @@ void Settings_init() {
 }
 
 // Not using O_C Storage
-size_t Settings_storageSize() {return 0;}
+constexpr size_t Settings_storageSize() {return 0;}
 size_t Settings_save(void *storage) {return 0;}
 size_t Settings_restore(const void *storage) {return 0;}
 

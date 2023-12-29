@@ -854,7 +854,7 @@ void ENVGEN_init() {
   envgen.Init();
 }
 
-size_t ENVGEN_storageSize() {
+constexpr size_t ENVGEN_storageSize() {
   return 4 * EnvelopeGenerator::storageSize();
 }
 

@@ -289,7 +289,7 @@ void BBGEN_init() {
   bbgen.Init();
 }
 
-size_t BBGEN_storageSize() {
+constexpr size_t BBGEN_storageSize() {
   return 4 * BouncingBall::storageSize();
 }
 

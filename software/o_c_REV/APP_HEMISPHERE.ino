@@ -707,7 +707,7 @@ void HEMISPHERE_init() {
     manager.BaseStart();
 }
 
-size_t HEMISPHERE_storageSize() {
+constexpr size_t HEMISPHERE_storageSize() {
     return HemispherePreset::storageSize() * HEM_NR_OF_PRESETS;
 }
 

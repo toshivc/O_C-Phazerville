@@ -69,7 +69,7 @@ struct App {
 
 namespace apps {
 
-  extern App *current_app;
+  extern const App *current_app;
 
   void Init(bool reset_settings);
 
@@ -79,7 +79,7 @@ namespace apps {
       current_app->isr();
   }
 
-  App *find(uint16_t id);
+  const App *find(uint16_t id);
   int index_of(uint16_t id);
 
 }; // namespace apps

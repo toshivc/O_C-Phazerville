@@ -347,7 +347,7 @@ void REFS_init() {
   references_app.Init();
 }
 
-size_t REFS_storageSize() {
+constexpr size_t REFS_storageSize() {
   return NUM_REF_CHANNELS * ReferenceChannel::storageSize();
 }
 

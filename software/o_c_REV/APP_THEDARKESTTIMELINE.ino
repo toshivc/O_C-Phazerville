@@ -531,7 +531,7 @@ void TheDarkestTimeline_init() {
     TheDarkestTimeline_instance.BaseStart();
 }
 
-size_t TheDarkestTimeline_storageSize() {
+constexpr size_t TheDarkestTimeline_storageSize() {
     return TheDarkestTimeline::storageSize();
 }
 

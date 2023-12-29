@@ -1016,7 +1016,7 @@ void H1200_init() {
   h1200_state.cursor.AdjustEnd(h1200_settings.num_enabled_settings() - 1);
 }
 
-size_t H1200_storageSize() {
+constexpr size_t H1200_storageSize() {
   return H1200Settings::storageSize();
 }
 

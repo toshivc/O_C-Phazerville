@@ -111,7 +111,7 @@ public:
 
     // Vbias auto-config helper
     // Cross-reference OC_apps.ino for app IDs
-    void SetStateForApp(OC::App *app) {
+    void SetStateForApp(const OC::App *app) {
         VState new_state = VBiasManager::ASYM; // default case
         
         switch (app->id)

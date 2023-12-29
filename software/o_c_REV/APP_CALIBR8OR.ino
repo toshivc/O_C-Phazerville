@@ -607,7 +607,7 @@ Calibr8or Calibr8or_instance;
 // App stubs
 void Calibr8or_init() { Calibr8or_instance.BaseStart(); }
 
-size_t Calibr8or_storageSize() {
+constexpr size_t Calibr8or_storageSize() {
     return Calibr8orPreset::storageSize() * NR_OF_PRESETS;
 }
 

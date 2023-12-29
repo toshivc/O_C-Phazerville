@@ -508,7 +508,7 @@ ScenesApp ScenesApp_instance;
 // App stubs
 void ScenesApp_init() { ScenesApp_instance.BaseStart(); }
 
-size_t ScenesApp_storageSize() {
+constexpr size_t ScenesApp_storageSize() {
     return ScenesAppPreset::storageSize() * NR_OF_SCENE_PRESETS;
 }
 

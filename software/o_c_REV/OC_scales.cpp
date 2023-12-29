@@ -1,13 +1,9 @@
 #include "OC_scales.h"
-#include "braids_quantizer_scales.h"
 
 namespace OC {
 
 Scale user_scales[Scales::SCALE_USER_LAST];
 Scale dummy_scale;
-
-/*static*/
-const int Scales::NUM_SCALES = OC::Scales::SCALE_USER_LAST + sizeof(braids::scales) / sizeof(braids::scales[0]);
 
 /*static*/
 void Scales::Init() {

@@ -546,7 +546,7 @@ void FPART_init() {
   fpart_instance.Init();
 }
 
-size_t FPART_storageSize() {
+constexpr size_t FPART_storageSize() {
   return Fpart::storageSize();
 }
 

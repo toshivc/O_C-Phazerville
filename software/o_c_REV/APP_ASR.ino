@@ -808,7 +808,7 @@ void ASR_init() {
   asr_state.cursor.AdjustEnd(asr.num_enabled_settings() - 1);
 }
 
-size_t ASR_storageSize() {
+constexpr size_t ASR_storageSize() {
   return ASRApp::storageSize();
 }
 

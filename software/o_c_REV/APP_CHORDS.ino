@@ -1068,7 +1068,7 @@ void CHORDS_init() {
   chords_state.cursor.AdjustEnd(chords.num_enabled_settings() - 1);
 }
 
-size_t CHORDS_storageSize() {
+constexpr size_t CHORDS_storageSize() {
   return Chords::storageSize();
 }
 

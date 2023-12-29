@@ -379,7 +379,7 @@ void POLYLFO_init() {
   poly_lfo.Init();
 }
 
-size_t POLYLFO_storageSize() {
+constexpr size_t POLYLFO_storageSize() {
   return PolyLfo::storageSize();
 }
 

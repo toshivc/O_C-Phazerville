@@ -848,7 +848,7 @@ void MIDI_init() {
     captain_midi_instance.Start();
 }
 
-size_t MIDI_storageSize() {
+constexpr size_t MIDI_storageSize() {
     return CaptainMIDI::storageSize();
 }
 

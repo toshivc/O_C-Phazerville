@@ -451,7 +451,7 @@ void BYTEBEATGEN_init() {
   bytebeatgen.Init();
 }
 
-size_t BYTEBEATGEN_storageSize() {
+constexpr size_t BYTEBEATGEN_storageSize() {
   return 4 * ByteBeat::storageSize();
 }
 

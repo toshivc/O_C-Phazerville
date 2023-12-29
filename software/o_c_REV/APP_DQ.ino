@@ -1183,7 +1183,7 @@ void DQ_init() {
   dq_state.cursor.AdjustEnd(dq_quantizer_channels[0].num_enabled_settings() - 1);
 }
 
-size_t DQ_storageSize() {
+constexpr size_t DQ_storageSize() {
   return NUMCHANNELS * DQ_QuantizerChannel::storageSize();
 }
 

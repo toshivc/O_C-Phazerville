@@ -1176,7 +1176,7 @@ void EnigmaTMWS_init() {
     EnigmaTMWS_instance.BaseStart();
 }
 
-size_t EnigmaTMWS_storageSize() {
+constexpr size_t EnigmaTMWS_storageSize() {
     return EnigmaTMWS::storageSize();
 }
 size_t EnigmaTMWS_save(void *storage) {

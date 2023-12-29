@@ -240,7 +240,7 @@ void LORENZ_init() {
   lorenz_generator.Init();
 }
 
-size_t LORENZ_storageSize() {
+constexpr size_t LORENZ_storageSize() {
   return LorenzGenerator::storageSize();
 }
 

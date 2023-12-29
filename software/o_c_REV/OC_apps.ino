@@ -37,7 +37,7 @@
   prefix ## _isr \
 }
 
-OC::App available_apps[] = {
+static constexpr OC::App available_apps[] = {
 
   #ifdef ENABLE_APP_CALIBR8OR
   DECLARE_APP('C','8', "Calibr8or", Calibr8or),
@@ -182,6 +182,18 @@ void save_global_settings() {
   SERIAL_PRINTLN("Saved global settings: page_index %d", global_settings_storage.page_index());
 }
 
+static constexpr size_t total_storage_size() {
+    size_t used = 0;
+    for (size_t i = 0; i < NUM_AVAILABLE_APPS; ++i) {
+        used += available_apps[i].storageSize() + sizeof(AppChunkHeader);
+        if (used & 1) ++used; // align on 2-byte boundaries
+    }
+    return used;
+}
+
+static constexpr size_t totalsize = total_storage_size();
+static_assert(totalsize < OC::AppData::kAppDataSize, "EEPROM Allocation Exceeded");
+
 void save_app_data() {
   SERIAL_PRINTLN("Save app data... (%u bytes available)", OC::AppData::kAppDataSize);
 
@@ -231,7 +243,7 @@ void restore_app_data() {
       break;
     }
 
-    App *app = apps::find(chunk->id);
+    const App *app = apps::find(chunk->id);
     if (!app) {
       SERIAL_PRINTLN("App %02x not found, ignoring chunk...", app->id);
       if (!chunk->length)
@@ -272,9 +284,9 @@ void set_current_app(int index) {
   #endif
 }
 
-App *current_app = &available_apps[DEFAULT_APP_INDEX];
+const App *current_app = &available_apps[DEFAULT_APP_INDEX];
 
-App *find(uint16_t id) {
+const App *find(uint16_t id) {
   for (auto &app : available_apps)
     if (app.id == id) return &app;
   return nullptr;

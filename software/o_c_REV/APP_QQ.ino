@@ -1213,7 +1213,7 @@ void QQ_init() {
   qq_state.cursor.AdjustEnd(quantizer_channels[0].num_enabled_settings() - 1);
 }
 
-size_t QQ_storageSize() {
+constexpr size_t QQ_storageSize() {
   return 4 * QuantizerChannel::storageSize();
 }
 

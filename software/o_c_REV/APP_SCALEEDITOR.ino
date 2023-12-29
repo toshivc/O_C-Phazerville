@@ -347,7 +347,7 @@ void SCALEEDITOR_init() {
 }
 
 // Not using O_C Storage
-size_t SCALEEDITOR_storageSize() {return 0;}
+constexpr size_t SCALEEDITOR_storageSize() {return 0;}
 size_t SCALEEDITOR_save(void *storage) {return 0;}
 size_t SCALEEDITOR_restore(const void *storage) {return 0;}
 

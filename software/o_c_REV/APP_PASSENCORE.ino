@@ -997,7 +997,7 @@ void PASSENCORE_init() {
   passencore_state.Init();
 }
 
-size_t PASSENCORE_storageSize() {
+constexpr size_t PASSENCORE_storageSize() {
   return PASSENCORE::storageSize();
 }
 
