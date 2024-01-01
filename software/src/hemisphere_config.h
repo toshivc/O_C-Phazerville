@@ -71,7 +71,6 @@ class_name class_name ## _instance[2]
 #include "applets/Slew.h"
 #include "applets/Squanch.h"
 #include "applets/Stairs.h"
-#include "applets/Strum.h"
 #include "applets/Switch.h"
 #include "applets/TB3PO.h"
 #include "applets/TLNeuron.h"
@@ -146,7 +145,6 @@ CREATE_APPLET(Shredder);
 CREATE_APPLET(Shuffle);
 CREATE_APPLET(Slew);
 CREATE_APPLET(Squanch);
-CREATE_APPLET(Strum);
 CREATE_APPLET(Switch);
 CREATE_APPLET(TLNeuron);
 CREATE_APPLET(Trending);
