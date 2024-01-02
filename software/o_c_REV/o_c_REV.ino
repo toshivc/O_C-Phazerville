@@ -118,7 +118,22 @@ void setup() {
 
   OC::DEBUG::Init();
   OC::DigitalInputs::Init();
-  delay(400); 
+  #if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
+  if (DAC8568_Uses_SPI) {
+    // DAC8568 Vref does not turn on by default like DAC8565
+    // best to turn on Vref as early as possible for analog
+    // circuitry to settle
+    OC::DAC::DAC8568_Vref_enable();
+  }
+  if (ADC33131D_Uses_FlexIO) {
+    // ADC33131D wants calibration for Vref, takes ~1150 ms
+    OC::ADC::ADC33131D_Vref_calibrate();
+  } else {
+  #endif
+    delay(400);
+  #if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
+  }
+  #endif
   OC::ADC::Init(&OC::calibration_data.adc); // Yes, it's using the calibration_data before it's loaded...
   OC::ADC::Init_DMA();
   OC::DAC::Init(&OC::calibration_data.dac);

@@ -18,7 +18,7 @@ uint8_t but_top=4, but_bot=5, but_mid=255, but_top2=255, but_bot2=255;
 uint8_t OC_GPIO_DEBUG_PIN1=24, OC_GPIO_DEBUG_PIN2=25;
 bool ADC33131D_Uses_FlexIO=false;
 bool OLED_Uses_SPI1=false;
-bool DAC8558_Uses_SPI=false;
+bool DAC8568_Uses_SPI=false;
 bool I2S2_Audio_ADC=false;
 bool I2S2_Audio_DAC=false;
 bool I2C_Expansion=false;
@@ -38,16 +38,16 @@ void OC::Pinout_Detect() {
     TR2 = 1;
     TR3 = 23;
     TR4 = 22;
-    but_top = 14;
-    but_top2 = 15;
-    but_bot = 29;
-    but_bot2 = 28;
+    but_top = 29;
+    but_top2 = 28;
+    but_bot = 14;
+    but_bot2 = 15;
     but_mid = 20;
     OLED_Uses_SPI1 = true;   // pins 26=MOSI, 27=SCK
     OLED_DC = 39;
     OLED_RST = 38;
     OLED_CS = 40;
-    DAC8558_Uses_SPI = true; // pins 10=CS, 11=MOSI, 13=SCK
+    DAC8568_Uses_SPI = true; // pins 10=CS, 11=MOSI, 13=SCK
     DAC_CS = 255;            // pin 10 controlled by SPI hardware
     DAC_RST = 255;
     encR1 = 36;
@@ -58,7 +58,7 @@ void OC::Pinout_Detect() {
     butL  = 24;
     OC_GPIO_DEBUG_PIN1 = 16;
     OC_GPIO_DEBUG_PIN2 = 17;
-    ADC33131D_Uses_FlexIO = true; // pins 6=A0, 7=A1, 8=SCK, 9=CS, 12=DATA, 32=A2
+    ADC33131D_Uses_FlexIO = true; // pins 7=A0, 6=A1, 8=SCK, 9=CS, 12=DATA, 32=A2
     I2S2_Audio_ADC = true;        // pins 3=LRCLK, 4=BCLK, 5=DATA, 33=MCLK
     I2S2_Audio_DAC = true;        // pins 2=DATA, 3=LRCLK, 4=BCLK, 33=MCLK
     I2C_Expansion = true;         // pins 18=SDA, 19=SCL

@@ -49,6 +49,9 @@ public:
   };
 
   static void Init(CalibrationData *calibration_data);
+  #if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
+  static void ADC33131D_Vref_calibrate();
+  #endif
   static void Init_DMA();
   static void DMA_ISR();
   static void Scan_DMA();
@@ -116,6 +119,6 @@ private:
   #endif
 };
 
-};
+}; // namespace OC
 
 #endif // OC_ADC_H_
