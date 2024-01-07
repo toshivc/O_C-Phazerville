@@ -166,6 +166,9 @@ using namespace HS;
 
 class HemisphereManager : public HSApplication {
 public:
+    enum PopupType {
+      CLOCK_POPUP, PRESET_POPUP,
+    };
     void Start() {
         //select_mode = -1; // Not selecting
 
@@ -245,6 +248,7 @@ public:
             }
         }
         preset_id = id;
+        PokePopup(PRESET_POPUP);
     }
 
     // does not modify the preset, only the manager
@@ -325,26 +329,39 @@ public:
         }
     }
 
+    inline void PokePopup(PopupType pop) {
+      popup_type = pop;
+      popup_tick = OC::CORE::ticks;
+    }
+
     void DrawPopup() {
         graphics.clearRect(24, 23, 80, 18);
         graphics.drawFrame(25, 24, 78, 16);
 
         graphics.setPrintPos(29, 28);
-        graphics.print("Clock ");
-        if (clock_m->IsRunning())
-          graphics.print("Start");
-        else
-          graphics.print(clock_m->IsPaused() ? "Armed" : "Stop");
+
+        switch (popup_type) {
+          case CLOCK_POPUP:
+            graphics.print("Clock ");
+            if (clock_m->IsRunning())
+              graphics.print("Start");
+            else
+              graphics.print(clock_m->IsPaused() ? "Armed" : "Stop");
+          break;
+
+          case PRESET_POPUP:
+            graphics.print("> Preset ");
+            graphics.print(hem_preset_name[preset_id]);
+          break;
+        }
     }
 
     void View() {
         if (config_menu) {
             DrawConfigMenu();
-            //return;
         }
         else if (clock_setup) {
             HS::clock_setup_applet.View(LEFT_HEMISPHERE);
-            //return;
         }
         else if (help_hemisphere > -1) {
             int index = my_applet[help_hemisphere];
@@ -367,6 +384,7 @@ public:
             if (select_mode == RIGHT_HEMISPHERE) graphics.drawFrame(64, 0, 64, 64);
         }
 
+        // Overlay popup window last
         if (OC::CORE::ticks - popup_tick < HEMISPHERE_CURSOR_TICKS) {
             DrawPopup();
         }
@@ -489,7 +507,7 @@ public:
             bool p = clock_m->IsPaused();
             clock_m->Start( !p );
         }
-        popup_tick = OC::CORE::ticks;
+        PokePopup(CLOCK_POPUP);
     }
 
     void ToggleClockSetup() {
@@ -528,6 +546,7 @@ private:
     int help_hemisphere; // Which of the hemispheres (if any) is in help mode, or -1 if none
     uint32_t click_tick; // Measure time between clicks for double-click
     uint32_t popup_tick; // for button feedback
+    PopupType popup_type = PRESET_POPUP;
     int first_click; // The first button pushed of a double-click set, to see if the same one is pressed
     ClockManager *clock_m = clock_m->get();
 
