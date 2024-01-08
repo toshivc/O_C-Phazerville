@@ -270,7 +270,7 @@ public:
 
             int output_cv = c.last_note;
             if ( OC::DAC::calibration_data_used( DAC_CHANNEL(sel_chan) ) != 0x01 ) // not autotuned
-                output_cv *= (CAL8OR_PRECISION + c.scale_factor) / CAL8OR_PRECISION;
+                output_cv = output_cv * (CAL8OR_PRECISION + c.scale_factor) / CAL8OR_PRECISION;
             output_cv += c.offset;
 
             Out(ch, output_cv);
