@@ -96,9 +96,18 @@ public:
         }
 
         if (Clock(0)) {
+          // sequence advance, get trigger bits
+          bool trig_q[2] = { div_seq[0].Poke(), div_seq[1].Poke() };
+
           ForEachChannel(ch) {
-            if (div_seq[ch].Poke())
-              TrigOut(ch);
+            // XOR with positive CV gate
+            bool trig = (trig_q[ch] != (In(ch) > 6*128));
+
+            // negative CV gate enables XOR with other channel
+            if (In(ch) < -6*128)
+                trig = (trig != trig_q[1-ch]);
+
+            if (trig) TrigOut(ch);
           }
         }
 
@@ -162,8 +171,8 @@ protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "1=Clock  2=Reset";
-        help[HEMISPHERE_HELP_CVS]      = "1=       2=";
-        help[HEMISPHERE_HELP_OUTS]     = "A=Trig   B=Skips";
+        help[HEMISPHERE_HELP_CVS]      = "1=XOR    2=XOR";
+        help[HEMISPHERE_HELP_OUTS]     = "A=Trig   B=Trig";
         help[HEMISPHERE_HELP_ENCODER]  = "Division per step";
         //                               "------------------" <-- Size Guide
     }
