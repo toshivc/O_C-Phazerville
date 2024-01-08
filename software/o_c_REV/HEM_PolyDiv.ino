@@ -42,21 +42,25 @@ public:
       uint8_t steps[NUM_STEPS];
 
       bool Poke() {
-            // reset case
-            if (step_index < 0) {
-                ++step_index;
-                return true;
-            }
+        // reset case
+        if (step_index < 0) {
+            step_index = 0;
+            return steps[step_index] > 0;
+        }
 
-            // quota achieved, advance to next enabled step
-            if (++clock_count >= steps[step_index]) {
-                clock_count = 0;
-                do { // lol this will get stuck if anything goes wrong...
-                    ++step_index %= NUM_STEPS;
-                } while (steps[step_index] == 0);
-                return true;
-            }
-            return false;
+        // quota achieved, advance to next enabled step
+        if (++clock_count >= steps[step_index]) {
+            clock_count = 0;
+
+            int i = 0;
+            do {
+                ++step_index %= NUM_STEPS;
+                ++i;
+            } while (steps[step_index] == 0 && i < NUM_STEPS);
+
+            return steps[step_index] > 0;
+        }
+        return false;
       }
       void Reset() {
         step_index = -1;
@@ -139,7 +143,7 @@ public:
         const int s = cursor % NUM_STEPS;
         const int div = div_seq[ch].steps[s] + direction;
         //if (div < 0) div = MAX_DIV;
-        div_seq[ch].steps[s] = constrain(div, (cursor == STEP1A || cursor == STEP1B) ? 1 : 0, MAX_DIV);
+        div_seq[ch].steps[s] = constrain(div, 0, MAX_DIV);
     }
 
     uint64_t OnDataRequest() {
@@ -147,7 +151,7 @@ public:
         const size_t b = 6; // bitsize
         ForEachChannel(ch) {
           for (size_t i = 0; i < NUM_STEPS; i++) {
-            const uint8_t val = div_seq[ch].steps[i] + (i == 0 ? -1 : 0);
+            const uint8_t val = div_seq[ch].steps[i];
             Pack(data, PackLocation {ch*NUM_STEPS*b + i*b, b}, val);
           }
         }
@@ -158,7 +162,7 @@ public:
         const size_t b = 6; // bitsize
         ForEachChannel(ch) {
             for (size_t i = 0; i < NUM_STEPS; i++) {
-                div_seq[ch].steps[i] = Unpack(data, PackLocation {ch*NUM_STEPS*b + i*b, b}) + (i == 0 ? 1 : 0);
+                div_seq[ch].steps[i] = Unpack(data, PackLocation {ch*NUM_STEPS*b + i*b, b});
                 div_seq[ch].steps[i] = constrain(div_seq[ch].steps[i], 0, MAX_DIV);
             }
             // step 1 cannot be zero
@@ -189,6 +193,8 @@ private:
       // divisions
       ForEachChannel(ch) {
         for(int i = 0; i < NUM_STEPS; i++) {
+          if (div_seq[ch].steps[i] == 0 && cursor != i + ch*NUM_STEPS) continue;
+
           gfxPrint(1 + 31*ch, 15 + (i*10), div_seq[ch].steps[i]);
           DrawSlider(14 + 31*ch, 15 + (i*10), 14, div_seq[ch].steps[i], MAX_DIV, cursor == i+ch*NUM_STEPS);
 
