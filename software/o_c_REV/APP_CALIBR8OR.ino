@@ -671,6 +671,9 @@ void Calibr8or_handleButtonEvent(const UI::Event &event) {
     // For down button, handle press and long press
     switch (event.type) {
     case UI::EVENT_BUTTON_DOWN:
+#ifdef VOR
+        if (event.control != OC::CONTROL_BUTTON_M)
+#endif
         Calibr8or_instance.OnButtonDown(event);
 
         break;
