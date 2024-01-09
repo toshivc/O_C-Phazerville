@@ -85,11 +85,18 @@ void DAC::Init(CalibrationData *calibration_data) {
     SPIFIFO.begin(DAC_CS, SPICLOCK_30MHz, SPI_MODE0);  
 
 #elif defined(__IMXRT1062__)
+  #if defined(ARDUINO_TEENSY40)
   SPI.begin();
   IOMUXC_SW_MUX_CTL_PAD_GPIO_B0_00 = 3; // DAC CS pin controlled by SPI
-  #if defined(ARDUINO_TEENSY41)
-  // if (DAC8568_Uses_SPI), assume DAC8568_Vref_enable() already called by
-  // main program startup, so we don't need to do any more hardware init
+  #elif defined(ARDUINO_TEENSY41)
+  if (DAC8568_Uses_SPI) {
+    // Assume DAC8568_Vref_enable() already called by  main program startup,
+    // so we don't need to do any more hardware init, and calling SPI.begin()
+    // again could cause problems.
+  } else {
+    SPI.begin();
+    IOMUXC_SW_MUX_CTL_PAD_GPIO_B0_00 = 3; // DAC CS pin controlled by SPI
+  }
   if (ADC33131D_Uses_FlexIO) {
     // ADC33131D wants pin 12 for data input, but SPI.begin() takes it away
     // reconfigure pin mux to return pin 12 control to FlexIO
