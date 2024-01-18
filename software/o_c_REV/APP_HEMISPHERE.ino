@@ -156,7 +156,7 @@ public:
 // HemispherePreset hem_config; // special place for Clock data and Config data, 64 bits each
 
 HemispherePreset hem_presets[HEM_NR_OF_PRESETS];
-HemispherePreset *hem_active_preset;
+HemispherePreset *hem_active_preset = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Hemisphere Manager
@@ -192,12 +192,12 @@ public:
     }
     void Suspend() {
         if (hem_active_preset) {
-            if (HS::auto_save_enabled) StoreToPreset(preset_id);
+            if (HS::auto_save_enabled || 0 == preset_id) StoreToPreset(preset_id, !HS::auto_save_enabled);
             hem_active_preset->OnSendSysEx();
         }
     }
 
-    void StoreToPreset(HemispherePreset* preset) {
+    void StoreToPreset(HemispherePreset* preset, bool skip_eeprom = false) {
         bool doSave = (preset != hem_active_preset);
 
         hem_active_preset = preset;
@@ -219,7 +219,7 @@ public:
         hem_active_preset->SetClockData(data);
 
         // initiate actual EEPROM save - ONLY if necessary!
-        if (doSave) {
+        if (doSave && !skip_eeprom) {
             OC::CORE::app_isr_enabled = false;
             OC::draw_save_message(60);
             delay(1);
@@ -229,8 +229,8 @@ public:
         }
 
     }
-    void StoreToPreset(int id) {
-        StoreToPreset( (HemispherePreset*)(hem_presets + id) );
+    void StoreToPreset(int id, bool skip_eeprom = false) {
+        StoreToPreset( (HemispherePreset*)(hem_presets + id), skip_eeprom );
         preset_id = id;
     }
     void LoadFromPreset(int id) {
@@ -759,7 +759,6 @@ size_t HEMISPHERE_restore(const void *storage) {
     for (int i = 0; i < HEM_NR_OF_PRESETS; ++i) {
         used += hem_presets[i].Restore(static_cast<const char*>(storage) + used);
     }
-    manager.Resume();
     return used;
 }
 
@@ -770,6 +769,7 @@ void FASTRUN HEMISPHERE_isr() {
 void HEMISPHERE_handleAppEvent(OC::AppEvent event) {
     switch (event) {
     case OC::APP_EVENT_RESUME:
+        manager.Resume();
         break;
 
     case OC::APP_EVENT_SCREENSAVER_ON:
