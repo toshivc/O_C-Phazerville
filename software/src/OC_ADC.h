@@ -17,11 +17,17 @@ enum ADC_CHANNEL {
   ADC_CHANNEL_2,
   ADC_CHANNEL_3,
   ADC_CHANNEL_4,
+#if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
+  ADC_CHANNEL_5,
+  ADC_CHANNEL_6,
+  ADC_CHANNEL_7,
+  ADC_CHANNEL_8,
+#endif
   ADC_CHANNEL_LAST,
 };
 
 #define DMA_BUF_SIZE 16
-#define DMA_NUM_CH ADC_CHANNEL_LAST
+#define DMA_NUM_CH 4
 
 namespace OC {
 

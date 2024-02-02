@@ -25,7 +25,11 @@ static inline void dac8568_set_channel(uint32_t channel, uint32_t data) {
 extern void SPI_init();
 
 enum DAC_CHANNEL {
-  DAC_CHANNEL_A, DAC_CHANNEL_B, DAC_CHANNEL_C, DAC_CHANNEL_D, DAC_CHANNEL_LAST
+  DAC_CHANNEL_A, DAC_CHANNEL_B, DAC_CHANNEL_C, DAC_CHANNEL_D,
+#if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
+  DAC_CHANNEL_E, DAC_CHANNEL_F, DAC_CHANNEL_G, DAC_CHANNEL_H,
+#endif
+  DAC_CHANNEL_LAST
 };
 
 enum OutputVoltageScaling {
@@ -212,10 +216,8 @@ public:
 
   // Set all channels to integer voltage value, where 0 = 0V, 1 = 1V
   static void set_all_octave(int v) {
-    set_octave(DAC_CHANNEL_A, v);
-    set_octave(DAC_CHANNEL_B, v);
-    set_octave(DAC_CHANNEL_C, v);
-    set_octave(DAC_CHANNEL_D, v);
+    for (int i = DAC_CHANNEL_A; i < DAC_CHANNEL_LAST; ++i)
+      set_octave(DAC_CHANNEL(i), v);
   }
 
   static uint32_t get_zero_offset(DAC_CHANNEL channel) {
@@ -233,7 +235,10 @@ public:
         dac8568_set_channel(1, values_[DAC_CHANNEL_B]);
         dac8568_set_channel(2, values_[DAC_CHANNEL_C]);
         dac8568_set_channel(3, values_[DAC_CHANNEL_D]);
-        // TODO, other 4 channels....
+        dac8568_set_channel(4, values_[DAC_CHANNEL_E]);
+        dac8568_set_channel(5, values_[DAC_CHANNEL_F]);
+        dac8568_set_channel(6, values_[DAC_CHANNEL_G]);
+        dac8568_set_channel(7, values_[DAC_CHANNEL_H]);
       } else {
     #endif
         set8565_CHA(values_[DAC_CHANNEL_A]);
@@ -245,10 +250,8 @@ public:
     #endif
 
     size_t tail = history_tail_;
-    history_[DAC_CHANNEL_A][tail] = values_[DAC_CHANNEL_A];
-    history_[DAC_CHANNEL_B][tail] = values_[DAC_CHANNEL_B];
-    history_[DAC_CHANNEL_C][tail] = values_[DAC_CHANNEL_C];
-    history_[DAC_CHANNEL_D][tail] = values_[DAC_CHANNEL_D];
+    for (int i = DAC_CHANNEL_A; i < DAC_CHANNEL_LAST; ++i)
+      history_[i][tail] = values_[i];
     history_tail_ = (tail + 1) % kHistoryDepth;
   }
 

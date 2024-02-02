@@ -88,6 +88,32 @@ enum Cal8Settings {
     CAL8_TRANSPOSE_D,
     CAL8_ROOTKEY_AND_CLOCKMODE_D,
 
+#ifdef ARDUINO_TEENSY41
+    CAL8_SCALE_E,
+    CAL8_SCALEFACTOR_E,
+    CAL8_OFFSET_E,
+    CAL8_TRANSPOSE_E,
+    CAL8_ROOTKEY_AND_CLOCKMODE_E,
+
+    CAL8_SCALE_F,
+    CAL8_SCALEFACTOR_F,
+    CAL8_OFFSET_F,
+    CAL8_TRANSPOSE_F,
+    CAL8_ROOTKEY_AND_CLOCKMODE_F,
+
+    CAL8_SCALE_G,
+    CAL8_SCALEFACTOR_G,
+    CAL8_OFFSET_G,
+    CAL8_TRANSPOSE_G,
+    CAL8_ROOTKEY_AND_CLOCKMODE_G,
+
+    CAL8_SCALE_H,
+    CAL8_SCALEFACTOR_H,
+    CAL8_OFFSET_H,
+    CAL8_TRANSPOSE_H,
+    CAL8_ROOTKEY_AND_CLOCKMODE_H,
+#endif
+
     CAL8_SETTING_LAST
 };
 enum Cal8Presets {
@@ -99,15 +125,6 @@ enum Cal8Presets {
     NR_OF_PRESETS
 };
 
-enum Cal8Channel {
-    CAL8_CHANNEL_A,
-    CAL8_CHANNEL_B,
-    CAL8_CHANNEL_C,
-    CAL8_CHANNEL_D,
-
-    NR_OF_CHANNELS
-};
-
 enum Cal8ClockMode {
     CONTINUOUS,
     TRIG_TRANS,
@@ -115,8 +132,6 @@ enum Cal8ClockMode {
 
     NR_OF_CLOCKMODES
 };
-
-const char * cal8_preset_id[4] = {"A", "B", "C", "D"};
 
 class Calibr8orPreset : public settings::SettingsBase<Calibr8orPreset, CAL8_SETTING_LAST> {
 public:
@@ -128,7 +143,7 @@ public:
 
         int ix = 1; // skip validity flag
 
-        for (int ch = 0; ch < NR_OF_CHANNELS; ++ch) {
+        for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
             channel[ch].scale = values_[ix++];
             channel[ch].scale = constrain(channel[ch].scale, 0, OC::Scales::NUM_SCALES - 1);
 
@@ -148,7 +163,7 @@ public:
 
         values_[ix++] = 1; // validity flag
 
-        for (int ch = 0; ch < NR_OF_CHANNELS; ++ch) {
+        for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
             values_[ix++] = channel[ch].scale;
             values_[ix++] = channel[ch].scale_factor + 500;
             values_[ix++] = channel[ch].offset + 63;
@@ -185,7 +200,7 @@ public:
 	}
 	
     void ClearPreset() {
-        for (int ch = 0; ch < NR_OF_CHANNELS; ++ch) {
+        for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
             HS::quantizer[ch].Init();
             channel[ch].scale = OC::Scales::SCALE_SEMI;
             HS::quantizer[ch].Configure(OC::Scales::GetScale(channel[ch].scale), 0xffff);
@@ -223,7 +238,7 @@ public:
 
     void Resume() {
         // restore quantizer settings
-        for (int ch = 0; ch < NR_OF_CHANNELS; ++ch) {
+        for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
             HS::quantizer[ch].Configure(OC::Scales::GetScale(channel[ch].scale), 0xffff);
             HS::quantizer[ch].Requantize();
         }
@@ -252,7 +267,7 @@ public:
         ClockSetup_instance.Controller();
 
         // -- core processing --
-        for (int ch = 0; ch < NR_OF_CHANNELS; ++ch) {
+        for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
             bool clocked = Clock(ch);
             Cal8ChannelConfig &c = channel[ch];
 
@@ -308,7 +323,7 @@ public:
         } else {
             gfxPos(110, 1);
             if (preset_modified) gfxPrint("*");
-            if (cal8_presets[index].is_valid()) gfxPrint(cal8_preset_id[index]);
+            if (cal8_presets[index].is_valid()) gfxPrint(OC::Strings::capital_letters[index]);
 
             DrawInterface();
         }
@@ -394,8 +409,8 @@ public:
     // fires on button release
     void SwitchChannel(bool up) {
         if (!clock_setup && !preset_select) {
-            sel_chan += (up? -1 : 1) + NR_OF_CHANNELS;
-            sel_chan %= NR_OF_CHANNELS;
+            sel_chan += (up? -1 : 1) + DAC_CHANNEL_LAST;
+            sel_chan %= DAC_CHANNEL_LAST;
         }
 
         if (click_tick) {
@@ -478,7 +493,7 @@ public:
 
     int index = 0;
 
-	int sel_chan = 0;
+    int sel_chan = 0;
     bool edit_mode = 0;
     bool scale_edit = 0;
     int preset_select = 0; // both a flag and an index
@@ -488,10 +503,10 @@ public:
     bool first_click = 0;
     bool clock_setup = 0;
 
-    int trigger_flash[NR_OF_CHANNELS];
+    int trigger_flash[DAC_CHANNEL_LAST];
 
     SegmentDisplay segment;
-    Cal8ChannelConfig channel[NR_OF_CHANNELS];
+    Cal8ChannelConfig channel[DAC_CHANNEL_LAST];
 
     ClockManager *clock_m = clock_m->get();
 
@@ -503,7 +518,7 @@ public:
         gfxIcon(50, y, RIGHT_ICON);
 
         for (int i = 0; i < NR_OF_PRESETS; ++i) {
-            gfxPrint(60, 15 + i*10, cal8_preset_id[i]);
+            gfxPrint(60, 15 + i*10, OC::Strings::capital_letters[i]);
             if (!cal8_presets[i].is_valid())
                 gfxPrint(" (empty)");
             else if (i == index)
@@ -513,19 +528,34 @@ public:
             gfxPrint(60, 55, "[CLEAR]");
     }
 
-    void DrawInterface() {
+    void DrawTabs() {
         // Draw channel tabs
-        for (int i = 0; i < NR_OF_CHANNELS; ++i) {
-            gfxLine(i*32, 12, i*32, 22); // vertical line on left
-            if (channel[i].clocked_mode) gfxIcon(2 + i*32, 14, CLOCK_ICON);
-            if (channel[i].clocked_mode == SAMPLE_AND_HOLD) gfxIcon(22 + i*32, 14, STAIRS_ICON);
-            gfxPrint(i*32 + 13, 14, i+1);
+        const size_t w = 128 / DAC_CHANNEL_LAST;
+        for (int i = 0; i < DAC_CHANNEL_LAST; ++i) {
+          const size_t x = i * w;
+            gfxLine(x, 12, x, 22); // vertical line on left
+
+            const size_t center_x = x + w/2 - 3;
+            switch (channel[i].clocked_mode) {
+              case CONTINUOUS:
+                gfxPrint(center_x, 14, i+1);
+                break;
+              case TRIG_TRANS:
+                gfxIcon(center_x, 14, CLOCK_ICON);
+                break;
+              case SAMPLE_AND_HOLD:
+                gfxIcon(center_x, 14, STAIRS_ICON);
+                break;
+            }
 
             if (i == sel_chan)
-                gfxInvert(1 + i*32, 12, 31, 11);
+                gfxInvert(1 + x, 12, w - 1, 11);
         }
         gfxLine(127, 12, 127, 22); // vertical line
         gfxLine(0, 23, 127, 23);
+    }
+    void DrawInterface() {
+        DrawTabs();
 
         // Draw parameters for selected channel
         int y = 32;
@@ -604,7 +634,33 @@ SETTINGS_DECLARE(Calibr8orPreset, CAL8_SETTING_LAST) {
     {0, 0, 65535, "CV Scaling Factor D", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 255, "Offset Bias D", NULL, settings::STORAGE_TYPE_U8},
     {0, 0, 255, "Transpose D", NULL, settings::STORAGE_TYPE_U8},
-    {0, 0, 255, "Root Key + Mode D", NULL, settings::STORAGE_TYPE_U8}
+    {0, 0, 255, "Root Key + Mode D", NULL, settings::STORAGE_TYPE_U8},
+
+#ifdef ARDUINO_TEENSY41
+    {0, 0, 65535, "Scale E", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "CV Scaling Factor E", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 255, "Offset Bias E", NULL, settings::STORAGE_TYPE_U8},
+    {0, 0, 255, "Transpose E", NULL, settings::STORAGE_TYPE_U8},
+    {0, 0, 255, "Root Key + Mode E", NULL, settings::STORAGE_TYPE_U8},
+
+    {0, 0, 65535, "Scale F", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "CV Scaling Factor F", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 255, "Offset Bias F", NULL, settings::STORAGE_TYPE_U8},
+    {0, 0, 255, "Transpose F", NULL, settings::STORAGE_TYPE_U8},
+    {0, 0, 255, "Root Key + Mode F", NULL, settings::STORAGE_TYPE_U8},
+
+    {0, 0, 65535, "Scale G", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "CV Scaling Factor G", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 255, "Offset Bias G", NULL, settings::STORAGE_TYPE_U8},
+    {0, 0, 255, "Transpose G", NULL, settings::STORAGE_TYPE_U8},
+    {0, 0, 255, "Root Key + Mode G", NULL, settings::STORAGE_TYPE_U8},
+
+    {0, 0, 65535, "Scale H", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "CV Scaling Factor H", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 255, "Offset Bias H", NULL, settings::STORAGE_TYPE_U8},
+    {0, 0, 255, "Transpose H", NULL, settings::STORAGE_TYPE_U8},
+    {0, 0, 255, "Root Key + Mode H", NULL, settings::STORAGE_TYPE_U8},
+#endif
 };
 
 
