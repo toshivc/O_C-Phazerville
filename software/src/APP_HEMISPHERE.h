@@ -449,12 +449,12 @@ public:
     void View() {
         bool draw_applets = true;
 
-        if (config_menu) {
-          if (preset_cursor) {
-            DrawPresetSelector();
-            draw_applets = false;
-          }
-          else if (config_cursor > CONFIG_DUMMY) {
+        if (preset_cursor) {
+          DrawPresetSelector();
+          draw_applets = false;
+        }
+        else if (config_menu) {
+          if (config_cursor > CONFIG_DUMMY) {
             DrawConfigMenu();
             draw_applets = false;
           }
@@ -506,7 +506,7 @@ public:
         bool down = (event.type == UI::EVENT_BUTTON_DOWN);
         int h = (event.control == OC::CONTROL_BUTTON_L) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
 
-        if (config_menu) {
+        if (config_menu || preset_cursor) {
             // button release for config screen
             if (!down) ConfigButtonPush(h);
             return;
@@ -530,21 +530,45 @@ public:
         }
     }
 
+    void ExtraButtonPush(const UI::Event &event) {
+        bool down = (event.type == UI::EVENT_BUTTON_DOWN);
+        if (down) return;
+
+        if (preset_cursor) {
+            preset_cursor = 0;
+            return;
+        }
+        if (config_menu) {
+            // cancel preset select, or config screen on select button release
+            config_menu = 0;
+            popup_tick = 0;
+            return;
+        }
+
+        if (clock_setup) {
+            clock_setup = 0; // Turn off clock setup with any single-click button release
+            return;
+        }
+
+        if (event.control == OC::CONTROL_BUTTON_DOWN2)
+            ToggleConfigMenu();
+
+        if (event.control == OC::CONTROL_BUTTON_UP2)
+            ShowPresetSelector();
+
+    }
     void DelegateSelectButtonPush(const UI::Event &event) {
         bool down = (event.type == UI::EVENT_BUTTON_DOWN);
         int hemisphere = (event.control == OC::CONTROL_BUTTON_UP) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
 
-        if (config_menu) {
+        if (preset_cursor && !down) {
+            preset_cursor = 0;
+            return;
+        }
+        if (config_menu && !down) {
             // cancel preset select, or config screen on select button release
-            if (!down) {
-                if (preset_cursor) {
-                    preset_cursor = 0;
-                }
-                else {
-                  config_menu = 0;
-                  popup_tick = 0;
-                }
-            }
+            config_menu = 0;
+            popup_tick = 0;
             return;
         }
 
@@ -600,7 +624,7 @@ public:
 
     void DelegateEncoderMovement(const UI::Event &event) {
         int h = (event.control == OC::CONTROL_ENCODER_L) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
-        if (config_menu) {
+        if (config_menu || preset_cursor) {
             ConfigEncoderAction(h, event.value);
             return;
         }
@@ -633,6 +657,10 @@ public:
         config_menu = !config_menu;
         if (config_menu) SetHelpScreen(-1);
     }
+    void ShowPresetSelector() {
+        config_cursor = LOAD_PRESET;
+        preset_cursor = preset_id + 1;
+    }
 
     void SetHelpScreen(int hemisphere) {
         if (help_hemisphere > -1) { // Turn off the previous help screen
@@ -646,6 +674,33 @@ public:
         }
 
         help_hemisphere = hemisphere;
+    }
+
+    void HandleButtonEvent(const UI::Event &event) {
+        switch (event.type) {
+        case UI::EVENT_BUTTON_DOWN:
+            if (event.control == OC::CONTROL_BUTTON_M) {
+                ToggleClockRun();
+                OC::ui.SetButtonIgnoreMask(); // ignore release and long-press
+                break;
+            }
+        case UI::EVENT_BUTTON_PRESS:
+            if (event.control == OC::CONTROL_BUTTON_UP || event.control == OC::CONTROL_BUTTON_DOWN) {
+                DelegateSelectButtonPush(event);
+            } else if (event.control == OC::CONTROL_BUTTON_L || event.control == OC::CONTROL_BUTTON_R) {
+                DelegateEncoderPush(event);
+            } else // new buttons
+                ExtraButtonPush(event);
+
+            break;
+
+        case UI::EVENT_BUTTON_LONG_PRESS:
+            if (event.control == OC::CONTROL_BUTTON_DOWN) ToggleConfigMenu();
+            if (event.control == OC::CONTROL_BUTTON_L) ToggleClockRun();
+            break;
+
+        default: break;
+        }
     }
 
 private:
@@ -692,9 +747,13 @@ private:
         //case SCREENSAVER_MODE:
             // TODO?
             //break;
-        case SAVE_PRESET:
         case LOAD_PRESET:
-            preset_cursor = constrain(preset_cursor + dir, 1, HEM_NR_OF_PRESETS);
+        case SAVE_PRESET:
+            if (h == 0) {
+              config_cursor = constrain(config_cursor + dir, LOAD_PRESET, SAVE_PRESET);
+            } else {
+              preset_cursor = constrain(preset_cursor + dir, 1, HEM_NR_OF_PRESETS);
+            }
             break;
         }
     }
@@ -799,7 +858,6 @@ private:
             y += 10;
         }
     }
-
 };
 
 // TOTAL EEPROM SIZE: 8 * 30 bytes
@@ -959,28 +1017,7 @@ void HEMISPHERE_screensaver() {
 }
 
 void HEMISPHERE_handleButtonEvent(const UI::Event &event) {
-    switch (event.type) {
-    case UI::EVENT_BUTTON_DOWN:
-        if (event.control == OC::CONTROL_BUTTON_M) {
-            manager.ToggleClockRun();
-            OC::ui.SetButtonIgnoreMask(); // ignore release and long-press
-            break;
-        }
-    case UI::EVENT_BUTTON_PRESS:
-        if (event.control == OC::CONTROL_BUTTON_UP || event.control == OC::CONTROL_BUTTON_DOWN) {
-            manager.DelegateSelectButtonPush(event);
-        } else if (event.control == OC::CONTROL_BUTTON_L || event.control == OC::CONTROL_BUTTON_R) {
-            manager.DelegateEncoderPush(event);
-        }
-        break;
-
-    case UI::EVENT_BUTTON_LONG_PRESS:
-        if (event.control == OC::CONTROL_BUTTON_DOWN) manager.ToggleConfigMenu();
-        if (event.control == OC::CONTROL_BUTTON_L) manager.ToggleClockRun();
-        break;
-
-    default: break;
-    }
+    manager.HandleButtonEvent(event);
 }
 
 void HEMISPHERE_handleEncoderEvent(const UI::Event &event) {
