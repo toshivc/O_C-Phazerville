@@ -18,11 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <Arduino.h>
-#include "OC_core.h"
-#include "HemisphereApplet.h"
-#include "vector_osc/HSVectorOscillator.h"
-#include "vector_osc/WaveformManager.h"
+#include "../vector_osc/HSVectorOscillator.h"
+#include "../vector_osc/WaveformManager.h"
 
 static constexpr int pow10_lut[] = { 1, 10, 100, 1000 };
 

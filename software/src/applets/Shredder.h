@@ -18,10 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "braids_quantizer.h"
-#include "braids_quantizer_scales.h"
-#include "OC_scales.h"
-
 #define HEM_SHREDDER_ANIMATION_SPEED 500
 #define HEM_SHREDDER_DOUBLE_CLICK_DELAY 5000
 #define HEM_SHREDDER_POS_5V 7680 // 5 * (12 << 7)

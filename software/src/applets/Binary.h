@@ -21,10 +21,7 @@
 #ifndef _HEM_BIN_H_
 #define _HEM_BIN_H_
 
-#include <Arduino.h>
-#include "OC_core.h"
-#include "HemisphereApplet.h"
-#include "SegmentDisplay.h"
+#include "../SegmentDisplay.h"
 
 class Binary : public HemisphereApplet {
 public:

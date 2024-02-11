@@ -18,10 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <Arduino.h>
-#include "OC_core.h"
-#include "HemisphereApplet.h"
-
 #define HEM_PALIMPSEST_MAX_VALUE 100
 
 class Palimpsest : public HemisphereApplet {

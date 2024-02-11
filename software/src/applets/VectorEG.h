@@ -21,11 +21,8 @@
 #ifndef _HEM_VECTOR_EG_H_
 #define _HEM_VECTOR_EG_H_
 
-#include <Arduino.h>
-#include "OC_core.h"
-#include "HemisphereApplet.h"
-#include "vector_osc/HSVectorOscillator.h"
-#include "vector_osc/WaveformManager.h"
+#include "../vector_osc/HSVectorOscillator.h"
+#include "../vector_osc/WaveformManager.h"
 
 class VectorEG : public HemisphereApplet {
 public:

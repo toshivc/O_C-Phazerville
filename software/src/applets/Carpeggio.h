@@ -20,11 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <Arduino.h>
-#include "OC_core.h"
-#include "HemisphereApplet.h"
-#include "hem_arp_chord.h"
-#include "HSMIDI.h"
+#include "../hem_arp_chord.h"
 #define HEM_CARPEGGIO_ANIMATION_SPEED 500
 
 class Carpeggio : public HemisphereApplet {

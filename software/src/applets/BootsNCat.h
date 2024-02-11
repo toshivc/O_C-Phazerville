@@ -20,11 +20,8 @@
 #ifndef _HEM_BOOTSNCAT_H_
 #define _HEM_BOOTSNCAT_H_
 
-#include <Arduino.h>
-#include "OC_core.h"
-#include "HemisphereApplet.h"
-#include "vector_osc/HSVectorOscillator.h"
-#include "vector_osc/WaveformManager.h"
+#include "../vector_osc/HSVectorOscillator.h"
+#include "../vector_osc/WaveformManager.h"
 
 class BootsNCat : public HemisphereApplet {
 public:

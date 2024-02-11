@@ -21,10 +21,6 @@
 #ifndef _HEM_BRANCHER_H_
 #define _HEM_BRANCHER_H_
 
-#include <Arduino.h>
-#include "OC_core.h"
-#include "HemisphereApplet.h"
-
 class Brancher : public HemisphereApplet {
 public:
 

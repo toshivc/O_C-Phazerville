@@ -38,10 +38,6 @@
 #ifndef _HEM_ADSREG_H_
 #define _HEM_ADSREG_H_
 
-#include <Arduino.h>
-#include "OC_core.h"
-#include "HemisphereApplet.h"
-
 #define HEM_EG_ATTACK 0
 #define HEM_EG_DECAY 1
 #define HEM_EG_SUSTAIN 2

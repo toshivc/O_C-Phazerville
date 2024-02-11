@@ -23,12 +23,6 @@
 #ifndef _HEM_H_MIDI_IN_H_
 #define _HEM_H_MIDI_IN_H_
 
-#include <Arduino.h>
-#include "OC_core.h"
-#include "HemisphereApplet.h"
-#include "APP_HEMISPHERE.h"
-#include "HSMIDI.h"
-
 class hMIDIIn : public HemisphereApplet {
 public:
 

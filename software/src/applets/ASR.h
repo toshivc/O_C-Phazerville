@@ -23,11 +23,7 @@
 #ifndef _HEM_ASR_H_
 #define _HEM_ASR_H_
 
-#include <Arduino.h>
-#include "OC_core.h"
-#include "OC_scales.h"
-#include "HemisphereApplet.h"
-#include "HSRingBufferManager.h" // Singleton Ring Buffer manager
+#include "../HSRingBufferManager.h" // Singleton Ring Buffer manager
 
 class ASR : public HemisphereApplet {
 public:
