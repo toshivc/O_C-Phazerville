@@ -546,15 +546,15 @@ void FPART_init() {
   fpart_instance.Init();
 }
 
-constexpr size_t FPART_storageSize() {
+static constexpr size_t FPART_storageSize() {
   return Fpart::storageSize();
 }
 
-size_t FPART_save(void *storage) {
+static size_t FPART_save(void *storage) {
   return fpart_instance.Save(storage);
 }
 
-size_t FPART_restore(const void *storage) {
+static size_t FPART_restore(const void *storage) {
   return fpart_instance.Restore(storage);
 }
 

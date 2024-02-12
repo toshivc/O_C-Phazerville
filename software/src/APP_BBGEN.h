@@ -289,18 +289,18 @@ void BBGEN_init() {
   bbgen.Init();
 }
 
-constexpr size_t BBGEN_storageSize() {
+static constexpr size_t BBGEN_storageSize() {
   return 4 * BouncingBall::storageSize();
 }
 
-size_t BBGEN_save(void *storage) {
+static size_t BBGEN_save(void *storage) {
   size_t s = 0;
   for (auto &bb : bbgen.balls_)
     s += bb.Save(static_cast<byte *>(storage) + s);
   return s;
 }
 
-size_t BBGEN_restore(const void *storage) {
+static size_t BBGEN_restore(const void *storage) {
   size_t s = 0;
   for (auto &bb : bbgen.balls_)
     s += bb.Restore(static_cast<const byte *>(storage) + s);

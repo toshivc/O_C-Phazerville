@@ -522,11 +522,11 @@ ScenesApp ScenesApp_instance;
 // App stubs
 void ScenesApp_init() { ScenesApp_instance.BaseStart(); }
 
-constexpr size_t ScenesApp_storageSize() {
+static constexpr size_t ScenesApp_storageSize() {
     return ScenesAppPreset::storageSize() * NR_OF_SCENE_PRESETS;
 }
 
-size_t ScenesApp_save(void *storage) {
+static size_t ScenesApp_save(void *storage) {
     size_t used = 0;
     for (int i = 0; i < 4; ++i) {
         used += scene_presets[i].Save(static_cast<char*>(storage) + used);
@@ -534,7 +534,7 @@ size_t ScenesApp_save(void *storage) {
     return used;
 }
 
-size_t ScenesApp_restore(const void *storage) {
+static size_t ScenesApp_restore(const void *storage) {
     size_t used = 0;
     for (int i = 0; i < 4; ++i) {
         used += scene_presets[i].Restore(static_cast<const char*>(storage) + used);

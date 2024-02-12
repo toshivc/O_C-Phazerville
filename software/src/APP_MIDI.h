@@ -857,15 +857,15 @@ void MIDI_init() {
     captain_midi_instance.Start();
 }
 
-constexpr size_t MIDI_storageSize() {
+static constexpr size_t MIDI_storageSize() {
     return CaptainMIDI::storageSize();
 }
 
-size_t MIDI_save(void *storage) {
+static size_t MIDI_save(void *storage) {
     return captain_midi_instance.Save(storage);
 }
 
-size_t MIDI_restore(const void *storage) {
+static size_t MIDI_restore(const void *storage) {
     size_t s = captain_midi_instance.Restore(storage);
     captain_midi_instance.Resume();
     return s;

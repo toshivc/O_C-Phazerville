@@ -1213,11 +1213,11 @@ void QQ_init() {
   qq_state.cursor.AdjustEnd(quantizer_channels[0].num_enabled_settings() - 1);
 }
 
-constexpr size_t QQ_storageSize() {
+static constexpr size_t QQ_storageSize() {
   return 4 * QuantizerChannel::storageSize();
 }
 
-size_t QQ_save(void *storage) {
+static size_t QQ_save(void *storage) {
   size_t used = 0;
   for (size_t i = 0; i < 4; ++i) {
     used += quantizer_channels[i].Save(static_cast<char*>(storage) + used);
@@ -1225,7 +1225,7 @@ size_t QQ_save(void *storage) {
   return used;
 }
 
-size_t QQ_restore(const void *storage) {
+static size_t QQ_restore(const void *storage) {
   size_t used = 0;
   for (size_t i = 0; i < 4; ++i) {
     used += quantizer_channels[i].Restore(static_cast<const char*>(storage) + used);

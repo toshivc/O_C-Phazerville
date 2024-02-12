@@ -612,11 +612,11 @@ Calibr8or Calibr8or_instance;
 // App stubs
 void Calibr8or_init() { Calibr8or_instance.BaseStart(); }
 
-constexpr size_t Calibr8or_storageSize() {
+static constexpr size_t Calibr8or_storageSize() {
     return Calibr8orPreset::storageSize() * NR_OF_PRESETS;
 }
 
-size_t Calibr8or_save(void *storage) {
+static size_t Calibr8or_save(void *storage) {
     size_t used = 0;
     for (int i = 0; i < NR_OF_PRESETS; ++i) {
         used += cal8_presets[i].Save(static_cast<char*>(storage) + used);
@@ -624,7 +624,7 @@ size_t Calibr8or_save(void *storage) {
     return used;
 }
 
-size_t Calibr8or_restore(const void *storage) {
+static size_t Calibr8or_restore(const void *storage) {
     size_t used = 0;
     for (int i = 0; i < NR_OF_PRESETS; ++i) {
         used += cal8_presets[i].Restore(static_cast<const char*>(storage) + used);

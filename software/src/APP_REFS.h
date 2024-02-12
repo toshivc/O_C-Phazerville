@@ -347,11 +347,11 @@ void REFS_init() {
   references_app.Init();
 }
 
-constexpr size_t REFS_storageSize() {
+static constexpr size_t REFS_storageSize() {
   return NUM_REF_CHANNELS * ReferenceChannel::storageSize();
 }
 
-size_t REFS_save(void *storage) {
+static size_t REFS_save(void *storage) {
   size_t used = 0;
   for (size_t i = 0; i < NUM_REF_CHANNELS; ++i) {
     used += references_app.channels_[i].Save(static_cast<char*>(storage) + used);
@@ -359,7 +359,7 @@ size_t REFS_save(void *storage) {
   return used;
 }
 
-size_t REFS_restore(const void *storage) {
+static size_t REFS_restore(const void *storage) {
   size_t used = 0;
   for (size_t i = 0; i < NUM_REF_CHANNELS; ++i) {
     used += references_app.channels_[i].Restore(static_cast<const char*>(storage) + used);

@@ -544,15 +544,15 @@ void TheDarkestTimeline_init() {
     TheDarkestTimeline_instance.BaseStart();
 }
 
-constexpr size_t TheDarkestTimeline_storageSize() {
+static constexpr size_t TheDarkestTimeline_storageSize() {
     return TheDarkestTimeline::storageSize();
 }
 
-size_t TheDarkestTimeline_save(void *storage) {
+static size_t TheDarkestTimeline_save(void *storage) {
     return TheDarkestTimeline_instance.Save(storage);
 }
 
-size_t TheDarkestTimeline_restore(const void *storage) {
+static size_t TheDarkestTimeline_restore(const void *storage) {
     return TheDarkestTimeline_instance.Restore(storage);
 }
 

@@ -1184,11 +1184,11 @@ void DQ_init() {
   dq_state.cursor.AdjustEnd(dq_quantizer_channels[0].num_enabled_settings() - 1);
 }
 
-constexpr size_t DQ_storageSize() {
+static constexpr size_t DQ_storageSize() {
   return NUMCHANNELS * DQ_QuantizerChannel::storageSize();
 }
 
-size_t DQ_save(void *storage) {
+static size_t DQ_save(void *storage) {
   size_t used = 0;
   for (size_t i = 0; i < NUMCHANNELS; ++i) {
     used += dq_quantizer_channels[i].Save(static_cast<char*>(storage) + used);
@@ -1196,7 +1196,7 @@ size_t DQ_save(void *storage) {
   return used;
 }
 
-size_t DQ_restore(const void *storage) {
+static size_t DQ_restore(const void *storage) {
   size_t used = 0;
   for (size_t i = 0; i < NUMCHANNELS; ++i) {
     used += dq_quantizer_channels[i].Restore(static_cast<const char*>(storage) + used);

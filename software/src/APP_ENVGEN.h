@@ -854,18 +854,18 @@ void ENVGEN_init() {
   envgen.Init();
 }
 
-constexpr size_t ENVGEN_storageSize() {
+static constexpr size_t ENVGEN_storageSize() {
   return 4 * EnvelopeGenerator::storageSize();
 }
 
-size_t ENVGEN_save(void *storage) {
+static size_t ENVGEN_save(void *storage) {
   size_t s = 0;
   for (auto &env : envgen.envelopes_)
     s += env.Save(static_cast<byte *>(storage) + s);
   return s;
 }
 
-size_t ENVGEN_restore(const void *storage) {
+static size_t ENVGEN_restore(const void *storage) {
   size_t s = 0;
   for (auto &env : envgen.envelopes_) {
     s += env.Restore(static_cast<const byte *>(storage) + s);

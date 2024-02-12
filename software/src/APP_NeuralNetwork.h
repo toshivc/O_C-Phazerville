@@ -607,9 +607,9 @@ void NeuralNetwork_init() {
     NeuralNetwork_instance.BaseStart();
 }
 
-constexpr size_t NeuralNetwork_storageSize() {return NeuralNetwork::storageSize();}
-size_t NeuralNetwork_save(void *storage) {return NeuralNetwork_instance.Save(storage);}
-size_t NeuralNetwork_restore(const void *storage) {return NeuralNetwork_instance.Restore(storage);}
+static constexpr size_t NeuralNetwork_storageSize() {return NeuralNetwork::storageSize();}
+static size_t NeuralNetwork_save(void *storage) {return NeuralNetwork_instance.Save(storage);}
+static size_t NeuralNetwork_restore(const void *storage) {return NeuralNetwork_instance.Restore(storage);}
 
 void NeuralNetwork_isr() {
     return NeuralNetwork_instance.BaseController();

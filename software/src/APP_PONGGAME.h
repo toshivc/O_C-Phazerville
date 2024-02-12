@@ -296,15 +296,15 @@ void PONGGAME_init() {
 	pong_instance.Init();
 }
 
-constexpr size_t PONGGAME_storageSize() {
+static constexpr size_t PONGGAME_storageSize() {
 	return 0;
 }
 
-size_t PONGGAME_save(void *storage) {
+static size_t PONGGAME_save(void *storage) {
 	return 0;
 }
 
-size_t PONGGAME_restore(const void *storage) {
+static size_t PONGGAME_restore(const void *storage) {
 	return 0;
 }
 

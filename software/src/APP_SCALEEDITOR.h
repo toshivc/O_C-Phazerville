@@ -350,9 +350,9 @@ void SCALEEDITOR_init() {
 }
 
 // Not using O_C Storage
-constexpr size_t SCALEEDITOR_storageSize() {return 0;}
-size_t SCALEEDITOR_save(void *storage) {return 0;}
-size_t SCALEEDITOR_restore(const void *storage) {return 0;}
+static constexpr size_t SCALEEDITOR_storageSize() {return 0;}
+static size_t SCALEEDITOR_save(void *storage) {return 0;}
+static size_t SCALEEDITOR_restore(const void *storage) {return 0;}
 
 void SCALEEDITOR_isr() {
 	return scale_editor_instance.BaseController();

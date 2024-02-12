@@ -370,7 +370,7 @@ void Automatonnetz_init() {
   automatonnetz_state.Reset();
 }
 
-constexpr size_t Automatonnetz_storageSize() {
+static constexpr size_t Automatonnetz_storageSize() {
   return AutomatonnetzState::storageSize() +
     GRID_CELLS * TransformCell::storageSize();
 }
@@ -655,7 +655,7 @@ void Automatonnetz_screensaver() {
   }
 }
 
-size_t Automatonnetz_save(void *dest) {
+static size_t Automatonnetz_save(void *dest) {
   char *storage = static_cast<char *>(dest);
   size_t used = automatonnetz_state.Save(storage);
   for (size_t cell = 0; cell < GRID_CELLS; ++cell)
@@ -664,7 +664,7 @@ size_t Automatonnetz_save(void *dest) {
   return used;
 }
 
-size_t Automatonnetz_restore(const void *dest) {
+static size_t Automatonnetz_restore(const void *dest) {
   const char *storage = static_cast<const char *>(dest);
   size_t used = automatonnetz_state.Restore(storage);
   for (size_t cell = 0; cell < GRID_CELLS; ++cell)

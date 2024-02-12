@@ -451,18 +451,18 @@ void BYTEBEATGEN_init() {
   bytebeatgen.Init();
 }
 
-constexpr size_t BYTEBEATGEN_storageSize() {
+static constexpr size_t BYTEBEATGEN_storageSize() {
   return 4 * ByteBeat::storageSize();
 }
 
-size_t BYTEBEATGEN_save(void *storage) {
+static size_t BYTEBEATGEN_save(void *storage) {
   size_t s = 0;
   for (auto &bytebeat : bytebeatgen.bytebeats_)
     s += bytebeat.Save(static_cast<byte *>(storage) + s);
   return s;
 }
 
-size_t BYTEBEATGEN_restore(const void *storage) {
+static size_t BYTEBEATGEN_restore(const void *storage) {
   size_t s = 0;
   for (auto &bytebeat : bytebeatgen.bytebeats_) {
     s += bytebeat.Restore(static_cast<const byte *>(storage) + s);

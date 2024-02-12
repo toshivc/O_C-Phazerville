@@ -2076,11 +2076,11 @@ void SEQ_init() {
   seq_state.cursor.AdjustEnd(seq_channel[0].num_enabled_settings() - 1);
 }
 
-constexpr size_t SEQ_storageSize() {
+static constexpr size_t SEQ_storageSize() {
   return NUM_CHANNELS * SEQ_Channel::storageSize();
 }
 
-size_t SEQ_save(void *storage) {
+static size_t SEQ_save(void *storage) {
 
   size_t used = 0;
   for (size_t i = 0; i < NUM_CHANNELS; ++i) {
@@ -2089,7 +2089,7 @@ size_t SEQ_save(void *storage) {
   return used;
 }
 
-size_t SEQ_restore(const void *storage) {
+static size_t SEQ_restore(const void *storage) {
 
   size_t used = 0;
 

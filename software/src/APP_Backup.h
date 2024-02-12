@@ -147,9 +147,9 @@ void Backup_menu() {Backup_instance.View();}
 void Backup_isr() {Backup_instance.Controller();}
 
 // Storage not used for this app
-constexpr size_t Backup_storageSize() {return 0;}
-size_t Backup_save(void *storage) {return 0;}
-size_t Backup_restore(const void *storage) {return 0;}
+static constexpr size_t Backup_storageSize() {return 0;}
+static size_t Backup_save(void *storage) {return 0;}
+static size_t Backup_restore(const void *storage) {return 0;}
 
 void Backup_handleAppEvent(OC::AppEvent event) {
     if (event == OC::APP_EVENT_RESUME) Backup_instance.Resume();

@@ -240,15 +240,15 @@ void LORENZ_init() {
   lorenz_generator.Init();
 }
 
-constexpr size_t LORENZ_storageSize() {
+static constexpr size_t LORENZ_storageSize() {
   return LorenzGenerator::storageSize();
 }
 
-size_t LORENZ_save(void *storage) {
+static size_t LORENZ_save(void *storage) {
   return lorenz_generator.Save(storage);
 }
 
-size_t LORENZ_restore(const void *storage) {
+static size_t LORENZ_restore(const void *storage) {
   return lorenz_generator.Restore(storage);
 }
 

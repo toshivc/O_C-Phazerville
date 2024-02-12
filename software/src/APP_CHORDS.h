@@ -1068,15 +1068,15 @@ void CHORDS_init() {
   chords_state.cursor.AdjustEnd(chords.num_enabled_settings() - 1);
 }
 
-constexpr size_t CHORDS_storageSize() {
+static constexpr size_t CHORDS_storageSize() {
   return Chords::storageSize();
 }
 
-size_t CHORDS_save(void *storage) {
+static size_t CHORDS_save(void *storage) {
   return chords.Save(storage);
 }
 
-size_t CHORDS_restore(const void *storage) {
+static size_t CHORDS_restore(const void *storage) {
 
   size_t storage_size = chords.Restore(storage);
   chords.update_enabled_settings();

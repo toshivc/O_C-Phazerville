@@ -1017,15 +1017,15 @@ void H1200_init() {
   h1200_state.cursor.AdjustEnd(h1200_settings.num_enabled_settings() - 1);
 }
 
-constexpr size_t H1200_storageSize() {
+static constexpr size_t H1200_storageSize() {
   return H1200Settings::storageSize();
 }
 
-size_t H1200_save(void *storage) {
+static size_t H1200_save(void *storage) {
   return h1200_settings.Save(storage);
 }
 
-size_t H1200_restore(const void *storage) {
+static size_t H1200_restore(const void *storage) {
   h1200_settings.update_enabled_settings();
   h1200_state.cursor.AdjustEnd(h1200_settings.num_enabled_settings() - 1);
   return h1200_settings.Restore(storage);

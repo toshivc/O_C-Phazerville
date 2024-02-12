@@ -997,11 +997,11 @@ void PASSENCORE_init() {
   passencore_state.Init();
 }
 
-constexpr size_t PASSENCORE_storageSize() {
+static constexpr size_t PASSENCORE_storageSize() {
   return PASSENCORE::storageSize();
 }
 
-size_t PASSENCORE_save(void *storage) {
+static size_t PASSENCORE_save(void *storage) {
   return passencore_instance.Save(storage);
 }
 
@@ -1121,7 +1121,7 @@ void PASSENCORE_handleEncoderEvent(const UI::Event & event) {
   }
 }
 
-size_t PASSENCORE_restore(const void *storage) {
+static size_t PASSENCORE_restore(const void *storage) {
   size_t storage_size = passencore_instance.Restore(storage);
   passencore_state.left_encoder_value = passencore_instance.get_scale(DUMMY);
   passencore_instance.set_scale(passencore_state.left_encoder_value);

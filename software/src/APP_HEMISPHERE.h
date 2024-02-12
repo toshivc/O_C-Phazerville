@@ -812,11 +812,11 @@ void HEMISPHERE_init() {
     manager.BaseStart();
 }
 
-constexpr size_t HEMISPHERE_storageSize() {
+static constexpr size_t HEMISPHERE_storageSize() {
     return HemispherePreset::storageSize() * HEM_NR_OF_PRESETS;
 }
 
-size_t HEMISPHERE_save(void *storage) {
+static size_t HEMISPHERE_save(void *storage) {
     size_t used = 0;
     for (int i = 0; i < HEM_NR_OF_PRESETS; ++i) {
         used += hem_presets[i].Save(static_cast<char*>(storage) + used);
@@ -824,7 +824,7 @@ size_t HEMISPHERE_save(void *storage) {
     return used;
 }
 
-size_t HEMISPHERE_restore(const void *storage) {
+static size_t HEMISPHERE_restore(const void *storage) {
     size_t used = 0;
     for (int i = 0; i < HEM_NR_OF_PRESETS; ++i) {
         used += hem_presets[i].Restore(static_cast<const char*>(storage) + used);

@@ -810,11 +810,11 @@ void ASR_init() {
   asr_state.cursor.AdjustEnd(asr.num_enabled_settings() - 1);
 }
 
-constexpr size_t ASR_storageSize() {
+static constexpr size_t ASR_storageSize() {
   return ASRApp::storageSize();
 }
 
-size_t ASR_restore(const void *storage) {
+static size_t ASR_restore(const void *storage) {
   // init nicely
   size_t storage_size = asr.Restore(storage);
   asr_state.left_encoder_value = asr.get_scale(DUMMY);
@@ -965,7 +965,7 @@ void ASR_handleEncoderEvent(const UI::Event &event) {
   }
 }
 
-size_t ASR_save(void *storage) {
+static size_t ASR_save(void *storage) {
   return asr.Save(storage);
 }
 

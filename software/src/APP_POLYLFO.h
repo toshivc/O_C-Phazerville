@@ -381,15 +381,15 @@ void POLYLFO_init() {
   poly_lfo.Init();
 }
 
-constexpr size_t POLYLFO_storageSize() {
+static constexpr size_t POLYLFO_storageSize() {
   return PolyLfo::storageSize();
 }
 
-size_t POLYLFO_save(void *storage) {
+static size_t POLYLFO_save(void *storage) {
   return poly_lfo.Save(storage);
 }
 
-size_t POLYLFO_restore(const void *storage) {
+static size_t POLYLFO_restore(const void *storage) {
   return poly_lfo.Restore(storage);
 }
 

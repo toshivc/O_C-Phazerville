@@ -377,9 +377,9 @@ void WaveformEditor_init() {
 }
 
 // Not using O_C Storage
-constexpr size_t WaveformEditor_storageSize() {return 0;}
-size_t WaveformEditor_save(void *storage) {return 0;}
-size_t WaveformEditor_restore(const void *storage) {return 0;}
+static constexpr size_t WaveformEditor_storageSize() {return 0;}
+static size_t WaveformEditor_save(void *storage) {return 0;}
+static size_t WaveformEditor_restore(const void *storage) {return 0;}
 
 void WaveformEditor_isr() {
     return WaveformEditor_instance.BaseController();
