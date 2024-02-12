@@ -54,7 +54,7 @@ extern int select_mode;
 extern bool cursor_wrap;
 
 extern bool auto_save_enabled;
-extern int trigger_mapping[4];
+extern int trigger_mapping[ADC_CHANNEL_LAST];
 extern uint8_t trig_length;
 extern uint8_t screensaver_mode;
 

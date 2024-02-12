@@ -2,9 +2,9 @@
 
 IOFrame HS::frame;
 
-int HemisphereApplet::cursor_countdown[2];
+int HemisphereApplet::cursor_countdown[APPLET_SLOTS];
 
-void HemisphereApplet::BaseStart(bool hemisphere_) {
+void HemisphereApplet::BaseStart(HEM_SIDE hemisphere_) {
     hemisphere = hemisphere_;
 
     // Initialize some things for startup
@@ -62,14 +62,16 @@ bool HemisphereApplet::Clock(int ch, bool physical) {
     ClockManager *clock_m = clock_m->get();
     bool useTock = (!physical && clock_m->IsRunning());
 
+    const size_t virt_chan = (ch + io_offset) % 4;
+
     // clock triggers
-    if (useTock && clock_m->GetMultiply(ch + io_offset) != 0)
-        clocked = clock_m->Tock(ch + io_offset);
+    if (useTock && clock_m->GetMultiply(virt_chan) != 0)
+        clocked = clock_m->Tock(virt_chan);
     else if (trigger_mapping[ch + io_offset] > 0 && trigger_mapping[ch + io_offset] < 5)
         clocked = frame.clocked[ trigger_mapping[ch + io_offset] - 1 ];
 
     // Try to eat a boop
-    clocked = clocked || clock_m->Beep(io_offset + ch);
+    clocked = clocked || clock_m->Beep(virt_chan);
 
     if (clocked) {
         frame.cycle_ticks[io_offset + ch] = OC::CORE::ticks - frame.last_clock[io_offset + ch];

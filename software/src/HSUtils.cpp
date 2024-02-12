@@ -16,7 +16,11 @@ bool cursor_wrap = 0;
 //static void CycleEditMode() { ++modal_edit_mode %= 3; }
 
 bool auto_save_enabled = false;
+#ifdef ARDUINO_TEENSY41
+int trigger_mapping[] = { 1, 2, 3, 4, 1, 2, 3, 4 };
+#else
 int trigger_mapping[] = { 1, 2, 3, 4 };
+#endif
 uint8_t trig_length = 10; // in ms, multiplier for HEMISPHERE_CLOCK_TICKS
 uint8_t screensaver_mode = 2; // 0 = blank, 1 = Meters, 2 = Zaps
 

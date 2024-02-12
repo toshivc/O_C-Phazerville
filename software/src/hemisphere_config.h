@@ -11,11 +11,24 @@
 // * Category filtering is deprecated at 1.8, but I'm leaving the per-applet categorization
 // alone to avoid breaking forked codebases by other developers.
 
+#ifdef ARDUINO_TEENSY41
+// Teensy 4.1 can run four applets in Quadrasphere
+#define CREATE_APPLET(class_name) \
+class_name class_name ## _instance[4]
+
+#define DECLARE_APPLET(id, categories, class_name) \
+{ id, categories, { \
+  &class_name ## _instance[0], &class_name ## _instance[1], \
+  &class_name ## _instance[2], &class_name ## _instance[3] \
+  } }
+
+#else
 #define CREATE_APPLET(class_name) \
 class_name class_name ## _instance[2]
 
 #define DECLARE_APPLET(id, categories, class_name) \
 { id, categories, { &class_name ## _instance[0], &class_name ## _instance[1] } }
+#endif
 
 #include "applets/ADSREG.h"
 #include "applets/ADEG.h"

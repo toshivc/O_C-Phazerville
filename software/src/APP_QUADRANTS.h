@@ -1,4 +1,5 @@
 // Copyright (c) 2018, Jason Justian
+// Copyright (c) 2024, Nicholas J. Michalek
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,8 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef _HEM_APP_HEMISPHERE_H_
-#define _HEM_APP_HEMISPHERE_H_
+#pragma once
 
 #include "OC_DAC.h"
 #include "OC_digital_inputs.h"
@@ -39,11 +39,11 @@
 #include "hemisphere_config.h"
 namespace HS {
   static constexpr Applet available_applets[] = HEMISPHERE_APPLETS;
-  static constexpr int HEMISPHERE_AVAILABLE_APPLETS = ARRAY_SIZE(available_applets);
+  static constexpr int QUADRANTS_AVAILABLE_APPLETS = ARRAY_SIZE(available_applets);
 
   constexpr int get_applet_index_by_id(const int& id) {
     int index = 0;
-    for (int i = 0; i < HEMISPHERE_AVAILABLE_APPLETS; i++)
+    for (int i = 0; i < QUADRANTS_AVAILABLE_APPLETS; i++)
     {
         if (available_applets[i].id == id) index = i;
     }
@@ -52,8 +52,8 @@ namespace HS {
 
   int get_next_applet_index(int index, int dir) {
       index += dir;
-      if (index >= HEMISPHERE_AVAILABLE_APPLETS) index = 0;
-      if (index < 0) index = HEMISPHERE_AVAILABLE_APPLETS - 1;
+      if (index >= QUADRANTS_AVAILABLE_APPLETS) index = 0;
+      if (index < 0) index = QUADRANTS_AVAILABLE_APPLETS - 1;
 
       return index;
   }
@@ -61,82 +61,88 @@ namespace HS {
 
 // The settings specify the selected applets, and 64 bits of data for each applet,
 // plus 64 bits of data for the ClockSetup applet (which includes some misc config).
-// TRIGMAP and CVMAP are packed nibbles.
-// This is the structure of a HemispherePreset in eeprom.
-enum HEMISPHERE_SETTINGS {
-    HEMISPHERE_SELECTED_LEFT_ID,
-    HEMISPHERE_SELECTED_RIGHT_ID,
-    HEMISPHERE_LEFT_DATA_B1,
-    HEMISPHERE_LEFT_DATA_B2,
-    HEMISPHERE_LEFT_DATA_B3,
-    HEMISPHERE_LEFT_DATA_B4,
-    HEMISPHERE_RIGHT_DATA_B1,
-    HEMISPHERE_RIGHT_DATA_B2,
-    HEMISPHERE_RIGHT_DATA_B3,
-    HEMISPHERE_RIGHT_DATA_B4,
-    HEMISPHERE_CLOCK_DATA1,
-    HEMISPHERE_CLOCK_DATA2,
-    HEMISPHERE_CLOCK_DATA3,
-    HEMISPHERE_CLOCK_DATA4,
-    HEMISPHERE_TRIGMAP,
-    HEMISPHERE_CVMAP,
-    HEMISPHERE_SETTING_LAST
+// This is the structure of a QuadrantsPreset in eeprom.
+enum QUADRANTS_SETTINGS {
+    QUADRANTS_SELECTED_LEFT_ID = 0,
+    QUADRANTS_SELECTED_RIGHT_ID = 1,
+    QUADRANTS_SELECTED_LEFT2_ID = 2,
+    QUADRANTS_SELECTED_RIGHT2_ID = 3,
+    QUADRANTS_LEFT_DATA_B1,
+    QUADRANTS_LEFT_DATA_B2,
+    QUADRANTS_LEFT_DATA_B3,
+    QUADRANTS_LEFT_DATA_B4,
+    QUADRANTS_RIGHT_DATA_B1,
+    QUADRANTS_RIGHT_DATA_B2,
+    QUADRANTS_RIGHT_DATA_B3,
+    QUADRANTS_RIGHT_DATA_B4,
+    QUADRANTS_LEFT2_DATA_B1,
+    QUADRANTS_LEFT2_DATA_B2,
+    QUADRANTS_LEFT2_DATA_B3,
+    QUADRANTS_LEFT2_DATA_B4,
+    QUADRANTS_RIGHT2_DATA_B1,
+    QUADRANTS_RIGHT2_DATA_B2,
+    QUADRANTS_RIGHT2_DATA_B3,
+    QUADRANTS_RIGHT2_DATA_B4,
+    QUADRANTS_CLOCK_DATA1,
+    QUADRANTS_CLOCK_DATA2,
+    QUADRANTS_CLOCK_DATA3,
+    QUADRANTS_CLOCK_DATA4,
+    QUADRANTS_TRIGMAP,
+    QUADRANTS_CVMAP,
+    QUADRANTS_SETTING_LAST
 };
 
-#if defined(MOAR_PRESETS)
-static constexpr int HEM_NR_OF_PRESETS = 16;
-#else
-static constexpr int HEM_NR_OF_PRESETS = 8;
-#endif
+static constexpr int QUAD_PRESET_COUNT = 4;
 
-/* Hemisphere Preset
- * - conveniently store/recall multiple configurations
+/* Preset
+ * - conveniently store/recall multiple applet configurations
  */
-class HemispherePreset : public SystemExclusiveHandler,
-    public settings::SettingsBase<HemispherePreset, HEMISPHERE_SETTING_LAST> {
+class QuadrantsPreset : public SystemExclusiveHandler,
+    public settings::SettingsBase<QuadrantsPreset, QUADRANTS_SETTING_LAST> {
 public:
-    int GetAppletId(int h) {
-        return (h == LEFT_HEMISPHERE) ? values_[HEMISPHERE_SELECTED_LEFT_ID]
-                                      : values_[HEMISPHERE_SELECTED_RIGHT_ID];
+    int GetAppletId(HEM_SIDE h) {
+        return values_[QUADRANTS_SELECTED_LEFT_ID + h];
     }
-    HemisphereApplet* GetApplet(int h) {
+    HemisphereApplet* GetApplet(HEM_SIDE h) {
       int idx = HS::get_applet_index_by_id( GetAppletId(h) );
       return HS::available_applets[idx].instance[h];
     }
-    void SetAppletId(int h, int id) {
+    void SetAppletId(HEM_SIDE h, int id) {
         apply_value(h, id);
     }
     bool is_valid() {
-        return values_[HEMISPHERE_SELECTED_LEFT_ID] != 0;
+        return values_[QUADRANTS_SELECTED_LEFT_ID] != 0;
     }
 
     uint64_t GetClockData() {
-        return ( (uint64_t(values_[HEMISPHERE_CLOCK_DATA4]) << 48) |
-                 (uint64_t(values_[HEMISPHERE_CLOCK_DATA3]) << 32) |
-                 (uint64_t(values_[HEMISPHERE_CLOCK_DATA2]) << 16) |
-                  uint64_t(values_[HEMISPHERE_CLOCK_DATA1]) );
+        return ( (uint64_t(values_[QUADRANTS_CLOCK_DATA4]) << 48) |
+                 (uint64_t(values_[QUADRANTS_CLOCK_DATA3]) << 32) |
+                 (uint64_t(values_[QUADRANTS_CLOCK_DATA2]) << 16) |
+                  uint64_t(values_[QUADRANTS_CLOCK_DATA1]) );
     }
     void SetClockData(const uint64_t data) {
-        apply_value(HEMISPHERE_CLOCK_DATA1, data & 0xffff);
-        apply_value(HEMISPHERE_CLOCK_DATA2, (data >> 16) & 0xffff);
-        apply_value(HEMISPHERE_CLOCK_DATA3, (data >> 32) & 0xffff);
-        apply_value(HEMISPHERE_CLOCK_DATA4, (data >> 48) & 0xffff);
+        apply_value(QUADRANTS_CLOCK_DATA1, data & 0xffff);
+        apply_value(QUADRANTS_CLOCK_DATA2, (data >> 16) & 0xffff);
+        apply_value(QUADRANTS_CLOCK_DATA3, (data >> 32) & 0xffff);
+        apply_value(QUADRANTS_CLOCK_DATA4, (data >> 48) & 0xffff);
     }
 
     // returns true if changed
     bool StoreInputMap() {
-      uint16_t trigmap = 0;
-      for (size_t i = 0; i < 4; ++i) {
-        trigmap |= (uint16_t(HS::trigger_mapping[i] + 1) & 0x0F) << (i*4);
+      // TODO: cvmap
+      uint32_t trigmap = 0;
+      for (size_t i = 0; i < 8; ++i) {
+        trigmap |= (uint32_t(HS::trigger_mapping[i] + 1) & 0x0F) << (i*4);
       }
 
-      bool changed = (uint16_t(values_[HEMISPHERE_TRIGMAP]) != trigmap);
-      apply_value(HEMISPHERE_TRIGMAP, trigmap);
+      bool changed = (values_[QUADRANTS_TRIGMAP] != trigmap);
+      values_[QUADRANTS_TRIGMAP] = trigmap;
       return changed;
     }
     void LoadInputMap() {
-      for (size_t i = 0; i < 4; ++i) {
-        int val = (uint16_t(values_[HEMISPHERE_TRIGMAP]) >> (i*4)) & 0x0F;
+      // TODO: cvmap
+      for (size_t i = 0; i < 8; ++i) {
+        int val = (uint32_t(values_[QUADRANTS_TRIGMAP]) >> (i*4)) & 0x0F;
         if (val != 0)
           HS::trigger_mapping[i] = constrain(val - 1, 0, 4);
       }
@@ -144,18 +150,19 @@ public:
 
     // Manually get data for one side
     uint64_t GetData(const HEM_SIDE h) {
-        return (uint64_t(values_[5 + h*4]) << 48) |
-               (uint64_t(values_[4 + h*4]) << 32) |
-               (uint64_t(values_[3 + h*4]) << 16) |
-               (uint64_t(values_[2 + h*4]));
+        size_t offset = h*4;
+        return (uint64_t(values_[7 + offset]) << 48) |
+               (uint64_t(values_[6 + offset]) << 32) |
+               (uint64_t(values_[5 + offset]) << 16) |
+               (uint64_t(values_[4 + offset]));
     }
 
     /* Manually store state data for one side */
     void SetData(const HEM_SIDE h, uint64_t &data) {
-        apply_value(2 + h*4, data & 0xffff);
-        apply_value(3 + h*4, (data >> 16) & 0xffff);
-        apply_value(4 + h*4, (data >> 32) & 0xffff);
-        apply_value(5 + h*4, (data >> 48) & 0xffff);
+        apply_value(4 + h*4, data & 0xffff);
+        apply_value(5 + h*4, (data >> 16) & 0xffff);
+        apply_value(6 + h*4, (data >> 32) & 0xffff);
+        apply_value(7 + h*4, (data >> 48) & 0xffff);
     }
 
     // TODO: I haven't updated the SysEx data structure here because I don't use it.
@@ -163,24 +170,24 @@ public:
     void OnSendSysEx() {
         // Describe the data structure for the audience
         uint8_t V[18];
-        V[0] = (uint8_t)values_[HEMISPHERE_SELECTED_LEFT_ID];
-        V[1] = (uint8_t)values_[HEMISPHERE_SELECTED_RIGHT_ID];
-        V[2] = (uint8_t)(values_[HEMISPHERE_LEFT_DATA_B1] & 0xff);
-        V[3] = (uint8_t)((values_[HEMISPHERE_LEFT_DATA_B1] >> 8) & 0xff);
-        V[4] = (uint8_t)(values_[HEMISPHERE_RIGHT_DATA_B1] & 0xff);
-        V[5] = (uint8_t)((values_[HEMISPHERE_RIGHT_DATA_B1] >> 8) & 0xff);
-        V[6] = (uint8_t)(values_[HEMISPHERE_LEFT_DATA_B2] & 0xff);
-        V[7] = (uint8_t)((values_[HEMISPHERE_LEFT_DATA_B2] >> 8) & 0xff);
-        V[8] = (uint8_t)(values_[HEMISPHERE_RIGHT_DATA_B2] & 0xff);
-        V[9] = (uint8_t)((values_[HEMISPHERE_RIGHT_DATA_B2] >> 8) & 0xff);
-        V[10] = (uint8_t)(values_[HEMISPHERE_LEFT_DATA_B3] & 0xff);
-        V[11] = (uint8_t)((values_[HEMISPHERE_LEFT_DATA_B3] >> 8) & 0xff);
-        V[12] = (uint8_t)(values_[HEMISPHERE_RIGHT_DATA_B3] & 0xff);
-        V[13] = (uint8_t)((values_[HEMISPHERE_RIGHT_DATA_B3] >> 8) & 0xff);
-        V[14] = (uint8_t)(values_[HEMISPHERE_LEFT_DATA_B4] & 0xff);
-        V[15] = (uint8_t)((values_[HEMISPHERE_LEFT_DATA_B4] >> 8) & 0xff);
-        V[16] = (uint8_t)(values_[HEMISPHERE_RIGHT_DATA_B4] & 0xff);
-        V[17] = (uint8_t)((values_[HEMISPHERE_RIGHT_DATA_B4] >> 8) & 0xff);
+        V[0] = (uint8_t)values_[QUADRANTS_SELECTED_LEFT_ID];
+        V[1] = (uint8_t)values_[QUADRANTS_SELECTED_RIGHT_ID];
+        V[2] = (uint8_t)(values_[QUADRANTS_LEFT_DATA_B1] & 0xff);
+        V[3] = (uint8_t)((values_[QUADRANTS_LEFT_DATA_B1] >> 8) & 0xff);
+        V[4] = (uint8_t)(values_[QUADRANTS_RIGHT_DATA_B1] & 0xff);
+        V[5] = (uint8_t)((values_[QUADRANTS_RIGHT_DATA_B1] >> 8) & 0xff);
+        V[6] = (uint8_t)(values_[QUADRANTS_LEFT_DATA_B2] & 0xff);
+        V[7] = (uint8_t)((values_[QUADRANTS_LEFT_DATA_B2] >> 8) & 0xff);
+        V[8] = (uint8_t)(values_[QUADRANTS_RIGHT_DATA_B2] & 0xff);
+        V[9] = (uint8_t)((values_[QUADRANTS_RIGHT_DATA_B2] >> 8) & 0xff);
+        V[10] = (uint8_t)(values_[QUADRANTS_LEFT_DATA_B3] & 0xff);
+        V[11] = (uint8_t)((values_[QUADRANTS_LEFT_DATA_B3] >> 8) & 0xff);
+        V[12] = (uint8_t)(values_[QUADRANTS_RIGHT_DATA_B3] & 0xff);
+        V[13] = (uint8_t)((values_[QUADRANTS_RIGHT_DATA_B3] >> 8) & 0xff);
+        V[14] = (uint8_t)(values_[QUADRANTS_LEFT_DATA_B4] & 0xff);
+        V[15] = (uint8_t)((values_[QUADRANTS_LEFT_DATA_B4] >> 8) & 0xff);
+        V[16] = (uint8_t)(values_[QUADRANTS_RIGHT_DATA_B4] & 0xff);
+        V[17] = (uint8_t)((values_[QUADRANTS_RIGHT_DATA_B4] >> 8) & 0xff);
 
         // Pack it up, ship it out
         UnpackedData unpacked;
@@ -192,25 +199,23 @@ public:
     void OnReceiveSysEx() {
         uint8_t V[18];
         if (ExtractSysExData(V, 'H')) {
-            values_[HEMISPHERE_SELECTED_LEFT_ID] = V[0];
-            values_[HEMISPHERE_SELECTED_RIGHT_ID] = V[1];
-            values_[HEMISPHERE_LEFT_DATA_B1] = ((uint16_t)V[3] << 8) + V[2];
-            values_[HEMISPHERE_RIGHT_DATA_B1] = ((uint16_t)V[5] << 8) + V[4];
-            values_[HEMISPHERE_LEFT_DATA_B2] = ((uint16_t)V[7] << 8) + V[6];
-            values_[HEMISPHERE_RIGHT_DATA_B2] = ((uint16_t)V[9] << 8) + V[8];
-            values_[HEMISPHERE_LEFT_DATA_B3] = ((uint16_t)V[11] << 8) + V[10];
-            values_[HEMISPHERE_RIGHT_DATA_B3] = ((uint16_t)V[13] << 8) + V[12];
-            values_[HEMISPHERE_LEFT_DATA_B4] = ((uint16_t)V[15] << 8) + V[14];
-            values_[HEMISPHERE_RIGHT_DATA_B4] = ((uint16_t)V[17] << 8) + V[16];
+            values_[QUADRANTS_SELECTED_LEFT_ID] = V[0];
+            values_[QUADRANTS_SELECTED_RIGHT_ID] = V[1];
+            values_[QUADRANTS_LEFT_DATA_B1] = ((uint16_t)V[3] << 8) + V[2];
+            values_[QUADRANTS_RIGHT_DATA_B1] = ((uint16_t)V[5] << 8) + V[4];
+            values_[QUADRANTS_LEFT_DATA_B2] = ((uint16_t)V[7] << 8) + V[6];
+            values_[QUADRANTS_RIGHT_DATA_B2] = ((uint16_t)V[9] << 8) + V[8];
+            values_[QUADRANTS_LEFT_DATA_B3] = ((uint16_t)V[11] << 8) + V[10];
+            values_[QUADRANTS_RIGHT_DATA_B3] = ((uint16_t)V[13] << 8) + V[12];
+            values_[QUADRANTS_LEFT_DATA_B4] = ((uint16_t)V[15] << 8) + V[14];
+            values_[QUADRANTS_RIGHT_DATA_B4] = ((uint16_t)V[17] << 8) + V[16];
         }
     }
 
 };
 
-// HemispherePreset hem_config; // special place for Clock data and Config data, 64 bits each
-
-HemispherePreset hem_presets[HEM_NR_OF_PRESETS];
-HemispherePreset *hem_active_preset = 0;
+QuadrantsPreset quad_presets[QUAD_PRESET_COUNT];
+QuadrantsPreset *quad_active_preset = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Hemisphere Manager
@@ -220,7 +225,7 @@ using namespace HS;
 
 void ReceiveManagerSysEx();
 
-class HemisphereManager : public HSApplication {
+class QuadAppletManager : public HSApplication {
 public:
     enum PopupType {
       MENU_POPUP,
@@ -238,44 +243,44 @@ public:
             quantizer[i].Configure(OC::Scales::GetScale(quant_scale[i]), 0xffff);
         }
 
-        SetApplet(LEFT_HEMISPHERE, HS::get_applet_index_by_id(18)); // DualTM
-        SetApplet(RIGHT_HEMISPHERE, HS::get_applet_index_by_id(15)); // EuclidX
+        SetApplet(HEM_SIDE(0), HS::get_applet_index_by_id(18)); // DualTM
+        SetApplet(HEM_SIDE(1), HS::get_applet_index_by_id(15)); // EuclidX
+        SetApplet(HEM_SIDE(2), HS::get_applet_index_by_id(68)); // DivSeq
+        SetApplet(HEM_SIDE(3), HS::get_applet_index_by_id(71)); // Pigeons
     }
 
     void Resume() {
-        if (!hem_active_preset)
+        if (!quad_active_preset)
             LoadFromPreset(0);
         // TODO: restore quantizer settings...
     }
     void Suspend() {
-        if (hem_active_preset) {
+        if (quad_active_preset) {
             if (HS::auto_save_enabled || 0 == preset_id) StoreToPreset(preset_id, !HS::auto_save_enabled);
-            hem_active_preset->OnSendSysEx();
+            quad_active_preset->OnSendSysEx();
         }
     }
 
-    void StoreToPreset(HemispherePreset* preset, bool skip_eeprom = false) {
-        bool doSave = (preset != hem_active_preset);
+    void StoreToPreset(QuadrantsPreset* preset, bool skip_eeprom = false) {
+        bool doSave = (preset != quad_active_preset);
 
-        hem_active_preset = preset;
-        for (int h = 0; h < 2; h++)
+        quad_active_preset = preset;
+        for (int h = 0; h < APPLET_SLOTS; h++)
         {
             int index = my_applet[h];
-            if (hem_active_preset->GetAppletId(HEM_SIDE(h)) != HS::available_applets[index].id)
+            if (quad_active_preset->GetAppletId(HEM_SIDE(h)) != HS::available_applets[index].id)
                 doSave = 1;
-            hem_active_preset->SetAppletId(HEM_SIDE(h), HS::available_applets[index].id);
+            quad_active_preset->SetAppletId(HEM_SIDE(h), HS::available_applets[index].id);
 
             uint64_t data = HS::available_applets[index].instance[h]->OnDataRequest();
             if (data != applet_data[h]) doSave = 1;
             applet_data[h] = data;
-            hem_active_preset->SetData(HEM_SIDE(h), data);
+            quad_active_preset->SetData(HEM_SIDE(h), data);
         }
         uint64_t data = ClockSetup_instance.OnDataRequest();
         if (data != clock_data) doSave = 1;
         clock_data = data;
-        hem_active_preset->SetClockData(data);
-
-        if (hem_active_preset->StoreInputMap()) doSave = 1;
+        quad_active_preset->SetClockData(data);
 
         // initiate actual EEPROM save - ONLY if necessary!
         if (doSave && !skip_eeprom) {
@@ -289,32 +294,28 @@ public:
 
     }
     void StoreToPreset(int id, bool skip_eeprom = false) {
-        StoreToPreset( (HemispherePreset*)(hem_presets + id), skip_eeprom );
+        StoreToPreset( (QuadrantsPreset*)(quad_presets + id), skip_eeprom );
         preset_id = id;
     }
     void LoadFromPreset(int id) {
-        hem_active_preset = (HemispherePreset*)(hem_presets + id);
-        if (hem_active_preset->is_valid()) {
-            clock_data = hem_active_preset->GetClockData();
+        quad_active_preset = (QuadrantsPreset*)(quad_presets + id);
+        if (quad_active_preset->is_valid()) {
+            clock_data = quad_active_preset->GetClockData();
             ClockSetup_instance.OnDataReceive(clock_data);
 
-            hem_active_preset->LoadInputMap();
-
-            for (int h = 0; h < 2; h++)
+            for (int h = 0; h < APPLET_SLOTS; h++)
             {
-                int index = HS::get_applet_index_by_id( hem_active_preset->GetAppletId(h) );
-                applet_data[h] = hem_active_preset->GetData(HEM_SIDE(h));
+                int index = HS::get_applet_index_by_id( quad_active_preset->GetAppletId(HEM_SIDE(h)) );
+                applet_data[h] = quad_active_preset->GetData(HEM_SIDE(h));
                 SetApplet(HEM_SIDE(h), index);
                 HS::available_applets[index].instance[h]->OnDataReceive(applet_data[h]);
             }
-
-
         }
         preset_id = id;
         PokePopup(PRESET_POPUP);
     }
 
-    // does not modify the preset, only the manager
+    // does not modify the preset, only the quad_manager
     void SetApplet(HEM_SIDE hemisphere, int index) {
         next_applet[hemisphere] = my_applet[hemisphere] = index;
         HS::available_applets[index].instance[hemisphere]->BaseStart(hemisphere);
@@ -328,13 +329,12 @@ public:
         return select_mode > -1;
     }
 
-    void ProcessMIDI() {
-        HS::IOFrame &f = HS::frame;
-
-        while (usbMIDI.read()) {
-            const int message = usbMIDI.getType();
-            const int data1 = usbMIDI.getData1();
-            const int data2 = usbMIDI.getData2();
+    template <typename T>
+    void ProcessMIDI(T device) {
+        while (device.read()) {
+            const int message = device.getType();
+            const int data1 = device.getData1();
+            const int data2 = device.getData2();
 
             if (message == usbMIDI.SystemExclusive) {
                 ReceiveManagerSysEx();
@@ -342,29 +342,46 @@ public:
             }
 
             if (message == usbMIDI.ProgramChange) {
-                int slot = usbMIDI.getData1();
-                if (slot < HEM_NR_OF_PRESETS) LoadFromPreset(slot);
+                int slot = device.getData1();
+                if (slot < QUAD_PRESET_COUNT) LoadFromPreset(slot);
                 continue;
             }
 
-            f.MIDIState.ProcessMIDIMsg(usbMIDI.getChannel(), message, data1, data2);
+            HS::frame.MIDIState.ProcessMIDIMsg(device.getChannel(), message, data1, data2);
+        }
+    }
+
+    void CheckPresetTriggers() {
+        for (int i = 0; i < 4; ++i) {
+            if (HS::trigger_mapping[i] > 4 && HS::frame.clocked[i]) {
+                LoadFromPreset(HS::trigger_mapping[i] - 5);
+                break;
+            }
         }
     }
 
     void Controller() {
         // top-level MIDI-to-CV handling - alters frame outputs
-        ProcessMIDI();
+        //ProcessMIDI(usbMIDI);
+        #ifdef USB_MIDI_HOST
+        ProcessMIDI(usbHostMIDI);
+        #endif
+
+        CheckPresetTriggers();
 
         // Clock Setup applet handles internal clock duties
         ClockSetup_instance.Controller();
 
         // execute Applets
-        for (int h = 0; h < 2; h++)
+        for (int h = 0; h < APPLET_SLOTS; h++)
         {
             if (my_applet[h] != next_applet[h]) {
               SetApplet(HEM_SIDE(h), next_applet[h]);
             }
             int index = my_applet[h];
+
+            // MIDI signals mixed with inputs to applets
+            /* TODO:
             if (HS::available_applets[index].id != 150) // not MIDI In
             {
                 ForEachChannel(ch) {
@@ -390,6 +407,7 @@ public:
                     }
                 }
             }
+            */
             HS::available_applets[index].instance[h]->BaseController();
         }
     }
@@ -479,12 +497,6 @@ public:
         }
 
         if (draw_applets) {
-            for (int h = 0; h < 2; h++)
-            {
-                int index = my_applet[h];
-                HS::available_applets[index].instance[h]->BaseView();
-            }
-
             if (clock_m->IsRunning()) {
                 // Metronome icon
                 gfxIcon(56, 1, clock_m->Cycle() ? METRO_L_ICON : METRO_R_ICON);
@@ -492,8 +504,19 @@ public:
                 gfxIcon(56, 1, PAUSE_ICON);
             }
 
-            if (select_mode == LEFT_HEMISPHERE) graphics.drawFrame(0, 0, 64, 64);
-            if (select_mode == RIGHT_HEMISPHERE) graphics.drawFrame(64, 0, 64, 64);
+            // only two applets visible at a time
+            for (int h = 0; h < 2; h++)
+            {
+                HEM_SIDE slot = HEM_SIDE(h + view_slot[h]*2);
+                int index = my_applet[slot];
+                HS::available_applets[index].instance[slot]->BaseView();
+
+                // Applets 3 and 4 get inverted titles
+                if (slot > 1) gfxInvert(1 + h*64, 1, 54, 10);
+            }
+
+            if (select_mode % 2 == LEFT_HEMISPHERE) graphics.drawFrame(0, 0, 64, 64);
+            if (select_mode % 2 == RIGHT_HEMISPHERE) graphics.drawFrame(64, 0, 64, 64);
         }
 
         // Overlay popup window last
@@ -505,6 +528,7 @@ public:
     void DelegateEncoderPush(const UI::Event &event) {
         bool down = (event.type == UI::EVENT_BUTTON_DOWN);
         int h = (event.control == OC::CONTROL_BUTTON_L) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
+        HEM_SIDE slot = HEM_SIDE(view_slot[h]*2 + h);
 
         if (config_menu || preset_cursor) {
             // button release for config screen
@@ -521,15 +545,16 @@ public:
         }
 
         // button release
-        if (select_mode == h) {
+        if (select_mode == slot) {
             select_mode = -1; // Pushing a button for the selected side turns off select mode
         } else if (!clock_setup) {
             // regular applets get button release
-            int index = my_applet[h];
-            HS::available_applets[index].instance[h]->OnButtonPress();
+            int index = my_applet[slot];
+            HS::available_applets[index].instance[slot]->OnButtonPress();
         }
     }
 
+    /*
     void ExtraButtonPush(const UI::Event &event) {
         bool down = (event.type == UI::EVENT_BUTTON_DOWN);
         if (down) return;
@@ -557,9 +582,28 @@ public:
             ShowPresetSelector();
 
     }
+    */
+    const HEM_SIDE ButtonToSlot(const UI::Event &event) {
+        switch (event.control) {
+        default:
+        case OC::CONTROL_BUTTON_UP:
+          return LEFT_HEMISPHERE;
+          break;
+        case OC::CONTROL_BUTTON_DOWN:
+          return RIGHT_HEMISPHERE;
+          break;
+        case OC::CONTROL_BUTTON_UP2:
+          return LEFT2_HEMISPHERE;
+          break;
+        case OC::CONTROL_BUTTON_DOWN2:
+          return RIGHT2_HEMISPHERE;
+          break;
+        }
+    }
+
     void DelegateSelectButtonPush(const UI::Event &event) {
         bool down = (event.type == UI::EVENT_BUTTON_DOWN);
-        int hemisphere = (event.control == OC::CONTROL_BUTTON_UP) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
+        HEM_SIDE hemisphere = ButtonToSlot(event);
 
         if (preset_cursor && !down) {
             preset_cursor = 0;
@@ -588,10 +632,9 @@ public:
                 return;
             }
 
-            if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME) {
+            if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME && hemisphere == first_click) {
                 // This is a double-click on one button. Activate corresponding help screen and deactivate select mode.
-                if (hemisphere == first_click)
-                    SetHelpScreen(hemisphere);
+                SetHelpScreen(hemisphere);
 
                 // reset double-click timer either way
                 click_tick = 0;
@@ -606,7 +649,6 @@ public:
                 else SetHelpScreen(-1); // Exit help screen if same button is clicked
                 OC::ui.SetButtonIgnoreMask(); // ignore release
             }
-
             // mark this single click
             click_tick = OC::CORE::ticks;
             first_click = hemisphere;
@@ -615,8 +657,13 @@ public:
 
         // -- button release
         if (!clock_setup) {
+            // switching views
+            if (view_slot[hemisphere % 2] != hemisphere / 2) {
+              view_slot[hemisphere % 2] = hemisphere / 2;
+              select_mode = -1;
+            }
             // Select Mode
-            if (hemisphere == select_mode) select_mode = -1; // Exit Select Mode if same button is pressed
+            else if (hemisphere == select_mode) select_mode = -1; // Exit Select Mode if same button is pressed
             else if (help_hemisphere < 0) // Otherwise, set Select Mode - UNLESS there's a help screen
                 select_mode = hemisphere;
         }
@@ -624,6 +671,7 @@ public:
 
     void DelegateEncoderMovement(const UI::Event &event) {
         int h = (event.control == OC::CONTROL_ENCODER_L) ? LEFT_HEMISPHERE : RIGHT_HEMISPHERE;
+        HEM_SIDE slot = HEM_SIDE(view_slot[h]*2 + h);
         if (config_menu || preset_cursor) {
             ConfigEncoderAction(h, event.value);
             return;
@@ -631,11 +679,11 @@ public:
 
         if (clock_setup) {
             ClockSetup_instance.OnEncoderMove(event.value);
-        } else if (select_mode == h) {
-            ChangeApplet(HEM_SIDE(h), event.value);
+        } else if (select_mode == slot) {
+            ChangeApplet(slot, event.value);
         } else {
-            int index = my_applet[h];
-            HS::available_applets[index].instance[h]->OnEncoderMove(event.value);
+            int index = my_applet[slot];
+            HS::available_applets[index].instance[slot]->OnEncoderMove(event.value);
         }
     }
 
@@ -685,12 +733,10 @@ public:
                 break;
             }
         case UI::EVENT_BUTTON_PRESS:
-            if (event.control == OC::CONTROL_BUTTON_UP || event.control == OC::CONTROL_BUTTON_DOWN) {
-                DelegateSelectButtonPush(event);
-            } else if (event.control == OC::CONTROL_BUTTON_L || event.control == OC::CONTROL_BUTTON_R) {
+            if (event.control == OC::CONTROL_BUTTON_L || event.control == OC::CONTROL_BUTTON_R) {
                 DelegateEncoderPush(event);
-            } else // new buttons
-                ExtraButtonPush(event);
+            } else
+                DelegateSelectButtonPush(event);
 
             break;
 
@@ -706,9 +752,12 @@ public:
 private:
     int preset_id = 0;
     int preset_cursor = 0;
-    int my_applet[2]; // Indexes to available_applets
-    int next_applet[2]; // queued from UI thread, handled by Controller
-    uint64_t clock_data, applet_data[2]; // cache of applet data
+    int my_applet[4]; // Indexes to available_applets
+                      // Left side: 0,2
+                      // Right side: 1,3
+    int next_applet[4]; // queued from UI thread, handled by Controller
+    uint64_t clock_data, applet_data[4]; // cache of applet data
+    bool view_slot[2] = {0, 0}; // Two applets on each side, only one visible at a time
     bool clock_setup;
     bool config_menu;
     bool isEditing = false;
@@ -718,7 +767,7 @@ private:
     uint32_t click_tick; // Measure time between clicks for double-click
     uint32_t popup_tick; // for button feedback
     PopupType popup_type = PRESET_POPUP;
-    int first_click; // The first button pushed of a double-click set, to see if the same one is pressed
+    HEM_SIDE first_click; // The first button pushed of a double-click set, to see if the same one is pressed
     ClockManager *clock_m = clock_m->get();
 
     enum HEMConfigCursor {
@@ -752,7 +801,7 @@ private:
             if (h == 0) {
               config_cursor = constrain(config_cursor + dir, LOAD_PRESET, SAVE_PRESET);
             } else {
-              preset_cursor = constrain(preset_cursor + dir, 1, HEM_NR_OF_PRESETS);
+              preset_cursor = constrain(preset_cursor + dir, 1, QUAD_PRESET_COUNT);
             }
             break;
         }
@@ -838,21 +887,21 @@ private:
 
         int y = 5 + constrain(preset_cursor,1,5)*10;
         gfxIcon(0, y, RIGHT_ICON);
-        const int top = constrain(preset_cursor - 4, 1, HEM_NR_OF_PRESETS) - 1;
+        const int top = constrain(preset_cursor - 4, 1, QUAD_PRESET_COUNT) - 1;
         y = 15;
-        for (int i = top; i < HEM_NR_OF_PRESETS && i < top + 5; ++i)
+        for (int i = top; i < QUAD_PRESET_COUNT && i < top + 5; ++i)
         {
             if (i == preset_id)
               gfxIcon(8, y, ZAP_ICON);
             else
               gfxPrint(8, y, OC::Strings::capital_letters[i]);
 
-            if (!hem_presets[i].is_valid())
+            if (!quad_presets[i].is_valid())
                 gfxPrint(18, y, "(empty)");
             else {
-                gfxPrint(18, y, hem_presets[i].GetApplet(0)->applet_name());
+                gfxPrint(18, y, quad_presets[i].GetApplet(LEFT_HEMISPHERE)->applet_name());
                 gfxPrint(", ");
-                gfxPrint(hem_presets[i].GetApplet(1)->applet_name());
+                gfxPrint(quad_presets[i].GetApplet(RIGHT_HEMISPHERE)->applet_name());
             }
 
             y += 10;
@@ -860,31 +909,41 @@ private:
     }
 };
 
-// TOTAL EEPROM SIZE: 8 * 30 bytes
-SETTINGS_DECLARE(HemispherePreset, HEMISPHERE_SETTING_LAST) {
+// TOTAL EEPROM SIZE: 4 * 26 bytes
+SETTINGS_DECLARE(QuadrantsPreset, QUADRANTS_SETTING_LAST) {
     {0, 0, 255, "Applet ID L", NULL, settings::STORAGE_TYPE_U8},
     {0, 0, 255, "Applet ID R", NULL, settings::STORAGE_TYPE_U8},
+    {0, 0, 255, "Applet ID L2", NULL, settings::STORAGE_TYPE_U8},
+    {0, 0, 255, "Applet ID R2", NULL, settings::STORAGE_TYPE_U8},
     {0, 0, 65535, "Data L block 1", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data R block 1", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Data L block 2", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data R block 2", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Data L block 3", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Data R block 3", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Data L block 4", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R block 1", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R block 2", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R block 3", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Data R block 4", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L2 block 1", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L2 block 2", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L2 block 3", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data L2 block 4", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R2 block 1", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R2 block 2", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R2 block 3", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Data R2 block 4", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 1", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 2", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 3", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 4", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Trig Input Map", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "CV Input Map", NULL, settings::STORAGE_TYPE_U16}
+    {0, 0, 0xFFFFFFFF, "Trig Input Map", NULL, settings::STORAGE_TYPE_U32},
+    {0, 0, 0xFFFFFFFF, "CV Input Map", NULL, settings::STORAGE_TYPE_U32}
 };
 
-HemisphereManager manager;
+QuadAppletManager quad_manager;
 
 void ReceiveManagerSysEx() {
-    if (hem_active_preset)
-        hem_active_preset->OnReceiveSysEx();
+    if (quad_active_preset)
+        quad_active_preset->OnReceiveSysEx();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -892,53 +951,53 @@ void ReceiveManagerSysEx() {
 ////////////////////////////////////////////////////////////////////////////////
 
 // App stubs
-void HEMISPHERE_init() {
-    manager.BaseStart();
+void QUADRANTS_init() {
+    quad_manager.BaseStart();
 }
 
-static constexpr size_t HEMISPHERE_storageSize() {
-    return HemispherePreset::storageSize() * HEM_NR_OF_PRESETS;
+static constexpr size_t QUADRANTS_storageSize() {
+    return QuadrantsPreset::storageSize() * QUAD_PRESET_COUNT;
 }
 
-static size_t HEMISPHERE_save(void *storage) {
+static size_t QUADRANTS_save(void *storage) {
     size_t used = 0;
-    for (int i = 0; i < HEM_NR_OF_PRESETS; ++i) {
-        used += hem_presets[i].Save(static_cast<char*>(storage) + used);
+    for (int i = 0; i < QUAD_PRESET_COUNT; ++i) {
+        used += quad_presets[i].Save(static_cast<char*>(storage) + used);
     }
     return used;
 }
 
-static size_t HEMISPHERE_restore(const void *storage) {
+static size_t QUADRANTS_restore(const void *storage) {
     size_t used = 0;
-    for (int i = 0; i < HEM_NR_OF_PRESETS; ++i) {
-        used += hem_presets[i].Restore(static_cast<const char*>(storage) + used);
+    for (int i = 0; i < QUAD_PRESET_COUNT; ++i) {
+        used += quad_presets[i].Restore(static_cast<const char*>(storage) + used);
     }
     return used;
 }
 
-void FASTRUN HEMISPHERE_isr() {
-    manager.BaseController();
+void FASTRUN QUADRANTS_isr() {
+    quad_manager.BaseController();
 }
 
-void HEMISPHERE_handleAppEvent(OC::AppEvent event) {
+void QUADRANTS_handleAppEvent(OC::AppEvent event) {
     switch (event) {
     case OC::APP_EVENT_RESUME:
-        manager.Resume();
+        quad_manager.Resume();
         break;
 
     case OC::APP_EVENT_SCREENSAVER_ON:
     case OC::APP_EVENT_SUSPEND:
-        manager.Suspend();
+        quad_manager.Suspend();
         break;
 
     default: break;
     }
 }
 
-void HEMISPHERE_loop() {} // Essentially deprecated in favor of ISR
+void QUADRANTS_loop() {} // Essentially deprecated in favor of ISR
 
-void HEMISPHERE_menu() {
-    manager.View();
+void QUADRANTS_menu() {
+    quad_manager.View();
 }
 
 typedef struct {
@@ -1001,7 +1060,7 @@ static void ZapScreensaver(const bool stars = false) {
   if (--frame_delay < 0) frame_delay = 100;
 }
 
-void HEMISPHERE_screensaver() {
+void QUADRANTS_screensaver() {
     switch (HS::screensaver_mode) {
     case 0x3: // Zips or Stars
         ZapScreensaver(true);
@@ -1010,18 +1069,16 @@ void HEMISPHERE_screensaver() {
         ZapScreensaver();
         break;
     case 0x1: // Meters
-        manager.BaseScreensaver(true); // show note names
+        quad_manager.BaseScreensaver(true); // show note names
         break;
     default: break; // blank screen
     }
 }
 
-void HEMISPHERE_handleButtonEvent(const UI::Event &event) {
-    manager.HandleButtonEvent(event);
+void QUADRANTS_handleButtonEvent(const UI::Event &event) {
+    quad_manager.HandleButtonEvent(event);
 }
 
-void HEMISPHERE_handleEncoderEvent(const UI::Event &event) {
-    manager.DelegateEncoderMovement(event);
+void QUADRANTS_handleEncoderEvent(const UI::Event &event) {
+    quad_manager.DelegateEncoderMovement(event);
 }
-
-#endif

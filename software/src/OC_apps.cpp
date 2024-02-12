@@ -39,7 +39,13 @@ ClockManager *ClockManager::instance = 0;
 namespace menu = OC::menu;
 
 #ifndef NO_HEMISPHERE
+
+#ifdef ARDUINO_TEENSY41
+#include "APP_QUADRANTS.h"
+#else
 #include "APP_HEMISPHERE.h"
+#endif
+
 #endif
 
 #include "APP_CALIBR8OR.h"
@@ -88,9 +94,12 @@ static constexpr OC::App available_apps[] = {
   #endif
 
 #ifndef NO_HEMISPHERE
+  #ifdef ARDUINO_TEENSY41
+  DECLARE_APP('Q','S', "Quadrants", QUADRANTS),
+  #else
   DECLARE_APP('H','S', "Hemisphere", HEMISPHERE),
+  #endif
 #endif
-
   #ifdef ENABLE_APP_ASR
   DECLARE_APP('A','S', "CopierMaschine", ASR),
   #endif

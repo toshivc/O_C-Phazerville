@@ -68,6 +68,12 @@
 enum HEM_SIDE {
 LEFT_HEMISPHERE = 0,
 RIGHT_HEMISPHERE = 1,
+#ifdef ARDUINO_TEENSY41
+LEFT2_HEMISPHERE = 2,
+RIGHT2_HEMISPHERE = 3,
+#endif
+
+APPLET_SLOTS
 };
 
 // Codes for help system sections
@@ -83,7 +89,7 @@ static const char * HEM_HELP_SECTION_NAMES[4] = {"Dig", "CV", "Out", "Enc"};
 #define BottomAlign(h) (62 - h)
 #define ForEachChannel(ch) for(int_fast8_t ch = 0; ch < 2; ++ch)
 #define ForAllChannels(ch) for(int_fast8_t ch = 0; ch < 4; ++ch)
-#define gfx_offset (hemisphere * 64) // Graphics offset, based on the side
+#define gfx_offset ((hemisphere % 2) * 64) // Graphics offset, based on the side
 #define io_offset (hemisphere * 2) // Input/Output offset, based on the side
 
 static constexpr uint32_t HEMISPHERE_SIM_CLICK_TIME = 1000;
@@ -102,7 +108,7 @@ namespace HS {
 typedef struct Applet {
   const int id;
   const uint8_t categories;
-  HemisphereApplet* instance[2];
+  HemisphereApplet* instance[APPLET_SLOTS];
 } Applet;
 
 extern IOFrame frame;
@@ -113,7 +119,7 @@ using namespace HS;
 
 class HemisphereApplet {
 public:
-    static int cursor_countdown[2];
+    static int cursor_countdown[APPLET_SLOTS];
 
     virtual const char* applet_name() = 0; // Maximum of 9 characters
 
@@ -125,7 +131,7 @@ public:
     virtual void OnButtonPress() = 0;
     virtual void OnEncoderMove(int direction) = 0;
 
-    void BaseStart(bool hemisphere_);
+    void BaseStart(HEM_SIDE hemisphere_);
     void BaseController();
     void BaseView();
 
@@ -370,7 +376,7 @@ public:
     }
 
 protected:
-    bool hemisphere; // Which hemisphere (0, 1) this applet uses
+    HEM_SIDE hemisphere; // Which hemisphere (0, 1, ...) this applet uses
     bool isEditing = false; // modal editing toggle
     const char* help[4];
     virtual void SetHelp() = 0;
@@ -394,11 +400,11 @@ protected:
      *     // etc...
      * }
      */
-    void StartADCLag(bool ch = 0) {
+    void StartADCLag(size_t ch = 0) {
         frame.adc_lag_countdown[io_offset + ch] = HEMISPHERE_ADC_LAG;
     }
 
-    bool EndOfADCLag(bool ch = 0) {
+    bool EndOfADCLag(size_t ch = 0) {
         if (frame.adc_lag_countdown[io_offset + ch] < 0) return false;
         return (--frame.adc_lag_countdown[io_offset + ch] == 0);
     }

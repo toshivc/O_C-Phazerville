@@ -23,10 +23,10 @@
 
 class ProbLoopLinker {
 	static ProbLoopLinker *instance;
-	bool trig_q[2] = {0, 0};
+	bool trig_q[4] = {0, 0, 0, 0};
 	uint8_t hemDiv;
 	uint8_t hemMelo;
-	uint32_t registered[2];
+	uint32_t registered[4];
 	bool isLooping;
 	int loopStep;
 	bool reseed;
@@ -49,12 +49,12 @@ public:
         return instance;
     }
 
-    void RegisterDiv(bool hemisphere) {
+    void RegisterDiv(size_t hemisphere) {
     	hemDiv = hemisphere;
         registered[hemisphere] = OC::CORE::ticks;
     }
 
-    void RegisterMelo(bool hemisphere) {
+    void RegisterMelo(size_t hemisphere) {
     	hemMelo = hemisphere;
         registered[hemisphere] = OC::CORE::ticks;
     }
