@@ -42,6 +42,7 @@
 
 
 namespace menu = OC::menu;
+using OC::DUMMY;
 
 const uint8_t NUM_CHANNELS = 2;
 const uint8_t MULT_MAX = 26;    // max multiplier
