@@ -43,6 +43,10 @@
 #include "util/util_debugpins.h"
 #include "VBiasManager.h"
 
+#if defined(ARDUINO_TEENSY41)
+#include "AudioSetup.h"
+#endif
+
 unsigned long LAST_REDRAW_TIME = 0;
 uint_fast8_t MENU_REDRAW = true;
 OC::UiMode ui_mode = OC::UI_MODE_MENU;
@@ -106,6 +110,7 @@ void setup() {
     delay(1500);
   }
   #if defined(ARDUINO_TEENSY41)
+  OC::AudioInit();
   OC::Pinout_Detect();
   #endif
 #endif

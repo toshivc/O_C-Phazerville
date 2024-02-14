@@ -9,6 +9,12 @@
 
 #include "HSMIDI.h"
 
+#ifdef ARDUINO_TEENSY41
+namespace OC {
+  extern void ModFilter1(int cv);
+}
+#endif
+
 namespace HS {
 
 typedef struct MIDILogEntry {
@@ -234,6 +240,11 @@ typedef struct IOFrame {
         for (int i = 0; i < DAC_CHANNEL_LAST; ++i) {
             OC::DAC::set_pitch(DAC_CHANNEL(i), outputs[i], 0);
         }
+
+#ifdef ARDUINO_TEENSY41
+        // HACK - modulate filter with first output from RIGHT side...
+        OC::ModFilter1(outputs[2]);
+#endif
     }
 
 } IOFrame;

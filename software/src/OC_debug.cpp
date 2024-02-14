@@ -9,6 +9,10 @@
 #include "util/util_misc.h"
 #include "extern/dspinst.h"
 
+#ifdef ARDUINO_TEENSY41
+#include <Audio.h>
+#endif
+
 #ifdef POLYLFO_DEBUG  
 extern void POLYLFO_debug();
 #endif // POLYLFO_DEBUG
@@ -131,6 +135,15 @@ static void debug_menu_adc() {
 //      graphics.setPrintPos(2, 52); graphics.print(ADC::fail_flag1());
 }
 
+#ifdef ARDUINO_TEENSY41
+static void debug_menu_audio() {
+  graphics.setPrintPos(2, 12);
+  graphics.printf("Total CPU %2.f %%", AudioProcessorUsage());
+  graphics.setPrintPos(2, 22);
+  graphics.printf("Max CPU %2.f %%", AudioProcessorUsageMax());
+}
+#endif
+
 struct DebugMenu {
   const char *title;
   void (*display_fn)();
@@ -141,6 +154,9 @@ static const DebugMenu debug_menus[] = {
   { " VERS", debug_menu_version },
   { " GFX", debug_menu_gfx },
   { " ADC", debug_menu_adc },
+#ifdef ARDUINO_TEENSY41
+  { " AUDIO", debug_menu_audio },
+#endif
 #ifdef POLYLFO_DEBUG  
   { " POLYLFO", POLYLFO_debug },
 #endif // POLYLFO_DEBUG
