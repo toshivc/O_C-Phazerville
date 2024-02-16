@@ -169,7 +169,7 @@ public:
             const int data2 = usbMIDI.getData2();
             f.MIDIState.ProcessMIDIMsg(usbMIDI.getChannel(), message, data1, data2);
         }
-        HS::clock_setup_applet.instance[0]->Controller();
+        ClockSetup_instance.Controller();
 
         const int OCTAVE = (12 << 7);
         // -- core processing --

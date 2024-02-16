@@ -248,7 +248,7 @@ public:
         ProcessMIDI();
 
         // ClockSetup applet handles internal clock duties
-        HS::clock_setup_applet.instance[0]->Controller();
+        ClockSetup_instance.Controller();
 
         // -- core processing --
         for (int ch = 0; ch < NR_OF_CHANNELS; ++ch) {
@@ -283,7 +283,7 @@ public:
 
     void View() {
         if (clock_setup) {
-            HS::clock_setup_applet.instance[0]->View();
+            ClockSetup_instance.View();
             return;
         }
 
@@ -385,7 +385,7 @@ public:
           case OC::CONTROL_BUTTON_L:
           case OC::CONTROL_BUTTON_R:
             if (clock_setup) // pass button down to Clock Setup
-              HS::clock_setup_applet.instance[0]->OnButtonPress();
+              ClockSetup_instance.OnButtonPress();
             break;
         }
     }
@@ -412,7 +412,7 @@ public:
     // Left encoder: Octave or VScaling + Scale Select
     void OnLeftEncoderMove(int direction) {
         if (clock_setup) {
-            HS::clock_setup_applet.instance[0]->OnEncoderMove(direction);
+            ClockSetup_instance.OnEncoderMove(direction);
             return;
         }
         if (preset_select) {
@@ -451,7 +451,7 @@ public:
     // Right encoder: Semitones or Bias Offset + Root Note
     void OnRightEncoderMove(int direction) {
         if (clock_setup) {
-            HS::clock_setup_applet.instance[0]->OnEncoderMove(direction);
+            ClockSetup_instance.OnEncoderMove(direction);
             return;
         }
         if (preset_select) {

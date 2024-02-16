@@ -42,7 +42,6 @@ ClockManager *ClockManager::instance = 0;
 namespace HS {
   static constexpr Applet available_applets[] = HEMISPHERE_APPLETS;
   static constexpr int HEMISPHERE_AVAILABLE_APPLETS = ARRAY_SIZE(available_applets);
-  static constexpr Applet clock_setup_applet = DECLARE_APPLET(9999, 0x01, ClockSetup);
 
   constexpr int get_applet_index_by_id(const int& id) {
     int index = 0;
@@ -252,7 +251,7 @@ public:
             applet_data[h] = data;
             hem_active_preset->SetData(h, data);
         }
-        uint64_t data = HS::clock_setup_applet.instance[0]->OnDataRequest();
+        uint64_t data = ClockSetup_instance.OnDataRequest();
         if (data != clock_data) doSave = 1;
         clock_data = data;
         hem_active_preset->SetClockData(data);
@@ -276,7 +275,7 @@ public:
         hem_active_preset = (HemispherePreset*)(hem_presets + id);
         if (hem_active_preset->is_valid()) {
             clock_data = hem_active_preset->GetClockData();
-            HS::clock_setup_applet.instance[0]->OnDataReceive(clock_data);
+            ClockSetup_instance.OnDataReceive(clock_data);
 
             for (int h = 0; h < 2; h++)
             {
@@ -332,7 +331,7 @@ public:
         ProcessMIDI();
 
         // Clock Setup applet handles internal clock duties
-        HS::clock_setup_applet.instance[0]->Controller();
+        ClockSetup_instance.Controller();
 
         // execute Applets
         for (int h = 0; h < 2; h++)
@@ -444,7 +443,7 @@ public:
 
         if (draw_applets) {
           if (clock_setup) {
-            HS::clock_setup_applet.instance[0]->View();
+            ClockSetup_instance.View();
             draw_applets = false;
           }
           else if (help_hemisphere > -1) {
@@ -491,7 +490,7 @@ public:
         // button down
         if (down) {
             // Clock Setup is more immediate for manual triggers
-            if (clock_setup) HS::clock_setup_applet.instance[0]->OnButtonPress();
+            if (clock_setup) ClockSetup_instance.OnButtonPress();
             // TODO: consider a new OnButtonDown handler for applets
             return;
         }
@@ -582,7 +581,7 @@ public:
         }
 
         if (clock_setup) {
-            HS::clock_setup_applet.instance[0]->OnEncoderMove(event.value);
+            ClockSetup_instance.OnEncoderMove(event.value);
         } else if (select_mode == h) {
             ChangeApplet(h, event.value);
         } else {
