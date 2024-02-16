@@ -26,6 +26,7 @@ public:
   };
 
   static void Init();
+  static void Validate();
   static const Scale &GetScale(int index);
   static constexpr int NUM_SCALES = SCALE_USER_LAST + sizeof(braids::scales) / sizeof(braids::scales[0]);
 };

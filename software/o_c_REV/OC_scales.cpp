@@ -12,6 +12,16 @@ void Scales::Init() {
 }
 
 /*static*/
+void Scales::Validate() {
+  // protecc from garbage EEPROM data
+  for (size_t i = 0; i < SCALE_USER_LAST; ++i) {
+    CONSTRAIN(user_scales[i].num_notes, 4, 16);
+    CONSTRAIN(user_scales[i].span, 12 << 7, 24 << 7);
+    // TODO: note values?
+  }
+}
+
+/*static*/
 const Scale &Scales::GetScale(int index) {
   if (index < SCALE_USER_LAST)
     return user_scales[index];
