@@ -155,8 +155,10 @@ public:
         preset_modified = 0;
     }
 
-	void Resume() {
-	}
+    void Suspend() {
+      if (preset_modified) SavePreset();
+    }
+    void Resume() { }
 
     void Controller() {
         // Keep the MIDI clock ticking
@@ -551,6 +553,7 @@ void ScenesApp_handleAppEvent(OC::AppEvent event) {
 
     case OC::APP_EVENT_SUSPEND:
     case OC::APP_EVENT_SCREENSAVER_ON:
+        ScenesApp_instance.Suspend();
         break;
 
     default: break;
