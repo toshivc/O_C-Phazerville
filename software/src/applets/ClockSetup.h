@@ -176,11 +176,10 @@ public:
         uint64_t data = 0;
         Pack(data, PackLocation { 0, 1 }, HS::auto_save_enabled);
         Pack(data, PackLocation { 1, 1 }, HS::cursor_wrap);
-        Pack(data, PackLocation { 2, 8 }, clock_m->GetTempo());
-        Pack(data, PackLocation { 10, 4 }, clock_m->GetClockPPQN());
+        Pack(data, PackLocation { 2, 9 }, clock_m->GetTempo());
+        Pack(data, PackLocation { 11, 5 }, clock_m->GetClockPPQN());
         for (size_t i = 0; i < 4; ++i) {
-            Pack(data, PackLocation { 14+i*6, 6 }, clock_m->GetMultiply(i)+32);
-            Pack(data, PackLocation { 38+i*4, 4 }, HS::trigger_mapping[i] + 1);
+            Pack(data, PackLocation { 16+i*6, 6 }, clock_m->GetMultiply(i)+32);
         }
 
         Pack(data, PackLocation { 54, 7 }, HS::trig_length);
@@ -194,17 +193,12 @@ public:
         HS::cursor_wrap = Unpack(data, PackLocation { 1, 1 });
 
         if (!clock_m->IsRunning())
-            clock_m->SetTempoBPM(Unpack(data, PackLocation { 2, 8 }));
+            clock_m->SetTempoBPM(Unpack(data, PackLocation { 2, 9 }));
         // { 0, 1,  2,  3,  4,  5,  6,  7,
         //   8, 9, 10, 11, 12, 16, 20, 24 }
-        clock_m->SetClockPPQN(Unpack(data, PackLocation { 10, 4 }));
+        clock_m->SetClockPPQN(Unpack(data, PackLocation { 11, 5 }));
         for (size_t i = 0; i < 4; ++i) {
-            clock_m->SetMultiply(Unpack(data, PackLocation { 14+i*6, 6 })-32, i);
-        }
-
-        for (size_t i = 0; i < 4; ++i) {
-            uint8_t t = Unpack(data, PackLocation { 38+i*4, 4 });
-            if (t) HS::trigger_mapping[i] = t - 1;
+            clock_m->SetMultiply(Unpack(data, PackLocation { 16+i*6, 6 })-32, i);
         }
 
         HS::trig_length = constrain( Unpack(data, PackLocation { 54, 7 }), 1, 63);

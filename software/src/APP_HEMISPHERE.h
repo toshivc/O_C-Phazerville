@@ -79,6 +79,8 @@ enum HEMISPHERE_SETTINGS {
     HEMISPHERE_CLOCK_DATA2,
     HEMISPHERE_CLOCK_DATA3,
     HEMISPHERE_CLOCK_DATA4,
+    HEMISPHERE_TRIGMAP,
+    HEMISPHERE_CVMAP,
     HEMISPHERE_SETTING_LAST
 };
 
@@ -122,6 +124,24 @@ public:
         apply_value(HEMISPHERE_CLOCK_DATA4, (data >> 48) & 0xffff);
     }
 
+    // returns true if changed
+    bool StoreInputMap() {
+      uint16_t trigmap = 0;
+      for (size_t i = 0; i < 4; ++i) {
+        trigmap |= (uint16_t(HS::trigger_mapping[i] + 1) & 0x0F) << (i*4);
+      }
+
+      bool changed = (values_[HEMISPHERE_TRIGMAP] != trigmap);
+      values_[HEMISPHERE_TRIGMAP] = trigmap;
+      return changed;
+    }
+    void LoadInputMap() {
+      for (size_t i = 0; i < 4; ++i) {
+        int val = (uint16_t(values_[HEMISPHERE_TRIGMAP]) >> (i*4)) & 0x0F;
+        if (val != 0)
+          HS::trigger_mapping[i] = constrain(val - 1, 0, 4);
+      }
+    }
 
     // Manually get data for one side
     uint64_t GetData(int h) {
@@ -256,6 +276,8 @@ public:
         clock_data = data;
         hem_active_preset->SetClockData(data);
 
+        if (hem_active_preset->StoreInputMap()) doSave = 1;
+
         // initiate actual EEPROM save - ONLY if necessary!
         if (doSave && !skip_eeprom) {
             OC::CORE::app_isr_enabled = false;
@@ -277,6 +299,8 @@ public:
             clock_data = hem_active_preset->GetClockData();
             ClockSetup_instance.OnDataReceive(clock_data);
 
+            hem_active_preset->LoadInputMap();
+
             for (int h = 0; h < 2; h++)
             {
                 int index = HS::get_applet_index_by_id( hem_active_preset->GetAppletId(h) );
@@ -284,6 +308,8 @@ public:
                 SetApplet(h, index);
                 HS::available_applets[index].instance[h]->OnDataReceive(applet_data[h]);
             }
+
+
         }
         preset_id = id;
         PokePopup(PRESET_POPUP);
@@ -792,7 +818,9 @@ SETTINGS_DECLARE(HemispherePreset, HEMISPHERE_SETTING_LAST) {
     {0, 0, 65535, "Clock data 1", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 2", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 3", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Clock data 4", NULL, settings::STORAGE_TYPE_U16}
+    {0, 0, 65535, "Clock data 4", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Trig Input Map", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "CV Input Map", NULL, settings::STORAGE_TYPE_U16}
 };
 
 HemisphereManager manager;
