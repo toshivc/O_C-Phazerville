@@ -25,6 +25,7 @@
 
 #ifdef ENABLE_APP_SCENES
 
+#include "OC_apps.h"
 #include "HSApplication.h"
 #include "HSMIDI.h"
 #include "util/util_settings.h"
@@ -140,6 +141,17 @@ public:
     }
     void SavePreset() {
         scene_presets[index].save_preset(scene);
+
+        // initiate actual EEPROM save - ONLY if necessary!
+        if (preset_modified) {
+            OC::CORE::app_isr_enabled = false;
+            OC::draw_save_message(60);
+            delay(1);
+            OC::save_app_data();
+            delay(1);
+            OC::CORE::app_isr_enabled = true;
+        }
+
         preset_modified = 0;
     }
 
