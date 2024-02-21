@@ -27,7 +27,10 @@ bool MIDI_Uses_Serial8=false;
 FLASHMEM
 void OC::Pinout_Detect() {
   float id_voltage = OC::ADC::Read_ID_Voltage();
-  Serial.printf("ID voltage (pin A17) = %.3f\n", id_voltage);
+  const int f = int(floor(id_voltage * 1000));
+  const int value = f / 1000;
+  const int cents = f % 1000;
+  Serial.printf("ID voltage (pin A17) = %1d.%03d\n", value, cents);
 
   if (id_voltage >= 0.05f && id_voltage < 0.15f) {
     CV1 = 255;
