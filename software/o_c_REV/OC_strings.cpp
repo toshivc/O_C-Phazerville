@@ -9,8 +9,8 @@ namespace OC {
 #ifdef OC_VERSION_EXTRA
     OC_VERSION_EXTRA
 #endif
-    "-"
 #ifdef OC_BUILD_TAG
+    "-"
     OC_BUILD_TAG
 #endif
     ;
