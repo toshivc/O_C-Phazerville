@@ -36,8 +36,6 @@
 #include "HSMIDI.h"
 #include "HSClockManager.h"
 
-ClockManager *ClockManager::instance = 0;
-
 #include "hemisphere_config.h"
 namespace HS {
   static constexpr Applet available_applets[] = HEMISPHERE_APPLETS;

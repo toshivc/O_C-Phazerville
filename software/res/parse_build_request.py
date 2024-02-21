@@ -8,6 +8,8 @@ pewcount = 0
 
 for item in flags:
     f = item.strip().upper()
+    if f.startswith('NOHEMI') or f.startswith('NO_HEM'):
+        custom_defines += " -DNO_HEMISPHERE"
     if f.startswith('FLIP'):
         custom_defines += " -DFLIP_180"
     if f.startswith('VOR'):

@@ -43,6 +43,7 @@
 // 16 presets in Hemisphere
 // #define MOAR_PRESETS
 
+
 /* Flags for the full-width apps, these enable/disable them in OC_apps.ino but also zero out the app   */
 /* files to prevent them from taking up space.                                                         */
 
@@ -67,6 +68,11 @@
 // #define ENABLE_APP_AUTOMATONNETZ
 // #define ENABLE_APP_BBGEN
 // #define ENABLE_APP_REFERENCES
+
+// Disable Hemisphere and all the applets, freeing up space.
+// If you really want to squeeze everything else in, use this.
+// If you want to exclude individual applets, edit hemisphere_config.h
+// #define NO_HEMISPHERE
 
 #endif
 

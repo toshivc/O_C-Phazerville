@@ -32,8 +32,14 @@
 #include "src/drivers/FreqMeasure/OC_FreqMeasure.h"
 #include "util/util_pagestorage.h"
 #include "util/EEPROMStorage.h"
+#include "HSClockManager.h"
 
+ClockManager *ClockManager::instance = 0;
+
+#ifndef NO_HEMISPHERE
 #include "APP_HEMISPHERE.h"
+#endif
+
 #include "APP_CALIBR8OR.h"
 #include "APP_SCENES.h"
 #include "APP_ASR.h"
@@ -79,7 +85,10 @@ static constexpr OC::App available_apps[] = {
   DECLARE_APP('S','X', "Scenes", ScenesApp),
   #endif
 
+#ifndef NO_HEMISPHERE
   DECLARE_APP('H','S', "Hemisphere", HEMISPHERE),
+#endif
+
   #ifdef ENABLE_APP_ASR
   DECLARE_APP('A','S', "CopierMaschine", ASR),
   #endif

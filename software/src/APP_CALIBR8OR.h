@@ -35,6 +35,7 @@
 #include "SegmentDisplay.h"
 #include "src/drivers/FreqMeasure/OC_FreqMeasure.h"
 #include "HemisphereApplet.h"
+#include "applets/ClockSetup.h"
 
 static constexpr int CAL8_MAX_TRANSPOSE = 60;
 static constexpr int CAL8OR_PRECISION = 10000;
