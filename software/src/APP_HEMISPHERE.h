@@ -63,17 +63,18 @@ namespace HS {
 
 // The settings specify the selected applets, and 64 bits of data for each applet,
 // plus 64 bits of data for the ClockSetup applet (which includes some misc config).
+// TRIGMAP and CVMAP are packed nibbles.
 // This is the structure of a HemispherePreset in eeprom.
 enum HEMISPHERE_SETTINGS {
     HEMISPHERE_SELECTED_LEFT_ID,
     HEMISPHERE_SELECTED_RIGHT_ID,
     HEMISPHERE_LEFT_DATA_B1,
-    HEMISPHERE_RIGHT_DATA_B1,
     HEMISPHERE_LEFT_DATA_B2,
-    HEMISPHERE_RIGHT_DATA_B2,
     HEMISPHERE_LEFT_DATA_B3,
-    HEMISPHERE_RIGHT_DATA_B3,
     HEMISPHERE_LEFT_DATA_B4,
+    HEMISPHERE_RIGHT_DATA_B1,
+    HEMISPHERE_RIGHT_DATA_B2,
+    HEMISPHERE_RIGHT_DATA_B3,
     HEMISPHERE_RIGHT_DATA_B4,
     HEMISPHERE_CLOCK_DATA1,
     HEMISPHERE_CLOCK_DATA2,
@@ -144,19 +145,19 @@ public:
     }
 
     // Manually get data for one side
-    uint64_t GetData(int h) {
-        return (uint64_t(values_[8 + h]) << 48) |
-               (uint64_t(values_[6 + h]) << 32) |
-               (uint64_t(values_[4 + h]) << 16) |
-               (uint64_t(values_[2 + h]));
+    uint64_t GetData(const HEM_SIDE h) {
+        return (uint64_t(values_[5 + h*4]) << 48) |
+               (uint64_t(values_[4 + h*4]) << 32) |
+               (uint64_t(values_[3 + h*4]) << 16) |
+               (uint64_t(values_[2 + h*4]));
     }
 
     /* Manually store state data for one side */
-    void SetData(int h, uint64_t data) {
-        apply_value(2 + h, data & 0xffff);
-        apply_value(4 + h, (data >> 16) & 0xffff);
-        apply_value(6 + h, (data >> 32) & 0xffff);
-        apply_value(8 + h, (data >> 48) & 0xffff);
+    void SetData(const HEM_SIDE h, uint64_t &data) {
+        apply_value(2 + h*4, data & 0xffff);
+        apply_value(3 + h*4, (data >> 16) & 0xffff);
+        apply_value(4 + h*4, (data >> 32) & 0xffff);
+        apply_value(5 + h*4, (data >> 48) & 0xffff);
     }
 
     // TODO: I haven't updated the SysEx data structure here because I don't use it.
@@ -269,7 +270,7 @@ public:
             uint64_t data = HS::available_applets[index].instance[h]->OnDataRequest();
             if (data != applet_data[h]) doSave = 1;
             applet_data[h] = data;
-            hem_active_preset->SetData(h, data);
+            hem_active_preset->SetData(HEM_SIDE(h), data);
         }
         uint64_t data = ClockSetup_instance.OnDataRequest();
         if (data != clock_data) doSave = 1;
@@ -304,8 +305,8 @@ public:
             for (int h = 0; h < 2; h++)
             {
                 int index = HS::get_applet_index_by_id( hem_active_preset->GetAppletId(h) );
-                applet_data[h] = hem_active_preset->GetData(h);
-                SetApplet(h, index);
+                applet_data[h] = hem_active_preset->GetData(HEM_SIDE(h));
+                SetApplet(HEM_SIDE(h), index);
                 HS::available_applets[index].instance[h]->OnDataReceive(applet_data[h]);
             }
 
