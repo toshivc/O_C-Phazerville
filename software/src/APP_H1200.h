@@ -33,7 +33,6 @@
 #include "util/util_ringbuffer.h"
 #include "bjorklund.h"
 
-namespace menu = OC::menu;
 extern uint_fast8_t MENU_REDRAW;
 
 // NOTE: H1200 state is updated in the ISR, and we're accessing shared state

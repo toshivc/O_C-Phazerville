@@ -136,8 +136,6 @@ static inline IntTriggerType TriggerSettingToType(int setting_value, int channel
   return static_cast<IntTriggerType>((setting_value - OC::DIGITAL_INPUT_LAST) - channel * INT_TRIGGER_LAST);
 }
 
-namespace menu = OC::menu;
-
 class EnvelopeGenerator : public settings::SettingsBase<EnvelopeGenerator, ENV_SETTING_LAST> {
 public:
 

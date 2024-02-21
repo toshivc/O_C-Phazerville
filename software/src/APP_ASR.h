@@ -34,7 +34,6 @@
 #include "peaks_bytebeat.h"
 #include "extern/dspinst.h"
 
-namespace menu = OC::menu; // Ugh. This works for all .ino files
 extern uint_fast8_t MENU_REDRAW;
 using OC::DUMMY;
 

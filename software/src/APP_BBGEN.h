@@ -60,8 +60,6 @@ enum BallCVMapping {
   BB_CV_MAPPING_LAST
 };
 
-namespace menu = OC::menu;
-
 class BouncingBall : public settings::SettingsBase<BouncingBall, BB_SETTING_LAST> {
 public:
 

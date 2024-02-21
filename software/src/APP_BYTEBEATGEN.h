@@ -79,8 +79,6 @@ enum ByteBeatCVMapping {
 
 };
 
-namespace menu = OC::menu;
-
 class ByteBeat : public settings::SettingsBase<ByteBeat, BYTEBEAT_SETTING_LAST> {
 public:
 

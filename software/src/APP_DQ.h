@@ -42,7 +42,6 @@
 #include "OC_ADC.h"
 #include "extern/dspinst.h"
 
-namespace menu = OC::menu;
 extern uint_fast8_t MENU_REDRAW;
 
 #ifdef BUCHLA_4U

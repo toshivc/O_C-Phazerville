@@ -213,7 +213,6 @@ struct PassenChord {
   }
 };
 
-namespace menu = OC::menu;
 using OC::DUMMY;
 
 class PASSENCORE : public settings::SettingsBase<PASSENCORE, PASSENCORE_SETTING_LAST> {

@@ -105,8 +105,6 @@ enum CellEventMasks {
 #define CELL_MAX_INVERSION 3
 #define CELL_MIN_INVERSION -3
 
-namespace menu = OC::menu;
-
 class TransformCell : public settings::SettingsBase<TransformCell, CELL_SETTING_LAST> {
 public:
   TransformCell() { }

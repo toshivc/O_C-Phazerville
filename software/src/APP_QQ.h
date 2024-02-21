@@ -41,8 +41,6 @@
 #include "OC_scale_edit.h"
 #include "OC_strings.h"
 
-namespace menu = OC::menu;
-
 // unsigned long LAST_REDRAW_TIME = 0;
 extern uint_fast8_t MENU_REDRAW;
 // OC::UiMode ui_mode = OC::UI_MODE_MENU;

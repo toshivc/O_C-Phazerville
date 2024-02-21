@@ -40,8 +40,6 @@
 #include "util/util_arp.h"
 #include "peaks_multistage_envelope.h"
 
-
-namespace menu = OC::menu;
 using OC::DUMMY;
 
 const uint8_t NUM_CHANNELS = 2;

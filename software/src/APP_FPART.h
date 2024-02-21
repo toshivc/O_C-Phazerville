@@ -165,8 +165,6 @@ enum FPART_MENU_PAGES {
   FPART_MENU_PAGES_LAST  
 };
 
-namespace menu = OC::menu;
-
 // define roots and scales and their names; root names come from OC_strings
 const char * const  scale_names[7] = { // name the possible scales, indices match scale_pitches
   "IONI", "DORI", "PHRY", "LYDI", "MIXO", "AEOL", "LOCR"
@@ -424,6 +422,7 @@ private:
   int8_t menu_page_;
 };
 
+// TOTAL EEPROM SIZE: 406 bytes
 // declare sources to generate the settings menu (need 4 or more)
 SETTINGS_DECLARE(Fpart, FPART_SETTING_LAST) {
   { 0, 0, 11,  "tonic", OC::Strings::note_names_unpadded, settings::STORAGE_TYPE_U8 },

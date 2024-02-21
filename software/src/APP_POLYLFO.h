@@ -36,8 +36,6 @@
 
 #include "VBiasManager.h"
 
-namespace menu = OC::menu;
-
 enum POLYLFO_SETTINGS {
   POLYLFO_SETTING_COARSE,
   POLYLFO_SETTING_FINE,
