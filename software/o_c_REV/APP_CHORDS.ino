@@ -180,7 +180,7 @@ public:
   }
 
   bool octave_toggle() {
-    _octave_toggle = (~_octave_toggle) & 1u;
+    _octave_toggle = !_octave_toggle;
     return _octave_toggle;
   }
 

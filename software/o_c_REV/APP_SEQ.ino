@@ -282,7 +282,7 @@ public:
   }
 
   bool octave_toggle() {
-    octave_toggle_ = (~octave_toggle_) & 1u;
+    octave_toggle_ = !octave_toggle_;
     return octave_toggle_;
   }
 
@@ -295,7 +295,7 @@ public:
   }
 
   void toggle_EoS() {
-    wait_for_EoS_ = (~wait_for_EoS_) & 1u;
+    wait_for_EoS_ = !wait_for_EoS_;
     apply_value(SEQ_CHANNEL_SETTING_DUMMY, wait_for_EoS_);
   }
 
@@ -900,11 +900,11 @@ public:
 
      // trigger delay:
      if (_playmode < PM_SH1) {
-
       trigger_delay_.Update();
       if (_triggered)
         trigger_delay_.Push(OC::trigger_delay_ticks[get_trigger_delay()]);
-        _triggered = trigger_delay_.triggered();
+
+      _triggered = trigger_delay_.triggered();
      }
 
      // new tick frequency:

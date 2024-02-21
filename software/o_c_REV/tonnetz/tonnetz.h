@@ -42,7 +42,7 @@ namespace tonnetz {
   };
 
 
-  static const char *transform_names_str[TRANSFORM_LAST + 1] = {
+  static const char *const transform_names_str[TRANSFORM_LAST + 1] = {
     "*", "P", "L", "R", "N", "S", "H", "@"
   };
 

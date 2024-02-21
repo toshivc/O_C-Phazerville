@@ -53,10 +53,10 @@ using namespace HS;
 
 class HSApplication {
 public:
-    virtual void Start();
-    virtual void Controller();
-    virtual void View();
-    virtual void Resume();
+    virtual void Start() = 0;
+    virtual void Controller() = 0;
+    virtual void View() = 0;
+    virtual void Resume() = 0;
 
     void BaseController() {
         // Load the IO frame from CV inputs

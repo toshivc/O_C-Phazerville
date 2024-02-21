@@ -231,14 +231,14 @@ public:
      * generating an UnpackedData instance, which contains an array of up to 48 uint8_t bytes,
      * converting it to a PackedData instance, and passing that PackedData to SysExSend().
      */
-    virtual void OnSendSysEx();
+    virtual void OnSendSysEx() = 0;
 
     /* OnReciveSysEx() is called when a system exclusive message comes in. In OnReceiveSysEx(),
      * the app is responsible for converting a PackedData instance into an UnpackedData instance,
      * which contains an array of up to 48 uint8_t bytes, and putting that data into the app's
      * internal data system.
      */
-    virtual void OnReceiveSysEx();
+    virtual void OnReceiveSysEx() = 0;
 
 protected:
     /* ListenForSysEx() is for use by apps that don't otherwise deal with listening to MIDI input.
