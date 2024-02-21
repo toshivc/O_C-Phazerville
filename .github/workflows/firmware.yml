@@ -14,7 +14,7 @@ jobs:
 
     - name: Setup env
       run: |
-        echo "OC_ARTIFACT_TAG=${GITHUB_REF_NAME}-$(software/res/oc_build_tag.sh)" | tr '/' '_' >> $GITHUB_ENV
+        echo "OC_ARTIFACT_TAG=${GITHUB_REF_NAME}-$(sh software/res/oc_build_tag.sh)" | tr '/' '_' >> $GITHUB_ENV
 
     - name: Cache PlatformIO
       uses: actions/cache@v3
