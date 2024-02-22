@@ -4,6 +4,7 @@
 #include "OC_strings.h"
 #include "OC_apps.h"
 #include "OC_bitmaps.h"
+#include "HSicons.h"
 #include "OC_calibration.h"
 #include "OC_config.h"
 #include "OC_core.h"
@@ -195,9 +196,40 @@ UiMode Ui::Splashscreen(bool &reset_settings) {
 
     now = millis();
 
-    // This graphics frame is necessary for the keys to be read. I don't know why this is the case,
-    // since the keys are read above, but I don't have time to figure that out right now. --jj
     GRAPHICS_BEGIN_FRAME(true);
+
+    menu::DefaultTitleBar::Draw();
+    graphics.print("Welcome 2 Phazerville");
+    weegfx::coord_t y = menu::CalcLineY(0);
+
+    graphics.setPrintPos(menu::kIndentDx, y + menu::kTextDy);
+    graphics.print("[L] => Calibrate");
+    if (UI_MODE_CALIBRATE == mode)
+      graphics.invertRect(menu::kIndentDx, y, 128, menu::kMenuLineH);
+
+    y += menu::kMenuLineH;
+    graphics.setPrintPos(menu::kIndentDx, y + menu::kTextDy);
+    graphics.print("[R] => Main Menu");
+    if (UI_MODE_APP_SETTINGS == mode)
+      graphics.invertRect(menu::kIndentDx, y, 128, menu::kMenuLineH);
+
+    y += menu::kMenuLineH;
+    graphics.setPrintPos(menu::kIndentDx, y + menu::kTextDy);
+    if (reset_settings) {
+      graphics.print("!! RESET EEPROM !!");
+      y += menu::kMenuLineH;
+      graphics.setPrintPos(menu::kIndentDx, y + menu::kTextDy);
+    }
+    graphics.print(OC::Strings::VERSION);
+
+    // pew pew?
+    for (int i = 0; i < 124; i+=8)
+      graphics.drawBitmap8(i, 56, 8, ZAP_ICON);
+    // chargin mah lazerrrr
+    weegfx::coord_t w = (now-start)*128 / (SPLASHSCREEN_DELAY_MS/6);
+    w %= 256;
+    if (w > 128) w = 256 - w;
+    graphics.invertRect(0, 56, w, 8);
 
     /* fixes spurious button presses when booting ? */
     while (event_queue_.available())
