@@ -24,6 +24,7 @@ typedef struct IOFrame {
     bool gate_high[ADC_CHANNEL_LAST];
     int inputs[ADC_CHANNEL_LAST];
     int outputs[DAC_CHANNEL_LAST];
+    int output_diff[DAC_CHANNEL_LAST];
     int outputs_smooth[DAC_CHANNEL_LAST];
     int clock_countdown[DAC_CHANNEL_LAST];
     int adc_lag_countdown[ADC_CHANNEL_LAST]; // Time between a clock event and an ADC read event
@@ -189,6 +190,7 @@ typedef struct IOFrame {
 
     // --- Soft IO ---
     void Out(DAC_CHANNEL channel, int value) {
+        output_diff[channel] = value - outputs[channel];
         outputs[channel] = value;
     }
     void ClockOut(DAC_CHANNEL ch, const int pulselength = HEMISPHERE_CLOCK_TICKS * HS::trig_length) {

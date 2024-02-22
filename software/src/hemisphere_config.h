@@ -1,3 +1,5 @@
+#pragma once
+
 // Categories*:
 // 0x01 = Modulator
 // 0x02 = Sequencer
@@ -242,3 +244,26 @@ CREATE_APPLET(VectorMorph);
     DECLARE_APPLET( 22, 0x01, GameOfLife), \
     DECLARE_APPLET(127, 0x80, DIAGNOSTIC), \
 */
+
+
+namespace HS {
+  static constexpr Applet available_applets[] = HEMISPHERE_APPLETS;
+  static constexpr int HEMISPHERE_AVAILABLE_APPLETS = ARRAY_SIZE(available_applets);
+
+  constexpr int get_applet_index_by_id(const int& id) {
+    int index = 0;
+    for (int i = 0; i < HEMISPHERE_AVAILABLE_APPLETS; i++)
+    {
+        if (available_applets[i].id == id) index = i;
+    }
+    return index;
+  }
+
+  constexpr int get_next_applet_index(int index, const int dir) {
+      index += dir;
+      if (index >= HEMISPHERE_AVAILABLE_APPLETS) index = 0;
+      if (index < 0) index = HEMISPHERE_AVAILABLE_APPLETS - 1;
+
+      return index;
+  }
+}

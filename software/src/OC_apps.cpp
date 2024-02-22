@@ -42,9 +42,8 @@ namespace menu = OC::menu;
 
 #ifdef ARDUINO_TEENSY41
 #include "APP_QUADRANTS.h"
-#else
-#include "APP_HEMISPHERE.h"
 #endif
+#include "APP_HEMISPHERE.h"
 
 #endif
 
@@ -96,9 +95,8 @@ static constexpr OC::App available_apps[] = {
 #ifndef NO_HEMISPHERE
   #ifdef ARDUINO_TEENSY41
   DECLARE_APP('Q','S', "Quadrants", QUADRANTS),
-  #else
-  DECLARE_APP('H','S', "Hemisphere", HEMISPHERE),
   #endif
+  DECLARE_APP('H','S', "Hemisphere", HEMISPHERE),
 #endif
   #ifdef ENABLE_APP_ASR
   DECLARE_APP('A','S', "CopierMaschine", ASR),

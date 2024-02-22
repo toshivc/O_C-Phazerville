@@ -37,27 +37,6 @@
 #include "HSClockManager.h"
 
 #include "hemisphere_config.h"
-namespace HS {
-  static constexpr Applet available_applets[] = HEMISPHERE_APPLETS;
-  static constexpr int QUADRANTS_AVAILABLE_APPLETS = ARRAY_SIZE(available_applets);
-
-  constexpr int get_applet_index_by_id(const int& id) {
-    int index = 0;
-    for (int i = 0; i < QUADRANTS_AVAILABLE_APPLETS; i++)
-    {
-        if (available_applets[i].id == id) index = i;
-    }
-    return index;
-  }
-
-  int get_next_applet_index(int index, int dir) {
-      index += dir;
-      if (index >= QUADRANTS_AVAILABLE_APPLETS) index = 0;
-      if (index < 0) index = QUADRANTS_AVAILABLE_APPLETS - 1;
-
-      return index;
-  }
-}
 
 // The settings specify the selected applets, and 64 bits of data for each applet,
 // plus 64 bits of data for the ClockSetup applet (which includes some misc config).
@@ -87,8 +66,10 @@ enum QUADRANTS_SETTINGS {
     QUADRANTS_CLOCK_DATA2,
     QUADRANTS_CLOCK_DATA3,
     QUADRANTS_CLOCK_DATA4,
-    QUADRANTS_TRIGMAP,
-    QUADRANTS_CVMAP,
+    QUADRANTS_TRIGMAP1,
+    QUADRANTS_TRIGMAP2,
+    QUADRANTS_CVMAP1,
+    QUADRANTS_CVMAP2,
     QUADRANTS_SETTING_LAST
 };
 
@@ -135,16 +116,19 @@ public:
         trigmap |= (uint32_t(HS::trigger_mapping[i] + 1) & 0x0F) << (i*4);
       }
 
-      bool changed = (values_[QUADRANTS_TRIGMAP] != trigmap);
-      values_[QUADRANTS_TRIGMAP] = trigmap;
+      bool changed = (trigmap != ( uint32_t(values_[QUADRANTS_TRIGMAP1])
+                                | (uint32_t(values_[QUADRANTS_TRIGMAP2]) << 16) ));
+      values_[QUADRANTS_TRIGMAP1] = trigmap & 0xFFFF;
+      values_[QUADRANTS_TRIGMAP2] = (trigmap >> 16) & 0xFFFF;
       return changed;
     }
     void LoadInputMap() {
       // TODO: cvmap
-      for (size_t i = 0; i < 8; ++i) {
-        int val = (uint32_t(values_[QUADRANTS_TRIGMAP]) >> (i*4)) & 0x0F;
-        if (val != 0)
-          HS::trigger_mapping[i] = constrain(val - 1, 0, 4);
+      for (size_t i = 0; i < 4; ++i) {
+        int val1 = (uint32_t(values_[QUADRANTS_TRIGMAP1]) >> (i*4)) & 0x0F;
+        int val2 = (uint32_t(values_[QUADRANTS_TRIGMAP2]) >> (i*4)) & 0x0F;
+        if (val1 != 0) HS::trigger_mapping[i] = constrain(val1 - 1, 0, 8);
+        if (val2 != 0) HS::trigger_mapping[i+4] = constrain(val2 - 1, 0, 8);
       }
     }
 
@@ -223,7 +207,7 @@ QuadrantsPreset *quad_active_preset = 0;
 
 using namespace HS;
 
-void ReceiveManagerSysEx();
+void QuadrantSysExHandler();
 
 class QuadAppletManager : public HSApplication {
 public:
@@ -337,7 +321,7 @@ public:
             const int data2 = device.getData2();
 
             if (message == usbMIDI.SystemExclusive) {
-                ReceiveManagerSysEx();
+                QuadrantSysExHandler();
                 continue;
             }
 
@@ -935,13 +919,15 @@ SETTINGS_DECLARE(QuadrantsPreset, QUADRANTS_SETTING_LAST) {
     {0, 0, 65535, "Clock data 2", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 3", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 4", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 0xFFFFFFFF, "Trig Input Map", NULL, settings::STORAGE_TYPE_U32},
-    {0, 0, 0xFFFFFFFF, "CV Input Map", NULL, settings::STORAGE_TYPE_U32}
+    {0, 0, 65535, "Trig Map 1234", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Trig Map 5678", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "CV Input Map1", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "CV Input Map2", NULL, settings::STORAGE_TYPE_U16}
 };
 
 QuadAppletManager quad_manager;
 
-void ReceiveManagerSysEx() {
+void QuadrantSysExHandler() {
     if (quad_active_preset)
         quad_active_preset->OnReceiveSysEx();
 }
@@ -998,66 +984,6 @@ void QUADRANTS_loop() {} // Essentially deprecated in favor of ISR
 
 void QUADRANTS_menu() {
     quad_manager.View();
-}
-
-typedef struct {
-    int x = 0;
-    int y = 0;
-    int x_v = 6;
-    int y_v = 3;
-
-    void Move(bool stars) {
-        if (stars) Move(6100, 2900);
-        else Move();
-    }
-    void Move(int target_x = -1, int target_y = -1) {
-        x += x_v;
-        y += y_v;
-        if (x > 12700 || x < 0 || y > 6300 || y < 0) {
-            if (target_x < 0 || target_y < 0) {
-                x = random(12700);
-                y = random(6300);
-            } else {
-                x = target_x + random(400);
-                y = target_y + random(400);
-                CONSTRAIN(x, 0, 12700);
-                CONSTRAIN(y, 0, 6300);
-            }
-
-            x_v = random(30) - 15;
-            y_v = random(30) - 15;
-            if (x_v == 0) ++x_v;
-            if (y_v == 0) ++y_v;
-        }
-    }
-} Zap;
-static constexpr int HOW_MANY_ZAPS = 30;
-static Zap zaps[HOW_MANY_ZAPS];
-static void ZapScreensaver(const bool stars = false) {
-  static int frame_delay = 0;
-  for (int i = 0; i < (stars ? HOW_MANY_ZAPS : 5); i++) {
-    if (frame_delay & 0x1) {
-        #if defined(__IMXRT1062__)
-        zaps[i].Move(stars); // centered starfield
-        #else
-        // Zips respawn from their previous sibling
-        if (0 == i) zaps[0].Move();
-        else zaps[i].Move(zaps[i-1].x, zaps[i-1].y);
-        #endif
-    }
-
-    if (stars && frame_delay == 0) {
-      // accel
-      zaps[i].x_v *= 2;
-      zaps[i].y_v *= 2;
-    }
-
-    if (stars)
-      gfxPixel(zaps[i].x/100, zaps[i].y/100);
-    else
-      gfxIcon(zaps[i].x/100, zaps[i].y/100, ZAP_ICON);
-  }
-  if (--frame_delay < 0) frame_delay = 100;
 }
 
 void QUADRANTS_screensaver() {
