@@ -516,15 +516,15 @@ public:
     void DrawInterface() {
         // Draw channel tabs
         for (int i = 0; i < NR_OF_CHANNELS; ++i) {
-            gfxLine(i*32, 13, i*32, 22); // vertical line on left
+            gfxLine(i*32, 12, i*32, 22); // vertical line on left
             if (channel[i].clocked_mode) gfxIcon(2 + i*32, 14, CLOCK_ICON);
             if (channel[i].clocked_mode == SAMPLE_AND_HOLD) gfxIcon(22 + i*32, 14, STAIRS_ICON);
             gfxPrint(i*32 + 13, 14, i+1);
 
             if (i == sel_chan)
-                gfxInvert(1 + i*32, 13, 31, 11);
+                gfxInvert(1 + i*32, 12, 31, 11);
         }
-        gfxLine(127, 13, 127, 22); // vertical line
+        gfxLine(127, 12, 127, 22); // vertical line
         gfxLine(0, 23, 127, 23);
 
         // Draw parameters for selected channel
