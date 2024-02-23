@@ -132,8 +132,8 @@ public:
         trigmap |= (uint16_t(HS::trigger_mapping[i] + 1) & 0x0F) << (i*4);
       }
 
-      bool changed = (values_[HEMISPHERE_TRIGMAP] != trigmap);
-      values_[HEMISPHERE_TRIGMAP] = trigmap;
+      bool changed = (uint16_t(values_[HEMISPHERE_TRIGMAP]) != trigmap);
+      apply_value(HEMISPHERE_TRIGMAP, trigmap);
       return changed;
     }
     void LoadInputMap() {
