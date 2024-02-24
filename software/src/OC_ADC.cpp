@@ -104,8 +104,11 @@ static PROGMEM const uint8_t adc2_pin_to_channel[] = {
 #elif defined(__IMXRT1062__)
 /*static*/ void ADC::Init(CalibrationData *calibration_data) {
   calibration_data_ = calibration_data;
-  std::fill(raw_, raw_ + ADC_CHANNEL_LAST, 0);
-  std::fill(smoothed_, smoothed_ + ADC_CHANNEL_LAST, 0);
+  // magic number to yield 0V reading on non-existent inputs
+  // (copied from OC_calibration.cpp)
+  static constexpr uint16_t _ADC_OFFSET = (uint16_t)((float)pow(2,OC::ADC::kAdcResolution)*0.6666667f); // ADC offset @2.2V
+  std::fill(raw_, raw_ + ADC_CHANNEL_LAST, _ADC_OFFSET << kAdcSmoothBits);
+  std::fill(smoothed_, smoothed_ + ADC_CHANNEL_LAST, _ADC_OFFSET << kAdcSmoothBits);
 }
 
 #endif // __IMXRT1062__
