@@ -37,7 +37,12 @@ void Ui::Init() {
   static const int button_pins[] = { but_top, but_bot, butL, butR };
 #endif
 
-  for (size_t i = 0; i < CONTROL_BUTTON_LAST; ++i) {
+#if defined(ARDUINO_TEENSY41)
+  const size_t count = (but_mid == 0xFF)? 4 : CONTROL_BUTTON_LAST;
+#else
+  const size_t count = CONTROL_BUTTON_LAST;
+#endif
+  for (size_t i = 0; i < count; ++i) {
     buttons_[i].Init(button_pins[i], OC_GPIO_BUTTON_PINMODE);
   }
   std::fill(button_press_time_, button_press_time_ + 4, 0);
@@ -82,12 +87,17 @@ void FASTRUN Ui::Poll() {
   uint32_t now = ++ticks_;
   uint16_t button_state = 0;
 
-  for (size_t i = 0; i < CONTROL_BUTTON_LAST; ++i) {
+#if defined(ARDUINO_TEENSY41)
+  const size_t count = (but_mid == 0xFF)? 4 : CONTROL_BUTTON_LAST;
+#else
+  const size_t count = CONTROL_BUTTON_LAST;
+#endif
+  for (size_t i = 0; i < count; ++i) {
     if (buttons_[i].Poll())
       button_state |= control_mask(i);
   }
 
-  for (size_t i = 0; i < CONTROL_BUTTON_LAST; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     auto &button = buttons_[i];
     if (button.just_pressed()) {
       button_press_time_[i] = now;
