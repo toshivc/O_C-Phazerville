@@ -372,11 +372,13 @@ public:
             HS::available_applets[index].instance[h]->BaseController();
         }
 
+#ifdef ARDUINO_TEENSY41
         // auto-trigger outputs E..H
         for (int ch = 0; ch < 4; ++ch) {
           if (abs(HS::frame.output_diff[ch]) > HEMISPHERE_CHANGE_THRESHOLD)
             HS::frame.ClockOut(DAC_CHANNEL(ch + 4));
         }
+#endif
     }
 
     inline void PokePopup(PopupType pop) {
@@ -674,8 +676,11 @@ public:
                 DelegateSelectButtonPush(event);
             } else if (event.control == OC::CONTROL_BUTTON_L || event.control == OC::CONTROL_BUTTON_R) {
                 DelegateEncoderPush(event);
-            } else // new buttons
+            }
+#ifdef ARDUINO_TEENSY41
+            else // new buttons
                 ExtraButtonPush(event);
+#endif
 
             break;
 
