@@ -22,25 +22,21 @@
 #define PROB_LOOP_LINKER_H_
 
 class ProbLoopLinker {
-	static ProbLoopLinker *instance;
-	bool trig_q[4] = {0, 0, 0, 0};
-	uint8_t hemDiv;
-	uint8_t hemMelo;
-	uint32_t registered[4];
-	bool isLooping;
-	int loopStep;
-	bool reseed;
+  static ProbLoopLinker *instance;
+  bool trig_q[4] = {0, 0, 0, 0};
+  uint32_t registered[2]; // { Div, Melo }
+  bool isLooping;
+  int loopStep;
+  bool reseed;
 
     uint32_t last_advance_tick = 0; // To prevent double-advancing
 
     ProbLoopLinker() {
-    	hemDiv = 10;
-    	hemMelo = 10;
-    	isLooping = false;
-    	loopStep = 0;
-    	reseed = false;
-    	registered[LEFT_HEMISPHERE] = 0;
-        registered[RIGHT_HEMISPHERE] = 0;
+      isLooping = false;
+      loopStep = 0;
+      reseed = false;
+      registered[0] = 0; // Div
+      registered[1] = 0; // Melo
     }
 
 public:
@@ -49,20 +45,18 @@ public:
         return instance;
     }
 
-    void RegisterDiv(size_t hemisphere) {
-    	hemDiv = hemisphere;
-        registered[hemisphere] = OC::CORE::ticks;
+    void RegisterDiv(HEM_SIDE hemisphere) {
+      registered[0] = OC::CORE::ticks;
     }
 
-    void RegisterMelo(size_t hemisphere) {
-    	hemMelo = hemisphere;
-        registered[hemisphere] = OC::CORE::ticks;
+    void RegisterMelo(HEM_SIDE hemisphere) {
+      registered[1] = OC::CORE::ticks;
     }
 
     bool IsLinked() {
-    	uint32_t t = OC::CORE::ticks;
-        return ((t - registered[LEFT_HEMISPHERE] < 160)
-                && (t - registered[RIGHT_HEMISPHERE] < 160));
+      uint32_t t = OC::CORE::ticks;
+      return ((t - registered[0] < 160)
+              && (t - registered[1] < 160));
     }
 
     void Trigger(int ch) {
