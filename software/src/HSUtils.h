@@ -40,7 +40,18 @@ void gfxDottedLine(int x, int y, int x2, int y2, uint8_t p = 2);
 void gfxCircle(int x, int y, int r);
 void gfxBitmap(int x, int y, int w, const uint8_t *data);
 void gfxIcon(int x, int y, const uint8_t *data);
-uint8_t pad(int range, int number);
+
+static constexpr uint8_t pad(int range, int number) {
+    uint8_t padding = 0;
+    while (range > 1)
+    {
+        if (abs(number) < range) padding += 6;
+        range = range / 10;
+    }
+    if (number < 0 && padding > 0) padding -= 6; // Compensate for minus sign
+    return padding;
+}
+
 
 namespace HS {
 

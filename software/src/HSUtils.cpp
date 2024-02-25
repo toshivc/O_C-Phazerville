@@ -154,14 +154,3 @@ void gfxIcon(int x, int y, const uint8_t *data) {
     gfxBitmap(x, y, 8, data);
 }
 
-uint8_t pad(int range, int number) {
-    uint8_t padding = 0;
-    while (range > 1)
-    {
-        if (abs(number) < range) padding += 6;
-        range = range / 10;
-    }
-    if (number < 0 && padding > 0) padding -= 6; // Compensate for minus sign
-    return padding;
-}
-
