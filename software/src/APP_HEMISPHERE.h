@@ -224,7 +224,11 @@ public:
     void Resume() {
         if (!hem_active_preset)
             LoadFromPreset(0);
-        // TODO: restore quantizer settings...
+        // restore quantizer settings
+        for (int i = 0; i < 4; ++i) {
+            quantizer[i].Init();
+            quantizer[i].Configure(OC::Scales::GetScale(quant_scale[i]), 0xffff);
+        }
     }
     void Suspend() {
         if (hem_active_preset) {
