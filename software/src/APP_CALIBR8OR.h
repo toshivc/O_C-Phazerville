@@ -35,7 +35,11 @@
 #include "SegmentDisplay.h"
 #include "src/drivers/FreqMeasure/OC_FreqMeasure.h"
 #include "HemisphereApplet.h"
+#ifdef ARDUINO_TEENSY41
+#include "applets/ClockSetupT4.h"
+#else
 #include "applets/ClockSetup.h"
+#endif
 
 static constexpr int CAL8_MAX_TRANSPOSE = 60;
 static constexpr int CAL8OR_PRECISION = 10000;

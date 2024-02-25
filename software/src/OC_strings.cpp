@@ -47,7 +47,7 @@ namespace OC {
 
   const char * const trigger_input_names[4] = { "TR1", "TR2", "TR3", "TR4" };
 
-  const char * const trigger_input_names_none[5] = { " - ", "TR1", "TR2", "TR3", "TR4" };
+  const char * const trigger_input_names_none[9] = { " - ", "TR1", "TR2", "TR3", "TR4", "TR5", "TR6", "TR7", "TR8" };
 
   const char * const cv_input_names[4] = { "CV1", "CV2", "CV3", "CV4" };
 

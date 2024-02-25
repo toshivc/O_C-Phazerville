@@ -62,7 +62,11 @@ bool HemisphereApplet::Clock(int ch, bool physical) {
     ClockManager *clock_m = clock_m->get();
     bool useTock = (!physical && clock_m->IsRunning());
 
+#ifdef ARDUINO_TEENSY41
+    const size_t virt_chan = (ch + io_offset) % 8;
+#else
     const size_t virt_chan = (ch + io_offset) % 4;
+#endif
 
     // clock triggers
     if (useTock && clock_m->GetMultiply(virt_chan) != 0)

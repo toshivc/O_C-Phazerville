@@ -70,6 +70,8 @@ enum QUADRANTS_SETTINGS {
     QUADRANTS_TRIGMAP2,
     QUADRANTS_CVMAP1,
     QUADRANTS_CVMAP2,
+    QUADRANTS_GLOBALS1, // for globals like trig_length
+    QUADRANTS_GLOBALS2,
     QUADRANTS_SETTING_LAST
 };
 
@@ -132,9 +134,18 @@ public:
       }
     }
 
+    uint64_t GetGlobals() {
+      return ( (uint64_t(values_[QUADRANTS_GLOBALS2]) << 16) |
+                uint64_t(values_[QUADRANTS_GLOBALS1]) );
+    }
+    void SetGlobals(uint64_t &data) {
+        apply_value(QUADRANTS_GLOBALS1, data & 0xffff);
+        apply_value(QUADRANTS_GLOBALS2, (data >> 16) & 0xffff);
+    }
+
     // Manually get data for one side
     uint64_t GetData(const HEM_SIDE h) {
-        size_t offset = h*4;
+        const size_t offset = h*4;
         return (uint64_t(values_[7 + offset]) << 48) |
                (uint64_t(values_[6 + offset]) << 32) |
                (uint64_t(values_[5 + offset]) << 16) |
@@ -266,6 +277,13 @@ public:
         clock_data = data;
         quad_active_preset->SetClockData(data);
 
+        data = ClockSetup_instance.GetGlobals();
+        if (data != global_data) doSave = 1;
+        global_data = data;
+        quad_active_preset->SetGlobals(data);
+
+        if (quad_active_preset->StoreInputMap()) doSave = 1;
+
         // initiate actual EEPROM save - ONLY if necessary!
         if (doSave && !skip_eeprom) {
             OC::CORE::app_isr_enabled = false;
@@ -286,6 +304,11 @@ public:
         if (quad_active_preset->is_valid()) {
             clock_data = quad_active_preset->GetClockData();
             ClockSetup_instance.OnDataReceive(clock_data);
+
+            global_data = quad_active_preset->GetGlobals();
+            ClockSetup_instance.SetGlobals(global_data);
+
+            quad_active_preset->LoadInputMap();
 
             for (int h = 0; h < APPLET_SLOTS; h++)
             {
@@ -740,7 +763,7 @@ private:
                       // Left side: 0,2
                       // Right side: 1,3
     int next_applet[4]; // queued from UI thread, handled by Controller
-    uint64_t clock_data, applet_data[4]; // cache of applet data
+    uint64_t clock_data, global_data, applet_data[4]; // cache of applet data
     bool view_slot[2] = {0, 0}; // Two applets on each side, only one visible at a time
     bool clock_setup;
     bool config_menu;
@@ -922,7 +945,9 @@ SETTINGS_DECLARE(QuadrantsPreset, QUADRANTS_SETTING_LAST) {
     {0, 0, 65535, "Trig Map 1234", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Trig Map 5678", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "CV Input Map1", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "CV Input Map2", NULL, settings::STORAGE_TYPE_U16}
+    {0, 0, 65535, "CV Input Map2", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Globals1", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Globals2", NULL, settings::STORAGE_TYPE_U16}
 };
 
 QuadAppletManager quad_manager;

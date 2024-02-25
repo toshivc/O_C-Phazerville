@@ -48,7 +48,11 @@ class_name class_name ## _instance[2]
 #include "applets/Carpeggio.h"
 #include "applets/Chordinator.h"
 #include "applets/ClockDivider.h"
+#ifdef ARDUINO_TEENSY41
+#include "applets/ClockSetupT4.h"
+#else
 #include "applets/ClockSetup.h"
+#endif
 #include "applets/ClockSkip.h"
 #include "applets/Compare.h"
 #include "applets/DivSeq.h"
