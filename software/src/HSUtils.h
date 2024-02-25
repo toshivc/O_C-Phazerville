@@ -22,7 +22,7 @@ typedef struct PackLocation {
     size_t size;
 } PackLocation;
 void Pack(uint64_t &data, PackLocation p, uint64_t value);
-int Unpack(uint64_t data, PackLocation p);
+int Unpack(const uint64_t &data, PackLocation p);
 
 void gfxPos(int x, int y);
 void gfxPrint(int x, int y, const char *str);

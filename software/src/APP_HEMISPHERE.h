@@ -59,13 +59,16 @@ enum HEMISPHERE_SETTINGS {
     HEMISPHERE_CLOCK_DATA4,
     HEMISPHERE_TRIGMAP,
     HEMISPHERE_CVMAP,
+    HEMISPHERE_GLOBALS,
     HEMISPHERE_SETTING_LAST
 };
 
 #if defined(MOAR_PRESETS)
 static constexpr int HEM_NR_OF_PRESETS = 16;
-#else
+#elif defined(PEWPEWPEW)
 static constexpr int HEM_NR_OF_PRESETS = 8;
+#else
+static constexpr int HEM_NR_OF_PRESETS = 4;
 #endif
 
 /* Hemisphere Preset
@@ -119,6 +122,13 @@ public:
         if (val != 0)
           HS::trigger_mapping[i] = constrain(val - 1, 0, 4);
       }
+    }
+
+    uint64_t GetGlobals() {
+      return ( uint64_t(values_[HEMISPHERE_GLOBALS]) & 0xffff );
+    }
+    void SetGlobals(const uint64_t &data) {
+        apply_value(HEMISPHERE_GLOBALS, data & 0xffff);
     }
 
     // Manually get data for one side
@@ -258,6 +268,11 @@ public:
         clock_data = data;
         hem_active_preset->SetClockData(data);
 
+        data = ClockSetup_instance.GetGlobals();
+        if (data != global_data) doSave = 1;
+        global_data = data;
+        hem_active_preset->SetGlobals(data);
+
         if (hem_active_preset->StoreInputMap()) doSave = 1;
 
         // initiate actual EEPROM save - ONLY if necessary!
@@ -280,6 +295,9 @@ public:
         if (hem_active_preset->is_valid()) {
             clock_data = hem_active_preset->GetClockData();
             ClockSetup_instance.OnDataReceive(clock_data);
+
+            global_data = hem_active_preset->GetGlobals();
+            ClockSetup_instance.SetGlobals(global_data);
 
             hem_active_preset->LoadInputMap();
 
@@ -702,7 +720,7 @@ private:
     int preset_cursor = 0;
     int my_applet[2]; // Indexes to available_applets
     int next_applet[2]; // queued from UI thread, handled by Controller
-    uint64_t clock_data, applet_data[2]; // cache of applet data
+    uint64_t clock_data, global_data, applet_data[2]; // cache of applet data
     bool clock_setup;
     bool config_menu;
     bool isEditing = false;
@@ -854,7 +872,7 @@ private:
     }
 };
 
-// TOTAL EEPROM SIZE: 8 * 30 bytes
+// TOTAL EEPROM SIZE: 8 presets * 32 bytes
 SETTINGS_DECLARE(HemispherePreset, HEMISPHERE_SETTING_LAST) {
     {0, 0, 255, "Applet ID L", NULL, settings::STORAGE_TYPE_U8},
     {0, 0, 255, "Applet ID R", NULL, settings::STORAGE_TYPE_U8},
@@ -871,7 +889,8 @@ SETTINGS_DECLARE(HemispherePreset, HEMISPHERE_SETTING_LAST) {
     {0, 0, 65535, "Clock data 3", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 4", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Trig Input Map", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "CV Input Map", NULL, settings::STORAGE_TYPE_U16}
+    {0, 0, 65535, "CV Input Map", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Misc Globals", NULL, settings::STORAGE_TYPE_U16}
 };
 
 HemisphereManager manager;

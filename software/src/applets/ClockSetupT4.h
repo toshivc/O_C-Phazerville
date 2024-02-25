@@ -184,10 +184,11 @@ public:
         }
     }
 
+    // Same data blobs as T3 version, but different layout
     uint64_t OnDataRequest() {
         uint64_t data = 0;
         Pack(data, PackLocation { 0, 9 }, clock_m->GetTempo());
-        Pack(data, PackLocation { 9, 6 }, clock_m->GetShuffle());
+        Pack(data, PackLocation { 9, 7 }, clock_m->GetShuffle());
         for (size_t i = 0; i < 8; ++i) {
             Pack(data, PackLocation { 16+i*6, 6 }, clock_m->GetMultiply(i)+32);
         }
@@ -197,7 +198,7 @@ public:
     void OnDataReceive(uint64_t data) {
         if (!clock_m->IsRunning())
             clock_m->SetTempoBPM(Unpack(data, PackLocation { 0, 9 }));
-        clock_m->SetShuffle(Unpack(data, PackLocation { 9, 6 }));
+        clock_m->SetShuffle(Unpack(data, PackLocation { 9, 7 }));
         for (size_t i = 0; i < 8; ++i) {
             clock_m->SetMultiply(Unpack(data, PackLocation { 16+i*6, 6 })-32, i);
         }
@@ -210,9 +211,10 @@ public:
         Pack(data, PackLocation { 2, 2 }, HS::screensaver_mode);
         Pack(data, PackLocation { 4, 7 }, HS::trig_length);
         Pack(data, PackLocation { 11, 5 }, clock_m->GetClockPPQN());
+        // 48 bits free
         return data;
     }
-    void SetGlobals(uint64_t &data) {
+    void SetGlobals(const uint64_t &data) {
         HS::auto_save_enabled = Unpack(data, PackLocation { 0, 1 });
         HS::cursor_wrap = Unpack(data, PackLocation { 1, 1 });
         HS::screensaver_mode = Unpack(data, PackLocation { 2, 2 });

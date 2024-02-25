@@ -916,7 +916,7 @@ private:
     }
 };
 
-// TOTAL EEPROM SIZE: 4 * 26 bytes
+// TOTAL EEPROM SIZE: 4 * 56 bytes
 SETTINGS_DECLARE(QuadrantsPreset, QUADRANTS_SETTING_LAST) {
     {0, 0, 255, "Applet ID L", NULL, settings::STORAGE_TYPE_U8},
     {0, 0, 255, "Applet ID R", NULL, settings::STORAGE_TYPE_U8},

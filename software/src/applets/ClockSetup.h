@@ -176,38 +176,43 @@ public:
 
     uint64_t OnDataRequest() {
         uint64_t data = 0;
-        Pack(data, PackLocation { 0, 1 }, HS::auto_save_enabled);
-        Pack(data, PackLocation { 1, 1 }, HS::cursor_wrap);
-        Pack(data, PackLocation { 2, 2 }, HS::screensaver_mode);
-
-        Pack(data, PackLocation { 4, 9 }, clock_m->GetTempo());
-        Pack(data, PackLocation { 13, 7 }, clock_m->GetShuffle());
-        Pack(data, PackLocation { 20, 5 }, clock_m->GetClockPPQN());
+        Pack(data, PackLocation { 0, 9 }, clock_m->GetTempo());
+        Pack(data, PackLocation { 9, 7 }, clock_m->GetShuffle());
         for (size_t i = 0; i < 4; ++i) {
-            Pack(data, PackLocation { 25+i*6, 6 }, clock_m->GetMultiply(i)+32);
+            Pack(data, PackLocation { 16+i*6, 6 }, clock_m->GetMultiply(i)+32);
         }
-
-        Pack(data, PackLocation { 57, 7 }, HS::trig_length);
+        Pack(data, PackLocation { 40, 5 }, clock_m->GetClockPPQN());
 
         return data;
     }
 
     void OnDataReceive(uint64_t data) {
+        if (!clock_m->IsRunning())
+            clock_m->SetTempoBPM(Unpack(data, PackLocation { 0, 9 }));
+        clock_m->SetShuffle(Unpack(data, PackLocation { 9, 7 }));
+        for (size_t i = 0; i < 4; ++i) {
+            clock_m->SetMultiply(Unpack(data, PackLocation { 16+i*6, 6 })-32, i);
+        }
+        clock_m->SetClockPPQN(Unpack(data, PackLocation { 40, 5 }));
+    }
+
+    uint64_t GetGlobals() {
+        uint64_t data = 0;
+        Pack(data, PackLocation { 0, 1 }, HS::auto_save_enabled);
+        Pack(data, PackLocation { 1, 1 }, HS::cursor_wrap);
+        Pack(data, PackLocation { 2, 2 }, HS::screensaver_mode);
+        Pack(data, PackLocation { 4, 7 }, HS::trig_length);
+        // TODO: VOR - remember Vbias per preset?
+        //Pack(data, PackLocation { 11, 2 }, vbias);
+        return data;
+    }
+    void SetGlobals(const uint64_t &data) {
         HS::auto_save_enabled = Unpack(data, PackLocation { 0, 1 });
         HS::cursor_wrap = Unpack(data, PackLocation { 1, 1 });
         HS::screensaver_mode = Unpack(data, PackLocation { 2, 2 });
-
-        if (!clock_m->IsRunning())
-            clock_m->SetTempoBPM(Unpack(data, PackLocation { 4, 9 }));
-
-        clock_m->SetShuffle(Unpack(data, PackLocation { 13, 7 }));
-        clock_m->SetClockPPQN(Unpack(data, PackLocation { 20, 5 }));
-        for (size_t i = 0; i < 4; ++i) {
-            clock_m->SetMultiply(Unpack(data, PackLocation { 25+i*6, 6 })-32, i);
-        }
-
-        HS::trig_length = constrain( Unpack(data, PackLocation { 57, 7 }), 1, 127);
+        HS::trig_length = constrain( Unpack(data, PackLocation { 4, 7 }), 1, 127);
     }
+
 
 protected:
     void SetHelp() {
