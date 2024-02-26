@@ -27,11 +27,13 @@
 #include "OC_config.h"
 #include "OC_digital_inputs.h"
 #include "OC_autotune.h"
+#include "OC_calibration.h"
 #include "OC_patterns.h"
 #include "enigma/TuringMachine.h"
 #include "src/drivers/FreqMeasure/OC_FreqMeasure.h"
 #include "util/util_pagestorage.h"
 #include "util/EEPROMStorage.h"
+#include "VBiasManager.h"
 #include "HSClockManager.h"
 
 ClockManager *ClockManager::instance = 0;
