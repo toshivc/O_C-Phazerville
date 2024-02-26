@@ -140,6 +140,8 @@ enum QQ_CV_DEST {
   QQ_DEST_LAST
 };
 
+using OC::DUMMY;
+
 class QuantizerChannel : public settings::SettingsBase<QuantizerChannel, CHANNEL_SETTING_LAST> {
 public:
 

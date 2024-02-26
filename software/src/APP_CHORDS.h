@@ -142,6 +142,7 @@ enum CHORDS_DIRECTIONS {
 };
 
 extern uint_fast8_t MENU_REDRAW;
+using OC::DUMMY;
 
 class Chords : public settings::SettingsBase<Chords, CHORDS_SETTING_LAST> {
 public:
