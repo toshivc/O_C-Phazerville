@@ -92,6 +92,7 @@ typedef struct IOFrame {
             case usbMIDI.Continue: // treat Continue like Start
             case usbMIDI.Start:
                 start_q = 1;
+                clock_count = 0;
                 ForAllChannels(ch) 
                 {
                     if (function[ch] == HEM_MIDI_START_OUT) {
