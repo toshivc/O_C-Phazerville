@@ -48,6 +48,7 @@ typedef struct IOFrame {
         // Output values and ClockOut triggers, handled by MIDIIn applet
         int outputs[4];
         bool trigout_q[4];
+        bool clock_run = 0;
 
         int8_t notes_on[16]; // attempts to track how many notes are on, per MIDI channel
         int last_msg_tick; // Tick of last received message
@@ -93,6 +94,7 @@ typedef struct IOFrame {
             case usbMIDI.Start:
                 start_q = 1;
                 clock_count = 0;
+                clock_run = true;
                 ForAllChannels(ch) 
                 {
                     if (function[ch] == HEM_MIDI_START_OUT) {
@@ -107,6 +109,7 @@ typedef struct IOFrame {
             case usbMIDI.SystemReset:
             case usbMIDI.Stop:
                 stop_q = 1;
+                clock_run = false;
                 // a way to reset stuck notes
                 for (int i = 0; i < 16; ++i) notes_on[i] = 0;
                 return;

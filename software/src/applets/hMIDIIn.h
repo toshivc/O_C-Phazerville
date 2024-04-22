@@ -70,6 +70,9 @@ public:
                     ClockOut(ch);
                 }
                 break;
+            case HEM_MIDI_RUN_OUT:
+                GateOut(ch, frame.MIDIState.clock_run);
+                break;
             default:
                 Out(ch, frame.MIDIState.outputs[ch_]);
                 break;
