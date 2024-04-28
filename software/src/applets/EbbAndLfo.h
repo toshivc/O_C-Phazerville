@@ -3,6 +3,7 @@
 class EbbAndLfo : public HemisphereApplet {
 public:
   enum EbbAndLfoCursor {
+    LEVEL,
     FREQUENCY,
     SLOPE_VAL,
     SHAPE_VAL,
@@ -42,12 +43,17 @@ public:
     slope_mod = slope;
     shape_mod = shape;
     fold_mod = fold;
+    level_mod = level * 10;
 
     ForEachChannel(ch) {
         switch (cv_type(ch)) {
         case FREQ:
+          if (ch == 0) {
             pitch_mod += In(ch);
-            break;
+          } else {
+            Modulate(level_mod, ch, 0, 1000);
+          }
+          break;
         case SLOPE:
             Modulate(slope_mod, ch, 0, 127);
             break;
@@ -82,13 +88,13 @@ public:
     ForEachChannel(ch) {
       switch (output(ch)) {
       case UNIPOLAR:
-        Out(ch, Proportion(sample.unipolar, 65535, HEMISPHERE_MAX_CV));
+        Out(ch, Proportion(sample.unipolar, 65535, HEMISPHERE_MAX_CV) * level_mod / 1000);
         break;
       case BIPOLAR:
         #ifdef VOR
-        Out(ch, Proportion(sample.bipolar, 32767, 7680)); // hardcoded at 5V for Plum Audio
+        Out(ch, Proportion(sample.bipolar, 32767, 7680) * level_mod / 1000); // hardcoded at 5V for Plum Audio
         #else
-        Out(ch, Proportion(sample.bipolar, 32767, HEMISPHERE_MAX_CV / 2));
+        Out(ch, Proportion(sample.bipolar, 32767, HEMISPHERE_MAX_CV / 2) * level_mod / 1000);
         #endif
         break;
       case EOA:
@@ -115,10 +121,10 @@ public:
         int next = 0;
         switch (output(ch)) {
         case UNIPOLAR:
-          next = bottom - disp_sample.unipolar * h / 65535;
+          next = bottom - disp_sample.unipolar * h / 65535 * level_mod / 1000;
           break;
         case BIPOLAR:
-          next = bottom - (disp_sample.bipolar + 32767) * h / 65535;
+          next = bottom - (disp_sample.bipolar * level_mod / 1000 + 32767) * h / 65535;
           break;
         case EOA:
           next = bottom - ((disp_sample.flags & FLAG_EOA) ? h : 0);
@@ -136,6 +142,10 @@ public:
     gfxLine(p, 15, p, 50);
 
     switch (cursor) {
+    case LEVEL:
+      gfxPrint(0, 56, "Level: ");
+      gfxPrint(level);
+      break;
     case FREQUENCY:
       // gfxPrint(0, 55, "Frq:");
       gfxPos(0, 56);
@@ -163,7 +173,7 @@ public:
       ForEachChannel(ch) {
           gfxIcon(0 + ch*32, 56, CV_ICON);
           gfxBitmap(8 + ch*32, 56, 3, ch ? SUB_TWO : SUP_ONE);
-          gfxPrint(13 + ch*32, 56, cv_labels[cv_type(ch)]);
+          gfxPrint(13 + ch*32, 56, (ch == 1 && cv_type(ch) == FREQ)? "Am" : cv_labels[cv_type(ch)]);
       }
       break;
     case ONESHOT_MODE:
@@ -188,6 +198,10 @@ public:
     }
 
     switch (cursor) {
+    case LEVEL: {
+      level = constrain(level + direction, 0, 100);
+      break;
+    }
     case FREQUENCY: {
       uint32_t old_pi = ComputePhaseIncrement(pitch);
       pitch += (knob_accel >> 8) * direction;
@@ -239,6 +253,7 @@ public:
     Pack(data, PackLocation { 37, 4 }, out);
     Pack(data, PackLocation { 41, 4 }, cv);
     Pack(data, PackLocation { 45, 1 }, oneshot_mode);
+    Pack(data, PackLocation { 46, 7 }, level);
     return data;
   }
 
@@ -251,6 +266,7 @@ public:
     out = Unpack(data, PackLocation { 37, 4 });
     cv = Unpack(data, PackLocation { 41, 4 });
     oneshot_mode = Unpack(data, PackLocation { 45, 1 });
+    level = Unpack(data, PackLocation { 46, 7 });
   }
 
 protected:
@@ -286,12 +302,14 @@ private:
   int slope = 64;
   int shape = 48; // triangle
   int fold = 0;
+  int level = 100; // 0 to 100
 
   // actual values after CV mod
   int16_t pitch_mod;
   int slope_mod;
   int shape_mod;
   int fold_mod;
+  int level_mod; // 0 to 1000 (higher precision for CV)
   
   bool oneshot_mode = 0;
   bool oneshot_active = 0;
