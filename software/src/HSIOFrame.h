@@ -44,6 +44,7 @@ typedef struct IOFrame {
         int channel[ADC_CHANNEL_LAST]; // MIDI channel number
         int function[ADC_CHANNEL_LAST]; // Function for each channel
         int function_cc[ADC_CHANNEL_LAST]; // CC# for each channel
+        uint16_t semitone_mask[ADC_CHANNEL_LAST]; // which notes are currently on
 
         // Output values and ClockOut triggers, handled by MIDIIn applet
         int outputs[DAC_CHANNEL_LAST];
@@ -134,6 +135,7 @@ typedef struct IOFrame {
 
                 switch (message) {
                 case usbMIDI.NoteOn:
+                    semitone_mask[ch] = semitone_mask[ch] | (1u << (data1 % 12));
 
                     // Should this message go out on this channel?
                     if (function[ch] == HEM_MIDI_NOTE_OUT)
@@ -152,6 +154,8 @@ typedef struct IOFrame {
                     break;
 
                 case usbMIDI.NoteOff:
+                    semitone_mask[ch] = semitone_mask[ch] & ~(1u << (data1 % 12));
+
                     // turn gate off only when all notes are off
                     if (notes_on[midi_chan - 1] <= 0)
                     {

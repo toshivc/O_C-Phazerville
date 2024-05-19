@@ -44,6 +44,9 @@
 static constexpr int CAL8_MAX_TRANSPOSE = 60;
 static constexpr int CAL8OR_PRECISION = 10000;
 
+static const int SCALE_SIZE(const int scale) {
+  return OC::Scales::GetScale(scale).num_notes;
+}
 // channel configs
 struct Cal8ChannelConfig {
     int scale;
@@ -207,7 +210,7 @@ public:
         for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
             HS::quantizer[ch].Init();
             channel[ch].scale = OC::Scales::SCALE_SEMI;
-            HS::quantizer[ch].Configure(OC::Scales::GetScale(channel[ch].scale), 0xffff);
+            HS::QuantizerConfigure(ch, channel[ch].scale, 0xffff);
 
             channel[ch].scale_factor = 0;
             channel[ch].offset = 0;
@@ -243,13 +246,14 @@ public:
     void Resume() {
         // restore quantizer settings
         for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
-            HS::quantizer[ch].Configure(OC::Scales::GetScale(channel[ch].scale), 0xffff);
+            HS::QuantizerConfigure(ch, channel[ch].scale, 0xffff);
             HS::quantizer[ch].Requantize();
         }
     }
 
     void ProcessMIDI() {
         HS::IOFrame &f = HS::frame;
+        bool dothething = false;
         while (usbMIDI.read()) {
             const int message = usbMIDI.getType();
             const int data1 = usbMIDI.getData1();
@@ -261,6 +265,24 @@ public:
             }
 
             f.MIDIState.ProcessMIDIMsg(usbMIDI.getChannel(), message, data1, data2);
+
+            if (message == usbMIDI.NoteOn || message == usbMIDI.NoteOff) {
+              dothething = true;
+            }
+        }
+
+        if (dothething) {
+          // reconfigure with MIDI-derived masks
+          for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
+            uint16_t mask_ = HS::frame.MIDIState.semitone_mask[ch];
+
+            if (mask_)
+              HS::QuantizerConfigure(ch, OC::Scales::SCALE_SEMI, mask_);
+            else
+              HS::QuantizerConfigure(ch, channel[ch].scale, 0xffff);
+
+            HS::quantizer[ch].Requantize();
+          }
         }
     }
 
@@ -273,25 +295,28 @@ public:
         // -- core processing --
         for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
             bool clocked = Clock(ch);
-            Cal8ChannelConfig &c = channel[ch];
+            Cal8ChannelConfig &cfg = channel[ch];
 
             // clocked transpose
-            if (CONTINUOUS == c.clocked_mode || clocked) {
-                c.transpose_active = c.transpose;
+            if (CONTINUOUS == cfg.clocked_mode || clocked) {
+                cfg.transpose_active = cfg.transpose;
             }
+            if (HS::frame.MIDIState.semitone_mask[ch] != 0)
+              cfg.transpose_active = 0;
 
             // respect S&H mode
-            if (c.clocked_mode != SAMPLE_AND_HOLD || clocked) {
+            if (cfg.clocked_mode != SAMPLE_AND_HOLD || clocked) {
                 // CV value
                 int pitch = In(ch);
-                int quantized = HS::quantizer[ch].Process(pitch, c.root_note * 128, c.transpose_active);
-                c.last_note = quantized;
+                //int quantized = HS::Quantize(ch, pitch, cfg.root_note * 128, cfg.transpose_active);
+                int quantized = HS::Quantize(ch, pitch, 0, cfg.transpose_active);
+                cfg.last_note = quantized;
             }
 
-            int output_cv = c.last_note;
+            int output_cv = cfg.last_note;
             if ( OC::DAC::calibration_data_used( DAC_CHANNEL(sel_chan) ) != 0x01 ) // not autotuned
-                output_cv = output_cv * (CAL8OR_PRECISION + c.scale_factor) / CAL8OR_PRECISION;
-            output_cv += c.offset;
+                output_cv = output_cv * (CAL8OR_PRECISION + cfg.scale_factor) / CAL8OR_PRECISION;
+            output_cv += cfg.offset;
 
             Out(ch, output_cv);
 
@@ -450,16 +475,14 @@ public:
             if (s_ < 0) s_ = OC::Scales::NUM_SCALES - 1;
 
             channel[sel_chan].scale = s_;
-            HS::quantizer[sel_chan].Configure(OC::Scales::GetScale(s_), 0xffff);
+            HS::QuantizerConfigure(sel_chan, s_, 0xffff);
             HS::quantizer[sel_chan].Requantize();
             return;
         }
 
         if (!edit_mode) { // Octave jump
-            int s = OC::Scales::GetScale(channel[sel_chan].scale).num_notes;
-            channel[sel_chan].transpose += (direction * s);
-            while (channel[sel_chan].transpose > CAL8_MAX_TRANSPOSE) channel[sel_chan].transpose -= s;
-            while (channel[sel_chan].transpose < -CAL8_MAX_TRANSPOSE) channel[sel_chan].transpose += s;
+          HS::q_octave[sel_chan] += direction;
+          CONSTRAIN(HS::q_octave[sel_chan], -5, 5);
         }
         else if ( OC::DAC::calibration_data_used( DAC_CHANNEL(sel_chan) ) != 0x01 ) // not autotuned
         {
@@ -482,13 +505,20 @@ public:
         preset_modified = 1;
         if (scale_edit) {
             // Root Note
-            channel[sel_chan].root_note = constrain(channel[sel_chan].root_note + direction, 0, 11);
+            HS::SetRootNote(sel_chan, HS::GetRootNote(sel_chan) + direction);
+            channel[sel_chan].root_note = HS::GetRootNote(sel_chan);
             HS::quantizer[sel_chan].Requantize();
             return;
         }
 
         if (!edit_mode) {
             channel[sel_chan].transpose = constrain(channel[sel_chan].transpose + direction, -CAL8_MAX_TRANSPOSE, CAL8_MAX_TRANSPOSE);
+            int overflow = channel[sel_chan].transpose / SCALE_SIZE(channel[sel_chan].scale);
+            if (overflow != 0) {
+              HS::q_octave[sel_chan] += overflow;
+              CONSTRAIN(HS::q_octave[sel_chan], -5, 5);
+              channel[sel_chan].transpose %= SCALE_SIZE(channel[sel_chan].scale);
+            }
         }
         else {
             channel[sel_chan].offset = constrain(channel[sel_chan].offset + direction, -63, 64);
@@ -566,15 +596,18 @@ public:
         gfxIcon(9, y, BEND_ICON);
 
         // -- LCD Display Section --
-        gfxFrame(20, y-3, 64, 18);
-        gfxIcon(23, y+2, (channel[sel_chan].transpose >= 0)? PLUS_ICON : MINUS_ICON);
+        const int s = SCALE_SIZE(channel[sel_chan].scale);
+        int degrees = channel[sel_chan].transpose + HS::q_octave[sel_chan] * s;
+        const bool positive = degrees >= 0;
+        const int octave = degrees / s;
+        degrees %= s;
 
-        int s = OC::Scales::GetScale(channel[sel_chan].scale).num_notes;
-        int octave = channel[sel_chan].transpose / s;
-        int semitone = channel[sel_chan].transpose % s;
+        gfxFrame(20, y-3, 64, 18);
+        gfxIcon(23, y+2, positive? PLUS_ICON : MINUS_ICON);
+
         segment.PrintWhole(33, y, abs(octave), 10);
         gfxPrint(53, y+5, ".");
-        segment.PrintWhole(61, y, abs(semitone), 10);
+        segment.PrintWhole(61, y, abs(degrees), 10);
 
         // Scale
         gfxIcon(89, y, SCALE_ICON);
@@ -584,7 +617,7 @@ public:
             gfxIcon(100, y+10, RIGHT_ICON);
         }
         // Root Note
-        gfxPrint(110, y+10, OC::Strings::note_names_unpadded[channel[sel_chan].root_note]);
+        gfxPrint(110, y+10, OC::Strings::note_names_unpadded[HS::GetRootNote(sel_chan)]);
 
         // Tracking Compensation
         y += 22;
@@ -603,6 +636,9 @@ public:
         }
         if (channel[sel_chan].offset >= 0) gfxPrint("+");
         gfxPrint(channel[sel_chan].offset);
+
+        if (HS::frame.MIDIState.semitone_mask[sel_chan] != 0)
+          gfxIcon(100, y, MIDI_ICON);
 
         // mode indicator
         if (!scale_edit)
