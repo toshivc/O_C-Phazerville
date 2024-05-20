@@ -86,7 +86,8 @@ class TB_3PO: public HemisphereApplet {
     density_cv = Proportion(DetentedIn(1), HEMISPHERE_MAX_INPUT_CV, 15);
     density = static_cast<uint8_t>(constrain(density_encoder + density_cv, 0, 14));
 
-    if (Clock(0)) {
+    bool clocked = Clock(0);
+    if (clocked) {
       cycle_time = ClockCycleTicks(0); // Track latest interval of clock 0 for gate timings
 
       regenerate_if_density_or_scale_changed(); // Flag to do the actual update at end of Controller()
@@ -94,7 +95,7 @@ class TB_3PO: public HemisphereApplet {
       //StartADCLag();
     }
 
-    if (Clock(0) && !Gate(1)) // Reset not held
+    if (clocked && !Gate(1)) // Reset not held
     {
       int step_pv = step;
 
