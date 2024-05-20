@@ -42,6 +42,9 @@ public:
         legato = 1;
         log_index = 0;
 
+        // defaults for auto MIDI out
+        HS::frame.MIDIState.outfn[io_offset + 0] = HEM_MIDI_NOTE_OUT;
+        HS::frame.MIDIState.outfn[io_offset + 1] = HEM_MIDI_GATE_OUT;
     }
 
     void Controller() {
@@ -148,10 +151,23 @@ public:
             MoveCursor(cursor, direction, 4);
             return;
         }
-        if (cursor == 0) channel = constrain(channel + direction, 0, 15);
-        if (cursor == 1) transpose = constrain(transpose + direction, -24, 24);
-        if (cursor == 2) function = constrain(function + direction, 0, 3);
-        if (cursor == 3) legato = direction > 0 ? 1 : 0;
+
+        switch (cursor) {
+        case 0:
+          channel = constrain(channel + direction, 0, 15);
+          HS::frame.MIDIState.outchan[io_offset + 0] = channel;
+          HS::frame.MIDIState.outchan[io_offset + 1] = channel;
+          break;
+        case 1: transpose = constrain(transpose + direction, -24, 24);
+                break;
+        case 2:
+          function = constrain(function + direction, 0, 3);
+          HS::frame.MIDIState.outfn[io_offset + 0] = HEM_MIDI_NOTE_OUT;
+          HS::frame.MIDIState.outfn[io_offset + 1] = HEM_MIDI_GATE_OUT;
+          break;
+        case 3: legato = direction > 0 ? 1 : 0;
+                break;
+        }
         ResetCursor();
     }
         

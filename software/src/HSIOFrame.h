@@ -46,19 +46,47 @@ typedef struct IOFrame {
         int function_cc[ADC_CHANNEL_LAST]; // CC# for each channel
         uint16_t semitone_mask[ADC_CHANNEL_LAST]; // which notes are currently on
 
-        // Output values and ClockOut triggers, handled by MIDIIn applet
-        int outputs[DAC_CHANNEL_LAST];
-        bool trigout_q[DAC_CHANNEL_LAST];
-        bool clock_run = 0;
-
+        // MIDI input stuff handled by MIDIIn applet
         int8_t notes_on[16]; // attempts to track how many notes are on, per MIDI channel
-        int last_msg_tick; // Tick of last received message
-        uint8_t clock_count; // MIDI clock counter (24ppqn)
+        int outputs[DAC_CHANNEL_LAST]; // translated CV values
+        bool trigout_q[DAC_CHANNEL_LAST];
 
         // Clock/Start/Stop are handled by ClockSetup applet
+        bool clock_run = 0;
         bool clock_q;
         bool start_q;
         bool stop_q;
+        uint8_t clock_count; // MIDI clock counter (24ppqn)
+        int last_msg_tick; // Tick of last received message
+
+        // MIDI output stuff
+        int outchan[DAC_CHANNEL_LAST] = {
+          0, 0, 1, 1,
+#ifdef ARDUINO_TEENSY41
+          2, 2, 3, 3,
+#endif
+        };
+        int outchan_last[DAC_CHANNEL_LAST] = {
+          0, 0, 1, 1,
+#ifdef ARDUINO_TEENSY41
+          2, 2, 3, 3,
+#endif
+        };
+        int outfn[DAC_CHANNEL_LAST] = {
+          HEM_MIDI_NOTE_OUT, HEM_MIDI_GATE_OUT,
+          HEM_MIDI_NOTE_OUT, HEM_MIDI_GATE_OUT,
+#ifdef ARDUINO_TEENSY41
+          HEM_MIDI_NOTE_OUT, HEM_MIDI_GATE_OUT,
+          HEM_MIDI_NOTE_OUT, HEM_MIDI_GATE_OUT,
+#endif
+        };
+        uint8_t current_note[16]; // note number, per MIDI channel
+        int note_countdown[DAC_CHANNEL_LAST];
+        int inputs[DAC_CHANNEL_LAST]; // CV to be translated
+        int last_cv[DAC_CHANNEL_LAST];
+        bool clocked[DAC_CHANNEL_LAST];
+        bool gate_high[DAC_CHANNEL_LAST];
+        bool changed_cv[DAC_CHANNEL_LAST];
 
         // Logging
         MIDILogEntry log[7];
@@ -199,6 +227,67 @@ typedef struct IOFrame {
                 if (log_this) UpdateLog(message, data1, data2);
             }
         }
+        void Send(int *outvals) {
+
+          // first pass - calculate things and turn off notes
+          for (int i = 0; i < DAC_CHANNEL_LAST; ++i) {
+            const int midi_ch = outchan[i];
+
+            inputs[i] = outvals[i];
+            gate_high[i] = inputs[i] > (12 << 7);
+            clocked[i] = (gate_high[i] && last_cv[i] < (12 << 7));
+            if (abs(inputs[i] - last_cv[i]) > HEMISPHERE_CHANGE_THRESHOLD) {
+                changed_cv[i] = 1;
+                last_cv[i] = inputs[i];
+            } else changed_cv[i] = 0;
+
+            if (outfn[i] == HEM_MIDI_NOTE_OUT) {
+              if (changed_cv[i]) {
+                // a note has changed, turn the last one off first
+                SendNoteOff(outchan_last[i]);
+                current_note[midi_ch] = MIDIQuantizer::NoteNumber( inputs[i] );
+              }
+            }
+            if (outfn[i] == HEM_MIDI_GATE_OUT) {
+              if (!gate_high[i] && changed_cv[i])
+                SendNoteOff(midi_ch);
+            }
+
+            // Handle clock pulse timing
+            if (note_countdown[i] > 0) {
+                if (--note_countdown[i] == 0) SendNoteOff(outchan_last[i]);
+            }
+          }
+
+          // 2nd pass - send eligible notes
+          for (int i = 0; i < 2; ++i) {
+            const int chA = i*2;
+            const int chB = chA + 1;
+
+            if (outfn[chB] == HEM_MIDI_GATE_OUT) {
+              if (clocked[chB]) {
+                SendNoteOn(outchan[chB]);
+                // no countdown
+                outchan_last[chB] = outchan[chB];
+              }
+            } else if (outfn[chA] == HEM_MIDI_NOTE_OUT) {
+              if (changed_cv[chA]) {
+                SendNoteOn(outchan[chA]);
+                note_countdown[chA] = HEMISPHERE_CLOCK_TICKS * HS::trig_length;
+                outchan_last[chA] = outchan[chA];
+              }
+            }
+          }
+
+          // I think this can cause the UI to lag and miss input
+          //usbMIDI.send_now();
+        }
+        void SendNoteOn(int midi_ch) {
+          usbMIDI.sendNoteOn(current_note[ midi_ch ], 100, midi_ch + 1);
+        }
+        void SendNoteOff(int midi_ch) {
+          usbMIDI.sendNoteOff(current_note[ midi_ch ], 0, midi_ch + 1);
+        }
 
     } MIDIState;
 
@@ -248,6 +337,7 @@ typedef struct IOFrame {
         for (int i = 0; i < DAC_CHANNEL_LAST; ++i) {
             OC::DAC::set_pitch(DAC_CHANNEL(i), outputs[i], 0);
         }
+        MIDIState.Send(outputs);
 
 #ifdef ARDUINO_TEENSY41
         // HACK - modulate filter with first output from RIGHT side...
