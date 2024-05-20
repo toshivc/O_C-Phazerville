@@ -33,6 +33,11 @@
 class TB_3PO: public HemisphereApplet {
   public:
 
+    enum TB3POCursor {
+      LOCK_SEED, DIGIT1, DIGIT2, DIGIT3, DIGIT4,
+      DENSITY, SCALE, ROOT, LENGTH,
+    };
+
     const char * applet_name() { // Maximum 10 characters
       return "TB-3PO";
     }
@@ -83,8 +88,10 @@ class TB_3PO: public HemisphereApplet {
       transpose_cv = Quantize(0, In(0), 0, 0); // Use root == 0 to start at c
     }
 
+    if (EditMode() && cursor == 5) density_auto[step] = density_encoder;
+    const int den_ = (density_auto_enabled ? density_auto[step] : density_encoder);
     density_cv = Proportion(DetentedIn(1), HEMISPHERE_MAX_INPUT_CV, 15);
-    density = static_cast<uint8_t>(constrain(density_encoder + density_cv, 0, 14));
+    density = static_cast<uint8_t>(constrain(den_ + density_cv, 0, 14));
 
     bool clocked = Clock(0);
     if (clocked) {
@@ -169,6 +176,13 @@ class TB_3PO: public HemisphereApplet {
     CursorAction(cursor, 8);
   }
 
+  void AuxButton() {
+    if (cursor == DENSITY) {
+      density_auto_enabled = !density_auto_enabled;
+    }
+    isEditing = false;
+  }
+
   void OnEncoderMove(int direction) {
     if (!EditMode()) { // move cursor
       MoveCursor(cursor, direction, 8);
@@ -181,17 +195,17 @@ class TB_3PO: public HemisphereApplet {
 
     // edit param
     switch (cursor) {
-    case 0:
+    case LOCK_SEED:
       lock_seed += direction;
 
       manual_reset_flag = (lock_seed > 1 || lock_seed < 0);
 
       lock_seed = constrain(lock_seed, 0, 1);
       break;
-    case 1:
-    case 2:
-    case 3:
-    case 4: { // Editing one of the 4 hex digits of the seed
+    case DIGIT1:
+    case DIGIT2:
+    case DIGIT3:
+    case DIGIT4: { // Editing one of the 4 hex digits of the seed
       int byte_offs = 4 - cursor;
       int shift_amt = byte_offs * 4;
 
@@ -204,17 +218,18 @@ class TB_3PO: public HemisphereApplet {
       seed |= (nib << shift_amt); // Move the nibble to its home
       break;
     }
-    case 5: // density
+    case DENSITY: // density
       density_encoder = constrain(density_encoder + direction, 0, 14); // Treated as a bipolar -7 to 7 in practice
+      density_auto[step] = density_encoder;
       density_encoder_display = 400; // How long to show the encoder version of density in the number display for
 
       break;
-    case 6: { // Scale selection
+    case SCALE: { // Scale selection
       NudgeScale(0, direction);
       set_quantizer_scale(GetScale(0));
       break;
     }
-    case 7: { // Root note selection
+    case ROOT: { // Root note selection
 
       int r = GetRootNote(0) + direction;
       int8_t &q_oct = HS::q_octave[io_offset];
@@ -233,7 +248,7 @@ class TB_3PO: public HemisphereApplet {
 
       break;
     }
-    case 8: // pattern length
+    case LENGTH: // pattern length
       num_steps = constrain(num_steps + direction, 1, 32);
       break;
     } //switch
@@ -306,6 +321,8 @@ private:
 
   // Density controls (Encoder sets center point, CV can apply +-)
   int density_encoder; // density value contributed by the encoder (center point)
+  int density_auto[ACID_MAX_STEPS]; // motion recording
+  bool density_auto_enabled = 0;
   int density_cv; // density value (+-) contributed by CV
   int density_encoder_display; // Countdown of frames to show the encoder's density value (centerpoint)
   uint8_t num_steps; // How many steps of the generated pattern to play before looping
@@ -636,6 +653,7 @@ private:
       gfxPrint(8, 37, "-"); // Print minus sign this way to right-align the number
     }
     gfxPrint(14, 37, dens_display);
+    if (density_auto_enabled) gfxFrame(8, 35, 16, 11);
 
     // Scale and root note select
     gfxPrint(38, 26, OC::scale_names_short[GetScale(0)]);
@@ -698,26 +716,26 @@ private:
 
     // Draw edit cursor
     switch (cursor) {
-    case 0:
+    case LOCK_SEED:
       // Set length to indicate length
       gfxCursor(14, 23, lock_seed ? 11 : 36); // Seed = auto-randomize / locked-manual
       break;
-    case 1:
-    case 2:
-    case 3:
-    case 4: // seed, 4 positions (1-4)
+    case DIGIT1:
+    case DIGIT2:
+    case DIGIT3:
+    case DIGIT4: // seed, 4 positions (1-4)
       gfxCursor(25 + 6 * (cursor - 1), 23, 7);
       break;
-    case 5:
+    case DENSITY:
       gfxCursor(9, 45, 14); // density
       break;
-    case 6:
+    case SCALE:
       gfxCursor(38, 34, 25); // scale
       break;
-    case 7:
+    case ROOT:
       gfxCursor(38, 44, 24); // root note
       break;
-    case 8:
+    case LENGTH:
       gfxCursor(20, 54, 12, 8); // step
       break;
     }
