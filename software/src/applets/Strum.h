@@ -54,19 +54,26 @@ public:
     }
 
     spacing_mod = spacing;
-    Modulate(spacing_mod, 1, HEM_BURST_SPACING_MIN, HEM_BURST_SPACING_MAX);
+    qselect_mod = qselect;
+    if (qmod) {
+      // select Quantizer over a 1Volt range
+      int cv = DetentedIn(1);
+      qselect_mod = constrain(qselect_mod + Proportion(cv, 12 << 7, 4), 0, 3);
+    }
+    else
+      Modulate(spacing_mod, 1, HEM_BURST_SPACING_MIN, HEM_BURST_SPACING_MAX);
 
     if (countdown <= 0 && !index_out_of_bounds && inc != 0) {
       int raw_pitch = In(0);
-      HS::Quantize(qselect, raw_pitch);
-      int note_num = HS::GetLatestNoteNumber(qselect);
-      int pitch = HS::QuantizerLookup(qselect, note_num + intervals[index]);
-      disp = note_num;
+      HS::Quantize(qselect_mod, raw_pitch);
+      disp = HS::GetLatestNoteNumber(qselect_mod);
+      int pitch = HS::Quantize(qselect_mod, raw_pitch, 0, intervals[index]);
       Out(0, pitch);
       ClockOut(1);
 
       last_note_dur = 17 * spacing;
-      Modulate(last_note_dur, 1, 17 * HEM_BURST_SPACING_MIN, 17 * HEM_BURST_SPACING_MAX);
+      if (!qmod)
+        Modulate(last_note_dur, 1, 17 * HEM_BURST_SPACING_MIN, 17 * HEM_BURST_SPACING_MAX);
 
       countdown += last_note_dur;
       index += inc;
@@ -80,10 +87,11 @@ public:
   }
 
   void View() {
-    gfxPrint(8, 15, OC::scale_names_short[HS::GetScale(qselect)]);
-    gfxPrint(42, 15, OC::Strings::note_names_unpadded[HS::GetRootNote(qselect)]);
+    gfxPrint(1, 15, "Q"); gfxPrint(qselect_mod + 1);
+    gfxPrint(15, 15, OC::scale_names_short[HS::GetScale(qselect_mod)]);
+    gfxPrint(45, 15, OC::Strings::note_names_unpadded[HS::GetRootNote(qselect_mod)]);
     if (cursor == QUANT)
-      gfxCursor(7, 23, 48);
+      gfxCursor(1, 23, 13);
 
     if (show_encoder) {
       gfxPrint(8 + pad(100, spacing), 25, spacing);
@@ -96,7 +104,9 @@ public:
     if (cursor == SPACING)
       gfxCursor(1, 33, 27);
 
-    int num_notes = OC::Scales::GetScale(HS::GetScale(qselect)).num_notes;
+    gfxIcon(56, qmod? 15 : 25, LEFT_ICON);
+
+    int num_notes = OC::Scales::GetScale(HS::GetScale(qselect_mod)).num_notes;
     const int cursor_width = 9;
     const int col_width = cursor_width + 2;
     const int top = 35;
@@ -122,8 +132,8 @@ public:
       }
 
       int quant_note = disp + (intervals[i] % num_notes);
-      int32_t pitch = HS::QuantizerLookup(qselect, quant_note);
-      int semitone = (MIDIQuantizer::NoteNumber(pitch) + HS::GetRootNote(qselect)) % 12;
+      int32_t pitch = HS::QuantizerLookup(qselect_mod, quant_note);
+      int semitone = MIDIQuantizer::NoteNumber(pitch) % 12;
       gfxBitmap(col_width * i, 55, 8, NOTE_NAMES + semitone * 8);
 
       // TODO: Flip indicator on reverse strums, though tbh it looks fine as is
@@ -144,10 +154,15 @@ public:
   }
 
   void OnButtonPress() {
+    isEditing = !isEditing;
+  }
+  void AuxButton() {
     if (cursor == QUANT)
       HS::QuantizerEdit(qselect);
-    else
-      isEditing = !isEditing;
+    if (cursor == SPACING) {
+      qmod = !qmod;
+    }
+    isEditing = false;
   }
 
   void OnEncoderMove(int direction) {
@@ -165,6 +180,9 @@ public:
       break;
     // TODO: modify qselect instead
     */
+    case QUANT:
+      qselect = constrain(qselect + direction, 0, 3);
+      break;
     case SPACING:
       spacing = constrain(spacing + direction, HEM_BURST_SPACING_MIN,
                           HEM_BURST_SPACING_MAX);
@@ -232,6 +250,8 @@ private:
   int show_encoder = 0;
 
   int8_t qselect = 0;
+  int8_t qselect_mod = 0;
+  bool qmod = 0; // switch CV between spacing and qselect
 
   int cursor = 0;
 
