@@ -8,15 +8,12 @@ struct MiniSeq {
 
   // packed as 6-bit Note Number and two flags
   uint8_t *note = (uint8_t*)(OC::user_patterns[0].notes);
-  uint8_t *length = OC::pattern_lengths;
-
   int step = 0;
   bool reset = 1;
 
   void SetPattern(int &index) {
     CONSTRAIN(index, 0, 7);
     note = (uint8_t*)(OC::user_patterns[index].notes);
-    length = &(OC::pattern_lengths[index]);
   }
   void Clear() {
       for (int s = 0; s < MAX_STEPS; s++) note[s] = 0x20; // C4 == 0V
@@ -71,19 +68,27 @@ struct MiniSeq {
   void Unmute(const size_t s_) {
     note[s_] &= ~(0x01 << 7);
   }
-  void Mute(const size_t s_, bool on = true) {
-    note[s_] |= (on << 7);
+  void Mute(const size_t s_) {
+    if (s_ == MAX_STEPS - 1) note[s_] &= ~(1 << 6); // clear accent
+    note[s_] |= (0x01 << 7);
   }
-  int8_t GetLength() {
-    return *length;
+  uint8_t GetLength() {
+    if ((note[MAX_STEPS - 1] & 0xE0) == 0xE0)
+      return (note[MAX_STEPS-1] & 0b00011111);
+    else
+      return MAX_STEPS;
   }
-  void SetLength(int8_t length_) {
-    *length = length_;
+  void SetLength(uint8_t length_) {
+    if (length_ < MAX_STEPS)
+      note[MAX_STEPS - 1] = 0b11100000 | (length_ & 0b00011111);
+    else
+      note[MAX_STEPS - 1] = 0x20; // reinit last step
   }
   void ToggleAccent(const size_t s_) {
     note[s_] ^= (0x01 << 6);
   }
   void ToggleMute(const size_t s_) {
+    if (s_ == MAX_STEPS - 1) note[s_] &= ~(1 << 6); // clear accent
     note[s_] ^= (0x01 << 7);
   }
   void Reset() {
