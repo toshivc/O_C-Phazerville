@@ -183,7 +183,12 @@ struct GlobalSettings {
 
   OC::Scale user_scales[OC::Scales::SCALE_USER_LAST];
   OC::Pattern user_patterns[OC::Patterns::PATTERN_USER_ALL];
+  // These both occupy 160 bytes
+#ifdef ENABLE_APP_CHORDS
+  OC::Chord user_chords[OC::Chords::CHORDS_USER_LAST];
+#else
   HS::TuringMachine user_turing_machines[HS::TURING_MACHINE_COUNT];
+#endif
   HS::VOSegment user_waveforms[HS::VO_SEGMENT_COUNT];
   OC::Autotune_data auto_calibration_data[DAC_CHANNEL_LAST];
 };
@@ -223,7 +228,11 @@ void save_global_settings() {
 
   memcpy(global_settings.user_scales, OC::user_scales, sizeof(OC::user_scales));
   memcpy(global_settings.user_patterns, OC::user_patterns, sizeof(OC::user_patterns));
+#ifdef ENABLE_APP_CHORDS
+  memcpy(global_settings.user_chords, OC::user_chords, sizeof(OC::user_chords));
+#else
   memcpy(global_settings.user_turing_machines, HS::user_turing_machines, sizeof(HS::user_turing_machines));
+#endif
   memcpy(global_settings.user_waveforms, HS::user_waveforms, sizeof(HS::user_waveforms));
   memcpy(global_settings.auto_calibration_data, OC::auto_calibration_data, sizeof(OC::auto_calibration_data));
   // scaling settings:
@@ -398,7 +407,11 @@ void Init(bool reset_settings) {
                     global_settings_storage.page_index(),global_settings.current_app_id);
       memcpy(user_scales, global_settings.user_scales, sizeof(user_scales));
       memcpy(user_patterns, global_settings.user_patterns, sizeof(user_patterns));
+#ifdef ENABLE_APP_CHORDS
+      memcpy(user_chords, global_settings.user_chords, sizeof(user_chords));
+#else
       memcpy(HS::user_turing_machines, global_settings.user_turing_machines, sizeof(HS::user_turing_machines));
+#endif
       memcpy(HS::user_waveforms, global_settings.user_waveforms, sizeof(HS::user_waveforms));
       memcpy(auto_calibration_data, global_settings.auto_calibration_data, sizeof(auto_calibration_data));
       DAC::choose_calibration_data(); // either use default data, or auto_calibration_data
