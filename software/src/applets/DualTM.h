@@ -123,7 +123,7 @@ public:
             case Q_MOD: {
                 // select Quantizer over a 1Volt range
                 const int cv = DetentedIn(ch);
-                qselect_mod[ch] = constrain(qselect_mod[ch] + Proportion(cv, 12 << 7, DAC_CHANNEL_LAST), 0, DAC_CHANNEL_LAST - 1);
+                qselect_mod[ch] = constrain(qselect_mod[ch] + Proportion(cv, 12 << 7, QUANT_CHANNEL_COUNT), 0, QUANT_CHANNEL_COUNT - 1);
                 break;
             }
 
@@ -252,7 +252,7 @@ public:
         case QUANT_A:
         case QUANT_B:
             HS::qview = qselect[cursor - QUANT_A] =
-              constrain(qselect[cursor - QUANT_A] + direction, 0, DAC_CHANNEL_LAST - 1);
+              constrain(qselect[cursor - QUANT_A] + direction, 0, QUANT_CHANNEL_COUNT - 1);
             HS::PokePopup(QUANTIZER_POPUP);
             break;
         case RANGE:

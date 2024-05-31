@@ -87,11 +87,11 @@ public:
             { pigeons[0].val[0], 0, 63 }, // CHAN1_V1
             { pigeons[0].val[1], 0, 63 }, // CHAN1_V2
             { pigeons[0].mod, 1, 64 }, // CHAN1_MOD
-            { qselect[0], 0, 3 }, // QUANT_A
+            { qselect[0], 0, QUANT_CHANNEL_COUNT - 1 }, // QUANT_A
             { pigeons[1].val[0], 0, 63 }, // CHAN2_V1
             { pigeons[1].val[1], 0, 63 }, // CHAN2_V2
             { pigeons[1].mod, 1, 64 }, // CHAN2_MOD
-            { qselect[1], 0, 3 }, // QUANT_B
+            { qselect[1], 0, QUANT_CHANNEL_COUNT - 1 }, // QUANT_B
         };
 
         params[cursor].p = constrain(params[cursor].p + direction, params[cursor].min, params[cursor].max);

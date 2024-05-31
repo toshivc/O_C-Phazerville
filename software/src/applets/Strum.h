@@ -58,7 +58,7 @@ public:
     if (qmod) {
       // select Quantizer over a 1Volt range
       int cv = DetentedIn(1);
-      qselect_mod = constrain(qselect_mod + Proportion(cv, 12 << 7, 4), 0, 3);
+      qselect_mod = constrain(qselect_mod + Proportion(cv, 12 << 7, QUANT_CHANNEL_COUNT), 0, QUANT_CHANNEL_COUNT - 1);
     }
     else
       Modulate(spacing_mod, 1, HEM_BURST_SPACING_MIN, HEM_BURST_SPACING_MAX);
@@ -181,7 +181,7 @@ public:
     // TODO: modify qselect instead
     */
     case QUANT:
-      qselect = constrain(qselect + direction, 0, 3);
+      qselect = constrain(qselect + direction, 0, QUANT_CHANNEL_COUNT - 1);
       break;
     case SPACING:
       spacing = constrain(spacing + direction, HEM_BURST_SPACING_MIN,

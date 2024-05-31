@@ -60,6 +60,19 @@ namespace HS {
     QUANTIZER_POPUP,
   };
 
+  enum QUANT_CHANNEL {
+    QUANT_CHANNEL_1,
+    QUANT_CHANNEL_2,
+    QUANT_CHANNEL_3,
+    QUANT_CHANNEL_4,
+    QUANT_CHANNEL_5,
+    QUANT_CHANNEL_6,
+    QUANT_CHANNEL_7,
+    QUANT_CHANNEL_8,
+
+    QUANT_CHANNEL_COUNT
+  };
+
   extern uint32_t popup_tick; // for button feedback
   extern PopupType popup_type;
   extern uint8_t qview; // which quantizer's setting is shown in popup
@@ -70,10 +83,10 @@ namespace HS {
     popup_tick = OC::CORE::ticks;
   }
 
-  extern braids::Quantizer quantizer[DAC_CHANNEL_LAST]; // global shared quantizers
-  extern int quant_scale[DAC_CHANNEL_LAST];
-  extern int8_t root_note[DAC_CHANNEL_LAST];
-  extern int8_t q_octave[DAC_CHANNEL_LAST];
+  extern braids::Quantizer quantizer[QUANT_CHANNEL_COUNT]; // global shared quantizers
+  extern int quant_scale[QUANT_CHANNEL_COUNT];
+  extern int8_t root_note[QUANT_CHANNEL_COUNT];
+  extern int8_t q_octave[QUANT_CHANNEL_COUNT];
 
   extern int octave_max;
 

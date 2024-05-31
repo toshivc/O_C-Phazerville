@@ -10,10 +10,10 @@ namespace HS {
   uint8_t qview = 0; // which quantizer's setting is shown in popup
   bool q_edit = false; // flag to edit current quantizer
 
-  braids::Quantizer quantizer[DAC_CHANNEL_LAST]; // global shared quantizers
-  int quant_scale[DAC_CHANNEL_LAST];
-  int8_t root_note[DAC_CHANNEL_LAST];
-  int8_t q_octave[DAC_CHANNEL_LAST];
+  braids::Quantizer quantizer[QUANT_CHANNEL_COUNT]; // global shared quantizers
+  int quant_scale[QUANT_CHANNEL_COUNT];
+  int8_t root_note[QUANT_CHANNEL_COUNT];
+  int8_t q_octave[QUANT_CHANNEL_COUNT];
 
   int octave_max = 5;
 
@@ -79,7 +79,7 @@ namespace HS {
     QuantizerConfigure(ch, s);
   }
   void QuantizerEdit(int ch) {
-    qview = ch;
+    qview = constrain(ch, 0, QUANT_CHANNEL_COUNT - 1);
     q_edit = true;
   }
 
