@@ -69,6 +69,7 @@ public:
         SLEW_MOD,
         LENGTH_MOD,
         P_MOD,
+        Q_MOD,
         RANGE_MOD,
         TRANSPOSE1,
         TRANSPOSE2,
@@ -83,6 +84,8 @@ public:
     void Start() {
         reg[0] = random(0, 65535);
         reg[1] = ~reg[0];
+        qselect[0] = io_offset;
+        qselect[1] = io_offset + 1;
     }
 
     void Controller() {
@@ -96,6 +99,8 @@ public:
 
         // default to no mod
         p_mod = p;
+        qselect_mod[0] = qselect[0];
+        qselect_mod[1] = qselect[1];
         len_mod = length;
         range_mod = range;
         smooth_mod = smoothing;
@@ -114,6 +119,13 @@ public:
             case P_MOD:
                 Modulate(p_mod, ch, 0, 100);
                 break;
+
+            case Q_MOD: {
+                // select Quantizer over a 1Volt range
+                const int cv = DetentedIn(ch);
+                qselect_mod[ch] = constrain(qselect_mod[ch] + Proportion(cv, 12 << 7, DAC_CHANNEL_LAST), 0, DAC_CHANNEL_LAST - 1);
+                break;
+            }
 
             case RANGE_MOD:
                 Modulate(range_mod, ch, 1, 32);
@@ -164,14 +176,14 @@ public:
               int x = constrain(note_trans[2], -range_mod, range_mod);
               int y = range_mod;
               int n = (note * (y + x) + note2 * (y - x)) / (2*y);
-              slew(Output[ch], QuantizerLookup(ch, n));
+              slew(Output[ch], HS::QuantizerLookup(qselect_mod[ch], n));
               break;
               }
             case PITCH1:
-              slew(Output[ch], QuantizerLookup(ch, note + note_trans[0]));
+              slew(Output[ch], HS::QuantizerLookup(qselect_mod[ch], note + note_trans[0]));
               break;
             case PITCH2:
-              slew(Output[ch], QuantizerLookup(ch, note2 + note_trans[1]));
+              slew(Output[ch], HS::QuantizerLookup(qselect_mod[ch], note2 + note_trans[1]));
               break;
             case MOD1: // 8-bit bi-polar proportioned CV
               slew(Output[ch], Proportion( int(reg[0] & 0xff)-0x7f, 0x80, HEMISPHERE_MAX_CV) );
@@ -215,10 +227,13 @@ public:
     }
 
     void OnButtonPress() {
+      CursorAction(cursor, LAST_SETTING);
+    }
+    void AuxButton() {
       if (cursor == QUANT_A || cursor == QUANT_B) {
-        HS::QuantizerEdit(io_offset + (cursor - QUANT_A));
-      } else
-        CursorAction(cursor, LAST_SETTING);
+        HS::QuantizerEdit(qselect[cursor - QUANT_A]);
+      }
+      isEditing = false;
     }
 
     void OnEncoderMove(int direction) {
@@ -236,7 +251,9 @@ public:
             break;
         case QUANT_A:
         case QUANT_B:
-            // TODO? maybe this never happens
+            HS::qview = qselect[cursor - QUANT_A] =
+              constrain(qselect[cursor - QUANT_A] + direction, 0, DAC_CHANNEL_LAST - 1);
+            HS::PokePopup(QUANTIZER_POPUP);
             break;
         case RANGE:
             range = constrain(range + direction, 1, 32);
@@ -268,13 +285,13 @@ public:
         Pack(data, PackLocation {12,5}, range - 1);
         Pack(data, PackLocation {17,4}, outmode[0]);
         Pack(data, PackLocation {21,4}, outmode[1]);
-        Pack(data, PackLocation {25,8}, constrain(GetScale(0), 0, 255));
+        //Pack(data, PackLocation {25,8}, constrain(GetScale(0), 0, 255));
         Pack(data, PackLocation {33,4}, cvmode[0]);
         Pack(data, PackLocation {37,4}, cvmode[1]);
         Pack(data, PackLocation {41,6}, smoothing);
-        Pack(data, PackLocation {47,4}, GetRootNote(0));
-        Pack(data, PackLocation {51,8}, constrain(GetScale(1), 0, 255));
-        Pack(data, PackLocation {59,4}, GetRootNote(1));
+
+        Pack(data, PackLocation {48,4}, qselect[0]);
+        Pack(data, PackLocation {52,4}, qselect[1]);
 
         // TODO: utilize enigma's global turing machine storage for the registers
 
@@ -287,20 +304,17 @@ public:
         range = Unpack(data, PackLocation{12,5}) + 1;
         outmode[0] = (OutputMode) Unpack(data, PackLocation {17,4});
         outmode[1] = (OutputMode) Unpack(data, PackLocation {21,4});
-        int scale = Unpack(data, PackLocation {25,8});
+        //int scale = Unpack(data, PackLocation {25,8});
         cvmode[0] = (InputMode) Unpack(data, PackLocation {33,4});
         cvmode[1] = (InputMode) Unpack(data, PackLocation {37,4});
         smoothing = Unpack(data, PackLocation {41,6});
         smoothing = constrain(smoothing, 0, 127);
-        int root_note = Unpack(data, PackLocation {47,4});
 
-        QuantizerConfigure(0, scale);
-        SetRootNote(0, root_note);
+        qselect[0] = Unpack(data, PackLocation {48,4});
+        qselect[1] = Unpack(data, PackLocation {52,4});
+        CONSTRAIN(qselect[0], 0, DAC_CHANNEL_LAST - 1);
+        CONSTRAIN(qselect[1], 0, DAC_CHANNEL_LAST - 1);
 
-        scale = Unpack(data, PackLocation {51,8});
-        root_note = Unpack(data, PackLocation {59,4});
-        QuantizerConfigure(1, scale);
-        SetRootNote(1, root_note);
     }
 
 protected:
@@ -326,6 +340,8 @@ private:
     int trigpulse[2] = {0, 0}; // tick timer for Trig output modes
 
     // Settings and modulated copies
+    int qselect[2];
+    int qselect_mod[2];
     int length = 16; // Sequence length
     int len_mod; // actual length after CV mod
     int p = 0; // Probability of bit flipping on each cycle
@@ -398,6 +414,9 @@ private:
         case P_MOD:
             gfxIcon(15 + x, y, TOSS_ICON);
             break;
+        case Q_MOD:
+            gfxPrint(15 + x, y, "Q");
+            break;
         case RANGE_MOD:
             gfxIcon(15 + x, y, UP_DOWN_ICON);
             break;
@@ -432,8 +451,8 @@ private:
         default:
         case SLEW:
             gfxBitmap(1, 25, 8, SCALE_ICON);
-            gfxPrint(12, 25, "Q"); gfxPrint(io_offset + 1);
-            gfxPrint(39, 25, "Q"); gfxPrint(io_offset + 2);
+            gfxPrint(12, 25, "Q"); gfxPrint(qselect_mod[0] + 1);
+            gfxPrint(39, 25, "Q"); gfxPrint(qselect_mod[1] + 1);
 
             gfxBitmap(1, 35, 8, UP_DOWN_ICON);
             gfxPrint(10, 35, range_mod);
