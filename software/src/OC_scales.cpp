@@ -23,6 +23,7 @@ void Scales::Validate() {
 
 /*static*/
 const Scale &Scales::GetScale(int index) {
+  CONSTRAIN(index, 0, NUM_SCALES - 1);
   if (index < SCALE_USER_LAST)
     return user_scales[index];
   else
