@@ -21,13 +21,20 @@
 // See https://www.pjrc.com/teensy/td_midi.html
 
 // The functions available for each output
-#define HEM_MIDI_CC_IN 0
-#define HEM_MIDI_AT_IN 1
-#define HEM_MIDI_PB_IN 2
-#define HEM_MIDI_VEL_IN 3
-
 class hMIDIOut : public HemisphereApplet {
 public:
+  enum MIDIOutCursor {
+    CHANNEL, TRANSPOSE, CV2_FUNC, LEGATO,
+    LOG_VIEW,
+
+    MAX_CURSOR = LOG_VIEW
+  };
+  enum MIDIOutMode {
+    HEM_MIDI_CC_IN,
+    HEM_MIDI_AT_IN,
+    HEM_MIDI_PB_IN,
+    HEM_MIDI_VEL_IN,
+  };
 
     const char* applet_name() { // Maximum 10 characters
         return "MIDIOut";
@@ -132,40 +139,43 @@ public:
 
     void View() {
         DrawMonitor();
-        if (cursor == 4) DrawLog();
+        if (cursor == LOG_VIEW) DrawLog();
         else DrawSelector();
     }
 
     void OnButtonPress() {
-        if (cursor == 3 && !EditMode()) { // special case to toggle legato
+        if (cursor == LEGATO && !EditMode()) { // special case to toggle legato
             legato = 1 - legato;
             ResetCursor();
             return;
         }
 
-        CursorAction(cursor, 4);
+        CursorAction(cursor, MAX_CURSOR);
     }
 
     void OnEncoderMove(int direction) {
         if (!EditMode()) {
-            MoveCursor(cursor, direction, 4);
+            MoveCursor(cursor, direction, MAX_CURSOR);
             return;
         }
 
         switch (cursor) {
-        case 0:
+        case CHANNEL:
           channel = constrain(channel + direction, 0, 15);
           HS::frame.MIDIState.outchan[io_offset + 0] = channel;
           HS::frame.MIDIState.outchan[io_offset + 1] = channel;
           break;
-        case 1: transpose = constrain(transpose + direction, -24, 24);
+        case TRANSPOSE: transpose = constrain(transpose + direction, -24, 24);
                 break;
-        case 2:
+        case CV2_FUNC:
           function = constrain(function + direction, 0, 3);
           HS::frame.MIDIState.outfn[io_offset + 0] = HEM_MIDI_NOTE_OUT;
-          HS::frame.MIDIState.outfn[io_offset + 1] = HEM_MIDI_GATE_OUT;
+          if (function == HEM_MIDI_CC_IN)
+            HS::frame.MIDIState.outfn[io_offset + 1] = HEM_MIDI_CC_OUT;
+          else
+            HS::frame.MIDIState.outfn[io_offset + 1] = HEM_MIDI_GATE_OUT;
           break;
-        case 3: legato = direction > 0 ? 1 : 0;
+        case LEGATO: legato = direction > 0 ? 1 : 0;
                 break;
         }
         ResetCursor();
@@ -250,10 +260,10 @@ private:
 
         // Legato
         gfxPrint(1, 45, "Legato ");
-        if (cursor != 3 || CursorBlink()) gfxIcon(54, 45, legato ? CHECK_ON_ICON : CHECK_OFF_ICON);
+        if (cursor != LEGATO || CursorBlink()) gfxIcon(54, 45, legato ? CHECK_ON_ICON : CHECK_OFF_ICON);
 
         // Cursor
-        if (cursor < 3) gfxCursor(24, 23 + (cursor * 10), 39);
+        if (cursor < LEGATO) gfxCursor(24, 23 + (cursor * 10), 39);
 
         // Last note log
         if (last_velocity) {

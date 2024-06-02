@@ -80,7 +80,14 @@ typedef struct IOFrame {
           HEM_MIDI_NOTE_OUT, HEM_MIDI_GATE_OUT,
 #endif
         };
+        uint8_t outccnum[DAC_CHANNEL_LAST] = {
+          1, 1, 1, 1,
+#ifdef ARDUINO_TEENSY41
+          5, 6, 7, 8,
+#endif
+        };
         uint8_t current_note[16]; // note number, per MIDI channel
+        uint8_t current_ccval[DAC_CHANNEL_LAST]; // level 0 - 127, per DAC channel
         int note_countdown[DAC_CHANNEL_LAST];
         int inputs[DAC_CHANNEL_LAST]; // CV to be translated
         int last_cv[DAC_CHANNEL_LAST];
@@ -241,16 +248,28 @@ typedef struct IOFrame {
                 last_cv[i] = inputs[i];
             } else changed_cv[i] = 0;
 
-            if (outfn[i] == HEM_MIDI_NOTE_OUT) {
-              if (changed_cv[i]) {
-                // a note has changed, turn the last one off first
-                SendNoteOff(outchan_last[i]);
-                current_note[midi_ch] = MIDIQuantizer::NoteNumber( inputs[i] );
+            switch (outfn[i]) {
+              case HEM_MIDI_NOTE_OUT:
+                if (changed_cv[i]) {
+                  // a note has changed, turn the last one off first
+                  SendNoteOff(outchan_last[i]);
+                  current_note[midi_ch] = MIDIQuantizer::NoteNumber( inputs[i] );
+                }
+                break;
+
+              case HEM_MIDI_GATE_OUT:
+                if (!gate_high[i] && changed_cv[i])
+                  SendNoteOff(midi_ch);
+                break;
+
+              case HEM_MIDI_CC_OUT:
+              {
+                const uint8_t newccval = ProportionCV(abs(inputs[i]), 127);
+                if (newccval != current_ccval[i])
+                  SendCC(midi_ch, outccnum[i], newccval);
+                current_ccval[i] = newccval;
+                break;
               }
-            }
-            if (outfn[i] == HEM_MIDI_GATE_OUT) {
-              if (!gate_high[i] && changed_cv[i])
-                SendNoteOff(midi_ch);
             }
 
             // Handle clock pulse timing
@@ -281,6 +300,9 @@ typedef struct IOFrame {
 
           // I think this can cause the UI to lag and miss input
           //usbMIDI.send_now();
+        }
+        void SendCC(int midi_ch, int ccnum, uint8_t val) {
+          usbMIDI.sendControlChange(ccnum, val, midi_ch + 1);
         }
         void SendNoteOn(int midi_ch) {
           usbMIDI.sendNoteOn(current_note[ midi_ch ], 100, midi_ch + 1);
