@@ -323,8 +323,7 @@ void restore_app_data() {
     if (app->Restore) {
         restored = app->Restore(chunk + 1);
       #ifdef PRINT_DEBUG
-        SERIAL_PRINTLN("* %s (%02x): Restored %u from %u (chunk length %u)...", app->name, chunk->id, app->Restore(chunk + 1), chunk->length - sizeof(AppChunkHeader), chunk->length);
-      #else
+        SERIAL_PRINTLN("* %s (%02x): Restored %u from %u (chunk length %u)...", app->name, chunk->id, restored, chunk->length - sizeof(AppChunkHeader), chunk->length);
       #endif
     }
     restored = ((restored + sizeof(AppChunkHeader) + 1) >> 1) << 1; // round up
