@@ -180,6 +180,9 @@ class TB_3PO: public HemisphereApplet {
     if (cursor == DENSITY) {
       density_auto_enabled = !density_auto_enabled;
     }
+    if (cursor == SCALE || cursor == ROOT) {
+      HS::QuantizerEdit(io_offset);
+    }
     isEditing = false;
   }
 
