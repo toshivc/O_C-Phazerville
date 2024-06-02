@@ -24,6 +24,14 @@ const uint8_t HEM_PPQN_VALUES[] = {1, 2, 4, 8, 16, 24};
 class Scope : public HemisphereApplet {
 public:
 
+  enum DisplayMode {
+    GRAPH1_VOLT1,
+    GRAPH1_VOLT2,
+    GRAPH2_VOLT1,
+    GRAPH2_VOLT2,
+    XY_MODE,
+  };
+
     const char* applet_name() {
         return "Scope";
     }
@@ -75,20 +83,16 @@ public:
     }
 
     void DrawFullScreen() {
-        int thing = (current_display == 4) ? -1 : (current_display & 0x2);
-        if (hemisphere == LEFT_HEMISPHERE) {
-            DrawInput(thing, 127, 63);
-        } else {
-            DrawInput(thing);
-        }
+      int thing = (current_display == XY_MODE) ? -1 : ((current_display & 0x2) >> 1);
+      DrawInputFull(thing);
     }
 
     void View() {
-        if(current_display == 4) {
-            DrawInput(-1);
+        if(current_display == XY_MODE) {
+            DrawInputSmall(-1);
         } else {
             DrawBPM();
-            DrawInput((current_display & 2) == 2);
+            DrawInputSmall((current_display & 2) == 2);
             PrintInput();
         }
         
@@ -178,7 +182,7 @@ private:
                 gfxPrint(32, 26, sample_ticks);
             } else if(current_setting == 1) {
                 gfxPrint(1, 26, "Mode ");
-                if(current_display == 4) {
+                if(current_display == XY_MODE) {
                     gfxPrint("1,2");
                 } else {
                     gfxPrint((current_display & 2) == 2 ? 2 : 1);
@@ -201,22 +205,42 @@ private:
         gfxPrintVoltage(last_cv);
     }
 
-    void DrawInput(const int input, const int width = 63, int height = 28) {
-        if (input < 0) height = 54;
-        for (int s = 0; s <= width; s++)
-        {
-            int n = (sample_num + width + s) % 128;
-            int px, py;
-            if (input < 0) { // X-Y mode
-                px = Proportion(snapshot[0][n], 255, width);
-                py = Proportion(snapshot[1][n], 255, height);
-                py = constrain((height - py) + 10, 0, 63);
-            } else {
-                px = n % width;
-                py = Proportion(snapshot[input][n], 255, height);
-                py = constrain((height - py) + (63 - height)/2 + 10, 0, 63);
-            }
-            gfxPixel(px, py);
+    void DrawInputSmall(const int input) {
+      const int width = 63;
+      const int height = (input < 0) ? 54 : 28;
+      for (int s = 0; s <= width; s++)
+      {
+        int n = (sample_num + width + s) % 128;
+        int px, py;
+        if (input < 0) { // X-Y mode
+          px = Proportion(snapshot[0][n], 255, width);
+          py = Proportion(snapshot[1][n], 255, height);
+          py = constrain((height - py) + 10, 0, 63);
+        } else {
+          px = n % width;
+          py = Proportion(snapshot[input][n], 255, height);
+          py = constrain((height - py) + (63 - height)/2 + 10, 0, 63);
         }
+        gfxPixel(px, py);
+      }
+    }
+    void DrawInputFull(const int input) {
+      const int width = 127;
+      const int height = (input < 0) ? 54 : 63;
+      for (int s = 0; s <= width; s++)
+      {
+        int n = (sample_num + width + s) % 128;
+        int px, py;
+        if (input < 0) { // X-Y mode
+          px = Proportion(snapshot[0][n], 255, width);
+          py = Proportion(snapshot[1][n], 255, height);
+          py = constrain((height - py) + 10, 0, 63);
+        } else {
+          px = n % width;
+          py = Proportion(snapshot[input][n], 255, height);
+          py = constrain((height - py) + (63 - height)/2 + 10, 0, 63);
+        }
+        graphics.setPixel(px, py);
+      }
     }
 };
