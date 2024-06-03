@@ -26,6 +26,7 @@ typedef struct MIDILogEntry {
 // shared IO Frame, updated every tick
 // this will allow chaining applets together, multiple stages of processing
 typedef struct IOFrame {
+    bool autoMIDIOut = false;
     bool clocked[ADC_CHANNEL_LAST];
     bool gate_high[ADC_CHANNEL_LAST];
     int inputs[ADC_CHANNEL_LAST];
@@ -359,7 +360,7 @@ typedef struct IOFrame {
         for (int i = 0; i < DAC_CHANNEL_LAST; ++i) {
             OC::DAC::set_pitch(DAC_CHANNEL(i), outputs[i], 0);
         }
-        MIDIState.Send(outputs);
+        if (autoMIDIOut) MIDIState.Send(outputs);
 
 #ifdef ARDUINO_TEENSY41
         // HACK - modulate filter with first output from RIGHT side...

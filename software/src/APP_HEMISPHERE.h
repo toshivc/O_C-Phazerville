@@ -848,6 +848,7 @@ private:
         TRIG_LENGTH,
         SCREENSAVER_MODE,
         CURSOR_MODE,
+        AUTO_MIDI,
 
         // Global Quantizers: 4x(Scale, Root, Octave, Mask?)
         QUANT1, QUANT2, QUANT3, QUANT4,
@@ -887,7 +888,7 @@ private:
             config_cursor = constrain(config_cursor, 0, MAX_CURSOR);
 
             if (config_cursor < CONFIG_DUMMY) config_page = LOADSAVE_POPUP;
-            else if (config_cursor <= CURSOR_MODE) config_page = CONFIG_SETTINGS;
+            else if (config_cursor <= AUTO_MIDI) config_page = CONFIG_SETTINGS;
             else if (config_cursor < TRIGMAP1) config_page = QUANTIZER_SETTINGS;
             else if (config_cursor < SHOWHIDELIST) config_page = INPUT_SETTINGS;
             //else config_page = SHOWHIDE_APPLETS;
@@ -996,6 +997,10 @@ private:
 
         case CURSOR_MODE:
             HS::cursor_wrap = !HS::cursor_wrap;
+            break;
+
+        case AUTO_MIDI:
+            HS::frame.autoMIDIOut = !HS::frame.autoMIDIOut;
             break;
 
         case SHOWHIDELIST:
@@ -1109,6 +1114,9 @@ private:
         gfxPrint(1, 35, "Cursor:  ");
         gfxPrint(cursor_mode_name[HS::cursor_wrap]);
 
+        gfxPrint(1, 45, "Auto MIDI-Out:  ");
+        gfxPrint( HS::frame.autoMIDIOut ? "On" : "Off" );
+
         switch (config_cursor) {
         case CVMAP1:
         case CVMAP2:
@@ -1127,6 +1135,9 @@ private:
             break;
         case CURSOR_MODE:
             gfxIcon(43, 35, RIGHT_ICON);
+            break;
+        case AUTO_MIDI:
+            gfxIcon(90, 45, RIGHT_ICON);
             break;
         case CONFIG_DUMMY:
             gfxIcon(2, 1, LEFT_ICON);
