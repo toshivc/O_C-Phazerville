@@ -49,8 +49,6 @@ static const int SCALE_SIZE(const int scale) {
 }
 // channel configs
 struct Cal8ChannelConfig {
-    int scale;
-    int root_note;
     int last_note; // for S&H mode
 
     uint8_t clocked_mode;
@@ -151,16 +149,21 @@ public:
         int ix = 1; // skip validity flag
 
         for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
-            channel[ch].scale = values_[ix++];
-            channel[ch].scale = constrain(channel[ch].scale, 0, OC::Scales::NUM_SCALES - 1);
+            HS::QuantizerConfigure(ch, values_[ix++]);
+            const int ssize_ = SCALE_SIZE(HS::GetScale(ch));
 
             channel[ch].scale_factor = values_[ix++] - 500;
             channel[ch].offset = values_[ix++] - 63;
             channel[ch].transpose = values_[ix++] - CAL8_MAX_TRANSPOSE;
+            const int overflow = channel[ch].transpose / ssize_;
+            if (overflow != 0) {
+              HS::q_octave[ch] = constrain(overflow, -5, 5);
+              channel[ch].transpose %= ssize_;
+            }
 
             uint32_t root_and_mode = uint32_t(values_[ix++]);
             channel[ch].clocked_mode = ((root_and_mode >> 4) & 0x03) % NR_OF_CLOCKMODES;
-            channel[ch].root_note = constrain(int(root_and_mode & 0x0f), 0, 11);
+            HS::SetRootNote(ch, int(root_and_mode & 0x0f) );
         }
 
         return true;
@@ -171,11 +174,12 @@ public:
         values_[ix++] = 1; // validity flag
 
         for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
-            values_[ix++] = channel[ch].scale;
+          const int scale = HS::GetScale(ch);
+            values_[ix++] = scale;
             values_[ix++] = channel[ch].scale_factor + 500;
             values_[ix++] = channel[ch].offset + 63;
-            values_[ix++] = channel[ch].transpose + CAL8_MAX_TRANSPOSE;
-            values_[ix++] = ((channel[ch].clocked_mode & 0x03) << 4) | (channel[ch].root_note & 0x0f);
+            values_[ix++] = channel[ch].transpose + HS::q_octave[ch] * SCALE_SIZE(scale) + CAL8_MAX_TRANSPOSE;
+            values_[ix++] = ((channel[ch].clocked_mode & 0x03) << 4) | (HS::GetRootNote(ch) & 0x0f);
         }
     }
 
@@ -209,12 +213,10 @@ public:
     void ClearPreset() {
         for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
             HS::quantizer[ch].Init();
-            channel[ch].scale = OC::Scales::SCALE_SEMI;
-            HS::QuantizerConfigure(ch, channel[ch].scale, 0xffff);
+            HS::QuantizerConfigure(ch, OC::Scales::SCALE_SEMI, 0xffff);
 
             channel[ch].scale_factor = 0;
             channel[ch].offset = 0;
-            channel[ch].root_note = 0;
             channel[ch].transpose = 0;
             channel[ch].clocked_mode = 0;
             channel[ch].last_note = 0;
@@ -246,7 +248,6 @@ public:
     void Resume() {
         // restore quantizer settings
         for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
-            HS::QuantizerConfigure(ch, channel[ch].scale, 0xffff);
             HS::quantizer[ch].Requantize();
         }
     }
@@ -276,10 +277,10 @@ public:
           for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
             uint16_t mask_ = HS::frame.MIDIState.semitone_mask[ch];
 
-            if (mask_)
-              HS::QuantizerConfigure(ch, OC::Scales::SCALE_SEMI, mask_);
-            else
-              HS::QuantizerConfigure(ch, channel[ch].scale, 0xffff);
+            if (mask_) // manually override global config
+              HS::quantizer[ch].Configure(OC::Scales::GetScale(OC::Scales::SCALE_SEMI), mask_);
+            else // restore global config
+              HS::quantizer[ch].Configure(OC::Scales::GetScale(HS::quant_scale[ch]), 0xffff);
 
             HS::quantizer[ch].Requantize();
           }
@@ -308,7 +309,6 @@ public:
             if (cfg.clocked_mode != SAMPLE_AND_HOLD || clocked) {
                 // CV value
                 int pitch = In(ch);
-                //int quantized = HS::Quantize(ch, pitch, cfg.root_note * 128, cfg.transpose_active);
                 int quantized = HS::Quantize(ch, pitch, 0, cfg.transpose_active);
                 cfg.last_note = quantized;
             }
@@ -470,12 +470,7 @@ public:
         preset_modified = 1;
         if (scale_edit) {
             // Scale Select
-            int s_ = channel[sel_chan].scale + direction;
-            if (s_ >= OC::Scales::NUM_SCALES) s_ = 0;
-            if (s_ < 0) s_ = OC::Scales::NUM_SCALES - 1;
-
-            channel[sel_chan].scale = s_;
-            HS::QuantizerConfigure(sel_chan, s_, 0xffff);
+            HS::NudgeScale(sel_chan, direction);
             HS::quantizer[sel_chan].Requantize();
             return;
         }
@@ -506,23 +501,28 @@ public:
         if (scale_edit) {
             // Root Note
             HS::SetRootNote(sel_chan, HS::GetRootNote(sel_chan) + direction);
-            channel[sel_chan].root_note = HS::GetRootNote(sel_chan);
             HS::quantizer[sel_chan].Requantize();
             return;
         }
 
         if (!edit_mode) {
-            channel[sel_chan].transpose = constrain(channel[sel_chan].transpose + direction, -CAL8_MAX_TRANSPOSE, CAL8_MAX_TRANSPOSE);
-            int overflow = channel[sel_chan].transpose / SCALE_SIZE(channel[sel_chan].scale);
-            if (overflow != 0) {
-              HS::q_octave[sel_chan] += overflow;
-              CONSTRAIN(HS::q_octave[sel_chan], -5, 5);
-              channel[sel_chan].transpose %= SCALE_SIZE(channel[sel_chan].scale);
-            }
+            SetTranspose(sel_chan, channel[sel_chan].transpose + direction);
         }
         else {
             channel[sel_chan].offset = constrain(channel[sel_chan].offset + direction, -63, 64);
         }
+    }
+
+    void SetTranspose(const int chan, int val) {
+      const int ssize_ = SCALE_SIZE(HS::GetScale(chan));
+      CONSTRAIN(val, -CAL8_MAX_TRANSPOSE, CAL8_MAX_TRANSPOSE);
+      const int overflow = val / ssize_;
+      if (overflow != 0) {
+        HS::q_octave[chan] += overflow;
+        CONSTRAIN(HS::q_octave[chan], -5, 5);
+        val %= ssize_;
+      }
+      channel[chan].transpose = val;
     }
 
     int index = 0;
@@ -596,7 +596,7 @@ public:
         gfxIcon(9, y, BEND_ICON);
 
         // -- LCD Display Section --
-        const int s = SCALE_SIZE(channel[sel_chan].scale);
+        const int s = SCALE_SIZE(HS::GetScale(sel_chan));
         int degrees = channel[sel_chan].transpose + HS::q_octave[sel_chan] * s;
         const bool positive = degrees >= 0;
         const int octave = degrees / s;
@@ -611,7 +611,7 @@ public:
 
         // Scale
         gfxIcon(89, y, SCALE_ICON);
-        gfxPrint(99, y, OC::scale_names_short[channel[sel_chan].scale]);
+        gfxPrint(99, y, OC::scale_names_short[HS::GetScale(sel_chan)]);
         if (scale_edit) {
             gfxInvert(98, y-1, 29, 9);
             gfxIcon(100, y+10, RIGHT_ICON);
