@@ -85,18 +85,6 @@ namespace HS {
 
 } // namespace HS
 
-/* Add value to a 64-bit storage unit at the specified location */
-void Pack(uint64_t &data, PackLocation p, uint64_t value) {
-    data |= (value << p.location);
-}
-
-/* Retrieve value from a 64-bit storage unit at the specified location and of the specified bit size */
-int Unpack(const uint64_t &data, PackLocation p) {
-    uint64_t mask = 1;
-    for (size_t i = 1; i < p.size; i++) mask |= (0x01 << i);
-    return (data >> p.location) & mask;
-}
-
 //////////////// Hemisphere-like graphics methods for easy porting
 ////////////////////////////////////////////////////////////////////////////////
 void gfxPos(int x, int y) {
