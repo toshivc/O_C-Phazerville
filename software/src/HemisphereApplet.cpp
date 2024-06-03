@@ -5,34 +5,6 @@ HS::ClockManager HS::clock_m;
 
 int HemisphereApplet::cursor_countdown[APPLET_SLOTS];
 
-void HemisphereApplet::BaseStart(HEM_SIDE hemisphere_) {
-    hemisphere = hemisphere_;
-
-    // Initialize some things for startup
-    full_screen = 0;
-    cursor_countdown[hemisphere] = HEMISPHERE_CURSOR_TICKS;
-
-    // Shutdown FTM capture on Digital 4, used by Tuner
-#ifdef FLIP_180
-    if (hemisphere == 0)
-#else
-    if (hemisphere == 1)
-#endif
-    {
-        FreqMeasure.end();
-        OC::DigitalInputs::reInit();
-    }
-
-    // Maintain previous app state by skipping Start
-    if (!applet_started) {
-        applet_started = true;
-        Start();
-        ForEachChannel(ch) {
-            Out(ch, 0); // reset outputs
-        }
-    }
-}
-
 void HemisphereApplet::BaseController() {
     // I moved the IO-related stuff to the parent HemisphereManager app.
     // The IOFrame gets loaded before calling Controllers, and outputs are handled after.

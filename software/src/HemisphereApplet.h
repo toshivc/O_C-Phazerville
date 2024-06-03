@@ -131,9 +131,37 @@ public:
     virtual void OnButtonPress() = 0;
     virtual void OnEncoderMove(int direction) = 0;
 
-    void BaseStart(HEM_SIDE hemisphere_);
+    //void BaseStart(const HEM_SIDE hemisphere_);
     void BaseController();
     void BaseView();
+
+    constexpr void BaseStart(const HEM_SIDE hemisphere_) {
+        hemisphere = hemisphere_;
+
+        // Initialize some things for startup
+        full_screen = 0;
+        cursor_countdown[hemisphere] = HEMISPHERE_CURSOR_TICKS;
+
+        // Shutdown FTM capture on Digital 4, used by Tuner
+#ifdef FLIP_180
+        if (hemisphere == 0)
+#else
+        if (hemisphere == 1)
+#endif
+        {
+            FreqMeasure.end();
+            OC::DigitalInputs::reInit();
+        }
+
+        // Maintain previous app state by skipping Start
+        if (!applet_started) {
+            applet_started = true;
+            Start();
+            ForEachChannel(ch) {
+                Out(ch, 0); // reset outputs
+            }
+        }
+    }
 
     // Screensavers are deprecated in favor of screen blanking, but the BaseScreensaverView() remains
     // to avoid breaking applets based on the old boilerplate
@@ -272,13 +300,13 @@ public:
         param = constrain(param + Proportion(cv, HEMISPHERE_MAX_INPUT_CV, max), min, max);
     }
 
-    bool EditMode() {
+    inline bool EditMode() {
         return (isEditing);
     }
 
     // Override HSUtils function to only return positive values
     // Not ideal, but too many applets rely on this.
-    int ProportionCV(int cv_value, int max_pixels) {
+    constexpr int ProportionCV(const int cv_value, const int max_pixels) {
         int prop = constrain(Proportion(cv_value, HEMISPHERE_MAX_INPUT_CV, max_pixels), 0, max_pixels);
         return prop;
     }
