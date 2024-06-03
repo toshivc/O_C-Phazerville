@@ -85,37 +85,6 @@ namespace HS {
 
 } // namespace HS
 
-/* Proportion method using simfloat, useful for calculating scaled values given
- * a fractional value.
- *
- * Solves this:  numerator        ???
- *              ----------- = -----------
- *              denominator       max
- *
- * For example, to convert a parameter with a range of 1 to 100 into value scaled
- * to HEMISPHERE_MAX_CV, to be sent to the DAC:
- *
- * Out(ch, Proportion(value, 100, HEMISPHERE_MAX_CV));
- *
- */
-int Proportion(int numerator, int denominator, int max_value) {
-    simfloat proportion = int2simfloat((int32_t)abs(numerator)) / (int32_t)denominator;
-    int scaled = simfloat2int(proportion * max_value);
-    return numerator >= 0 ? scaled : -scaled;
-}
-
-/* Proportion CV values into pixels for display purposes.
- *
- * Solves this:     cv_value           ???
- *              ----------------- = ----------
- *              HEMISPHERE_MAX_CV   max_pixels
- */
-int ProportionCV(int cv_value, int max_pixels) {
-    // TODO: variable scaling for VOR?
-    int prop = constrain(Proportion(cv_value, HEMISPHERE_MAX_INPUT_CV, max_pixels), -max_pixels, max_pixels);
-    return prop;
-}
-
 /* Add value to a 64-bit storage unit at the specified location */
 void Pack(uint64_t &data, PackLocation p, uint64_t value) {
     data |= (value << p.location);
