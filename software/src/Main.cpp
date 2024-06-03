@@ -124,10 +124,14 @@ void setup() {
   OC::Pinout_Detect();
 
   // Standard MIDI I/O on Serial8, only for Teensy 4.1
-  Serial8.begin(31250);
-  MIDI1.begin(MIDI_CHANNEL_OMNI);
+  if (MIDI_Uses_Serial8) {
+    Serial8.begin(31250);
+    MIDI1.begin(MIDI_CHANNEL_OMNI);
+  }
 
-  OC::AudioInit();
+  if (I2S2_Audio_ADC && I2S2_Audio_DAC) {
+    OC::AudioInit();
+  }
   #endif
 
   // USB Host support for both 4.0 and 4.1

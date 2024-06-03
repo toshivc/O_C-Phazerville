@@ -557,6 +557,13 @@ static void Init_Teensy41_ADC33131D_chip() {
     update<ADC_CHANNEL_2>(sum[1] * mult / count);
     update<ADC_CHANNEL_3>(sum[2] * mult / count);
     update<ADC_CHANNEL_4>(sum[3] * mult / count);
+#if defined(ARDUINO_TEENSY41)
+    update<ADC_CHANNEL_5>(sum[0] * mult / count);
+    update<ADC_CHANNEL_6>(sum[1] * mult / count);
+    update<ADC_CHANNEL_7>(sum[2] * mult / count);
+    update<ADC_CHANNEL_8>(sum[3] * mult / count);
+#endif
+
     old_idx = idx;
   }
 }
