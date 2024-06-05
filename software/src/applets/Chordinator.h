@@ -27,6 +27,7 @@ public:
   void Start() {
     continuous[0] = 1;
     continuous[1] = 1;
+    active_scale = OC::Scales::GetScale(GetScale(0));
     update_chord_quantizer();
   }
 
