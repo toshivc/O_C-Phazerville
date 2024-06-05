@@ -18,15 +18,19 @@ struct MiniSeq {
   void Clear() {
       for (int s = 0; s < MAX_STEPS; s++) note[s] = 0x20; // C4 == 0V
   }
-  void Randomize() {
-    for (int s = 0; s < MAX_STEPS; s++) {
+  void Randomize(bool keeplength = false) {
+    const uint8_t length = keeplength ? GetLength() : MAX_STEPS;
+    for (int s = 0; s < length; s++) {
       note[s] = random(0xff);
     }
+    if (keeplength) SetLength(length);
   }
   void SowPitches(const uint8_t range = 32) {
+    const int length = GetLength();
     for (int s = 0; s < MAX_STEPS; s++) {
       SetNote(random(range), s);
     }
+    SetLength(length);
   }
   void Advance() {
       if (reset) {

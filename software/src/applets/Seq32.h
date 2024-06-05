@@ -152,7 +152,7 @@ public:
       if (cursor >= NOTES)
         seq.ToggleMute(cursor - NOTES);
       else if (cursor == LENGTH)
-        seq.Randomize();
+        seq.Randomize(true);
       else if (cursor == TRANSPOSE)
         seq.SowPitches(abs(transpose));
       else if (cursor == PATTERN)
