@@ -852,6 +852,7 @@ private:
 
         // Global Quantizers: 4x(Scale, Root, Octave, Mask?)
         QUANT1, QUANT2, QUANT3, QUANT4,
+        QUANT5, QUANT6, QUANT7, QUANT8,
 
         // Input Remapping
         TRIGMAP1, TRIGMAP2, TRIGMAP3, TRIGMAP4,
@@ -975,6 +976,10 @@ private:
         case QUANT2:
         case QUANT3:
         case QUANT4:
+        case QUANT5:
+        case QUANT6:
+        case QUANT7:
+        case QUANT8:
             HS::QuantizerEdit(config_cursor - QUANT1);
             break;
 
@@ -1049,19 +1054,32 @@ private:
         for (int ch=0; ch<4; ++ch) {
           const int x = 8 + ch*32;
 
+          // 1-4 on top
           gfxPrint(x, 15, "Q");
           gfxPrint(ch + 1);
-          gfxLine(x, 24, x + 14, 24);
+          gfxLine(x, 23, x + 14, 23);
+          gfxLine(x + 14, 13, x + 14, 23);
+
+          const bool upper = config_cursor < QUANT5;
+          const int ch_view = upper ? ch : ch + 4;
+
+          gfxIcon(x + 3, upper? 25 : 45, upper? UP_BTN_ICON : DOWN_BTN_ICON);
 
           // Scale
-          gfxPrint(x - 3, 30, OC::scale_names_short[ HS::quant_scale[ch] ]);
+          gfxPrint(x - 3, 30, OC::scale_names_short[ HS::quant_scale[ch_view] ]);
 
           // Root Note + Octave
-          gfxPrint(x - 3, 40, OC::Strings::note_names[ HS::root_note[ch] ]);
-          if (HS::q_octave[ch] >= 0) gfxPrint("+");
-          gfxPrint(HS::q_octave[ch]);
+          gfxPrint(x - 3, 40, OC::Strings::note_names[ HS::root_note[ch_view] ]);
+          if (HS::q_octave[ch_view] >= 0) gfxPrint("+");
+          gfxPrint(HS::q_octave[ch_view]);
 
           // (TODO: mask editor)
+
+          // 5-8 on bottom
+          gfxPrint(x, 55, "Q");
+          gfxPrint(ch + 5);
+          gfxLine(x, 53, x + 14, 53);
+          gfxLine(x + 14, 53, x + 14, 63);
         }
 
         switch (config_cursor) {
@@ -1070,6 +1088,12 @@ private:
         case QUANT3:
         case QUANT4:
           gfxIcon( 32*(config_cursor-QUANT1), 15, RIGHT_ICON);
+          break;
+        case QUANT5:
+        case QUANT6:
+        case QUANT7:
+        case QUANT8:
+          gfxIcon( 32*(config_cursor-QUANT5), 55, RIGHT_ICON);
           break;
         }
     }
