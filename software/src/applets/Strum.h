@@ -171,15 +171,6 @@ public:
       return;
     }
     switch (cursor) {
-    /* handled in Popup editor
-    case SCALE:
-      NudgeScale(0, direction);
-      break;
-    case ROOT:
-      SetRootNote(0, GetRootNote(qselect) + direction);
-      break;
-    // TODO: modify qselect instead
-    */
     case QUANT:
       qselect = constrain(qselect + direction, 0, QUANT_CHANNEL_COUNT - 1);
       break;
@@ -200,8 +191,7 @@ public:
 
   uint64_t OnDataRequest() {
     uint64_t data = 0;
-    Pack(data, PackLocation{0, 8}, HS::GetScale(qselect));
-    Pack(data, PackLocation{8, 4}, HS::GetRootNote(qselect));
+    Pack(data, PackLocation{0, 4}, qselect);
     Pack(data, PackLocation{12, 9}, spacing);
     Pack(data, PackLocation{21, 4}, length);
     for (size_t i = 0; i < MAX_CHORD_LENGTH; i++) {
@@ -211,10 +201,10 @@ public:
   }
 
   void OnDataReceive(uint64_t data) {
-    HS::QuantizerConfigure(qselect, Unpack(data, PackLocation{0, 8}));
-    HS::SetRootNote(qselect, Unpack(data, PackLocation{8, 4}));
+    qselect = Unpack(data, PackLocation{0, 4});
     spacing = Unpack(data, PackLocation{12, 9});
     length = Unpack(data, PackLocation{21, 4});
+    CONSTRAIN(qselect, 0, QUANT_CHANNEL_COUNT - 1);
     CONSTRAIN(spacing, HEM_BURST_SPACING_MIN, HEM_BURST_SPACING_MAX);
     CONSTRAIN(length, 1, MAX_CHORD_LENGTH);
 
