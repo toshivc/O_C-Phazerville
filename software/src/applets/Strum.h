@@ -67,7 +67,7 @@ public:
       int raw_pitch = In(0);
       HS::Quantize(qselect_mod, raw_pitch);
       disp = HS::GetLatestNoteNumber(qselect_mod);
-      int pitch = HS::Quantize(qselect_mod, raw_pitch, 0, intervals[index]);
+      int pitch = HS::QuantizerLookup(qselect_mod, disp + intervals[index]);
       Out(0, pitch);
       ClockOut(1);
 
