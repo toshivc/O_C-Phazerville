@@ -128,7 +128,7 @@ public:
     virtual void View() = 0;
     virtual uint64_t OnDataRequest() = 0;
     virtual void OnDataReceive(uint64_t data) = 0;
-    virtual void OnButtonPress() = 0;
+    virtual void OnButtonPress() { CursorToggle(); };
     virtual void OnEncoderMove(int direction) = 0;
 
     //void BaseStart(const HEM_SIDE hemisphere_);
@@ -191,10 +191,14 @@ public:
     bool CursorBlink() { return (cursor_countdown[hemisphere] > 0); }
     void ResetCursor() { cursor_countdown[hemisphere] = HEMISPHERE_CURSOR_TICKS; }
 
-    // handle modal edit mode toggle or cursor advance
-    void CursorAction(int &cursor, int max) {
-        isEditing = !isEditing;
-        ResetCursor();
+    // legacy cursor mode has been removed
+    [[deprecated("Use CursorToggle() instead")]] void CursorAction(int &cursor, int max) {
+      CursorToggle();
+    }
+
+    void CursorToggle() {
+      isEditing = !isEditing;
+      ResetCursor();
     }
     void MoveCursor(int &cursor, int direction, int max) {
         cursor += direction;
