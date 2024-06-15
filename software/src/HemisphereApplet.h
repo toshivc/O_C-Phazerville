@@ -217,7 +217,8 @@ public:
     ////////////////////////////////////////////////////////////////////////////////
     int In(const int ch) {
         const int c = cvmapping[ch + io_offset];
-        return (c && c <= ADC_CHANNEL_LAST) ? frame.inputs[c - 1] : 0;
+        if (!c) return 0;
+        return (c <= ADC_CHANNEL_LAST) ? frame.inputs[c - 1] : frame.outputs[c - 1 - ADC_CHANNEL_LAST];
     }
 
     // Apply small center detent to input, so it reads zero before a threshold

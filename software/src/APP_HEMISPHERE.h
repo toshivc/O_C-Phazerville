@@ -129,7 +129,7 @@ public:
 
         val = (uint16_t(values_[HEMISPHERE_CVMAP]) >> (i*4)) & 0x0F;
         if (val != 0)
-          HS::cvmapping[i] = constrain(val - 1, 0, ADC_CHANNEL_LAST);
+          HS::cvmapping[i] = constrain(val - 1, 0, ADC_CHANNEL_LAST + 4);
       }
     }
 
@@ -926,7 +926,7 @@ private:
         case CVMAP2:
         case CVMAP3:
         case CVMAP4:
-            HS::cvmapping[config_cursor-CVMAP1] = constrain( HS::cvmapping[config_cursor-CVMAP1] + dir, 0, ADC_CHANNEL_LAST);
+            HS::cvmapping[config_cursor-CVMAP1] = constrain( HS::cvmapping[config_cursor-CVMAP1] + dir, 0, ADC_CHANNEL_LAST + 4);
             break;
         case TRIG_LENGTH:
             HS::trig_length = (uint32_t) constrain( int(HS::trig_length + dir), 1, 127);
@@ -1019,6 +1019,10 @@ private:
 
     void DrawInputMappings() {
         gfxHeader("<  Input Mapping  >");
+        gfxIcon(25, 19, TR_ICON);
+        gfxIcon(89, 19, TR_ICON);
+        gfxIcon(25, 39, CV_ICON);
+        gfxIcon(89, 39, CV_ICON);
 
         for (int ch=0; ch<4; ++ch) {
           // Physical trigger input mappings

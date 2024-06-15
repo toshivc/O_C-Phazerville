@@ -51,7 +51,11 @@ namespace OC {
 
   const char * const cv_input_names[4] = { "CV1", "CV2", "CV3", "CV4" };
 
-  const char * const cv_input_names_none[9] = { " - ", "CV1", "CV2", "CV3", "CV4", "CV5", "CV6", "CV7", "CV8" };
+  const char * const cv_input_names_none[] = { " - ", "CV1", "CV2", "CV3", "CV4",
+#ifdef ARDUINO_TEENSY41
+    "CV5", "CV6", "CV7", "CV8",
+#endif
+    "A", "B", "C", "D" };
 
   const char * const channel_id[4] = { "#A", "#B", "#C", "#D" };
 
