@@ -264,6 +264,7 @@ public:
     void ProcessMIDI() {
         HS::IOFrame &f = HS::frame;
         bool dothething = false;
+
         while (usbMIDI.read()) {
             const int message = usbMIDI.getType();
             const int data1 = usbMIDI.getData1();
@@ -280,6 +281,42 @@ public:
               dothething = true;
             }
         }
+
+#if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
+        thisUSB.Task();
+        while (usbHostMIDI.read()) {
+            const int message = usbHostMIDI.getType();
+            const int data1 = usbHostMIDI.getData1();
+            const int data2 = usbHostMIDI.getData2();
+
+            if (message == usbMIDI.SystemExclusive) {
+                // TODO: consider implementing SysEx import/export for Calibr8or
+                continue;
+            }
+
+            f.MIDIState.ProcessMIDIMsg(usbHostMIDI.getChannel(), message, data1, data2);
+
+            if (message == usbMIDI.NoteOn || message == usbMIDI.NoteOff) {
+              dothething = true;
+            }
+        }
+        while (MIDI1.read()) {
+            const int message = MIDI1.getType();
+            const int data1 = MIDI1.getData1();
+            const int data2 = MIDI1.getData2();
+
+            if (message == usbMIDI.SystemExclusive) {
+                // TODO: consider implementing SysEx import/export for Calibr8or
+                continue;
+            }
+
+            f.MIDIState.ProcessMIDIMsg(MIDI1.getChannel(), message, data1, data2);
+
+            if (message == usbMIDI.NoteOn || message == usbMIDI.NoteOff) {
+              dothething = true;
+            }
+        }
+#endif
 
         if (dothething) {
           // reconfigure with MIDI-derived masks
