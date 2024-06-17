@@ -106,9 +106,9 @@ public:
                 clock_m.Boop(cursor-BOOP1);
                 button_ticker = HEMISPHERE_PULSE_ANIMATION_TIME_LONG;
             }
-            else CursorAction(cursor, LAST_SETTING);
+            else CursorToggle();
         }
-        else CursorAction(cursor, LAST_SETTING);
+        else CursorToggle();
 
         if (cursor == TEMPO) {
             // Tap Tempo detection

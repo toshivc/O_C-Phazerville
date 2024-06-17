@@ -110,9 +110,9 @@ public:
     void OnButtonPress() {
         if (!EditMode()) { // special cases for toggle buttons
             if (cursor == PLAY_STOP) PlayStop();
-            else CursorAction(cursor, LAST_SETTING);
+            else CursorToggle();
         }
-        else CursorAction(cursor, LAST_SETTING);
+        else CursorToggle();
 
         if (cursor == TEMPO) {
             // Tap Tempo detection

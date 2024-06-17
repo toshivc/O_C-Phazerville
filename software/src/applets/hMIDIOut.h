@@ -150,7 +150,7 @@ public:
             return;
         }
 
-        CursorAction(cursor, MAX_CURSOR);
+        CursorToggle();
     }
 
     void OnEncoderMove(int direction) {

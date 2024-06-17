@@ -188,7 +188,7 @@ public:
     if (cursor == ONESHOT_MODE)
       oneshot_mode = !oneshot_mode;
     else
-      CursorAction(cursor, MAX_CURSOR);
+      CursorToggle();
   }
 
   void OnEncoderMove(int direction) {

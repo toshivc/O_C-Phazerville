@@ -106,7 +106,7 @@ public:
         if (current_setting == 2 && !EditMode()) // FREEZE button
             freeze = !freeze;
         else if (OC::CORE::ticks - last_encoder_move < SCOPE_CURRENT_SETTING_TIMEOUT) // params visible? toggle edit
-            CursorAction(current_setting, 2);
+            CursorToggle();
         else // show params
             last_encoder_move = OC::CORE::ticks;
     }
