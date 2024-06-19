@@ -173,6 +173,8 @@ public:
       switch (cursor) {
         default: // (cursor >= NOTES)
           seq.SetNote(seq.GetNote(cursor-NOTES) + direction, cursor-NOTES);
+          if ((cursor-NOTES) == seq.step)
+            current_note = seq.GetNote();
           break;
         case PATTERN:
           // TODO: queued pattern changes
