@@ -198,23 +198,32 @@ public:
   OC::Autotuner<Cal8ChannelConfig> autotuner;
 
 
-	void Start() {
+    void Start() {
         segment.Init(SegmentSize::BIG_SEGMENTS);
 
         // make sure to turn this off, just in case
         FreqMeasure.end();
         OC::DigitalInputs::reInit();
 
+        // This initializes the global HS Quantizers
         ClearPreset();
 
         autotuner.Init();
-	}
+    }
 	
     void ClearPreset() {
-        for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
+        for (int ch = 0; ch < QUANT_CHANNEL_COUNT; ++ch) {
             HS::quantizer[ch].Init();
+#ifdef ARDUINO_TEENSY41
             HS::QuantizerConfigure(ch, OC::Scales::SCALE_SEMI, 0xffff);
+#else
+            // Q1..Q4 default to Semitones
+            // Q5..Q8 get initialized as USR1..USR4
+            HS::QuantizerConfigure(ch, (ch<4) ? OC::Scales::SCALE_SEMI : ch - 4, 0xffff);
+#endif
+        }
 
+        for (int ch = 0; ch < DAC_CHANNEL_LAST; ++ch) {
             channel[ch].scale_factor = 0;
             channel[ch].offset = 0;
             channel[ch].transpose = 0;
