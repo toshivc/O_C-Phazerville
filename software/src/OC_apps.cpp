@@ -467,8 +467,9 @@ void draw_app_menu(const menu::ScreenCursor<5> &cursor) {
     graphics.movePrintPos(weegfx::kFixedFontW, 0);
     graphics.print(available_apps[current].name);
 
-    graphics.drawBitmap8(0, item.y + 1, 8,
-        global_settings.current_app_id == available_apps[current].id ? CHECK_ON_ICON : CHECK_OFF_ICON);
+    if (global_settings.current_app_id == available_apps[current].id)
+      graphics.drawBitmap8(0, item.y + 1, 8, ZAP_ICON);
+
     item.DrawCustom();
   }
 
