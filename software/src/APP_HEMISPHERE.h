@@ -732,6 +732,9 @@ public:
         }
 
         if (clock_setup) {
+          if (h == LEFT_HEMISPHERE)
+            ClockSetup_instance.OnLeftEncoderMove(event.value);
+          else
             ClockSetup_instance.OnEncoderMove(event.value);
         } else if (select_mode == h) {
             ChangeApplet(HEM_SIDE(h), event.value);

@@ -190,6 +190,18 @@ public:
         default: break;
         }
     }
+    void OnLeftEncoderMove(const int direction) {
+      if (EditMode() && cursor >= MULT1 && cursor <= MULT8) {
+        int mult = clock_m.GetMultiply(cursor - MULT1);
+
+        if (0 == mult) mult += direction;
+        else if (mult > 0) mult = (direction > 0) ? mult * 2 : mult / 2;
+        else mult = ((direction > 0) ? (mult - 1) / 2 : (mult - 1) * 2) + 1;
+
+        clock_m.SetMultiply(mult, cursor - MULT1);
+      }
+      else OnEncoderMove(direction);
+    }
 
     // Same data blobs as T3 version, but different layout
     uint64_t OnDataRequest() {
