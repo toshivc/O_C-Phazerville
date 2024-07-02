@@ -40,11 +40,9 @@ static constexpr uint16_t DAC_OFFSET = 4890; // DAC offset, initial approx., ish
 #endif
 
 namespace OC {
+
 CalibrationStorage calibration_storage;
 CalibrationData calibration_data;
-};
-
-static constexpr unsigned kCalibrationAdcSmoothing = 4;
 bool calibration_data_loaded = false;
 
 const OC::CalibrationData kCalibrationDefaults = {
@@ -155,107 +153,28 @@ void calibration_save() {
 #ifdef FLIP_180
   calibration_flip();
 #endif
+
+  uint32_t start = millis();
+  while(millis() < start + SETTINGS_SAVE_TIMEOUT_MS) {
+    GRAPHICS_BEGIN_FRAME(true);
+    graphics.setPrintPos(13, 18);
+    graphics.print("Calibration saved");
+    graphics.setPrintPos(31, 27);
+    graphics.print("to EEPROM!");
+    GRAPHICS_END_FRAME();
+  }
 }
 
-enum CALIBRATION_STEP {  
-  HELLO,
-  CENTER_DISPLAY,
-  
-  #ifdef VOR
-  DAC_A_VOLT_3m, DAC_A_VOLT_2m, DAC_A_VOLT_1m, DAC_A_VOLT_0, DAC_A_VOLT_1, DAC_A_VOLT_2, DAC_A_VOLT_3, DAC_A_VOLT_4, DAC_A_VOLT_5, DAC_A_VOLT_6, DAC_A_VOLT_7,
-  DAC_B_VOLT_3m, DAC_B_VOLT_2m, DAC_B_VOLT_1m, DAC_B_VOLT_0, DAC_B_VOLT_1, DAC_B_VOLT_2, DAC_B_VOLT_3, DAC_B_VOLT_4, DAC_B_VOLT_5, DAC_B_VOLT_6, DAC_B_VOLT_7,
-  DAC_C_VOLT_3m, DAC_C_VOLT_2m, DAC_C_VOLT_1m, DAC_C_VOLT_0, DAC_C_VOLT_1, DAC_C_VOLT_2, DAC_C_VOLT_3, DAC_C_VOLT_4, DAC_C_VOLT_5, DAC_C_VOLT_6, DAC_C_VOLT_7,
-  DAC_D_VOLT_3m, DAC_D_VOLT_2m, DAC_D_VOLT_1m, DAC_D_VOLT_0, DAC_D_VOLT_1, DAC_D_VOLT_2, DAC_D_VOLT_3, DAC_D_VOLT_4, DAC_D_VOLT_5, DAC_D_VOLT_6, DAC_D_VOLT_7,
-  V_BIAS_BIPOLAR, V_BIAS_ASYMMETRIC,
-  #else
-  DAC_A_VOLT_3m, DAC_A_VOLT_2m, DAC_A_VOLT_1m, DAC_A_VOLT_0, DAC_A_VOLT_1, DAC_A_VOLT_2, DAC_A_VOLT_3, DAC_A_VOLT_4, DAC_A_VOLT_5, DAC_A_VOLT_6,
-  DAC_B_VOLT_3m, DAC_B_VOLT_2m, DAC_B_VOLT_1m, DAC_B_VOLT_0, DAC_B_VOLT_1, DAC_B_VOLT_2, DAC_B_VOLT_3, DAC_B_VOLT_4, DAC_B_VOLT_5, DAC_B_VOLT_6,
-  DAC_C_VOLT_3m, DAC_C_VOLT_2m, DAC_C_VOLT_1m, DAC_C_VOLT_0, DAC_C_VOLT_1, DAC_C_VOLT_2, DAC_C_VOLT_3, DAC_C_VOLT_4, DAC_C_VOLT_5, DAC_C_VOLT_6,
-  DAC_D_VOLT_3m, DAC_D_VOLT_2m, DAC_D_VOLT_1m, DAC_D_VOLT_0, DAC_D_VOLT_1, DAC_D_VOLT_2, DAC_D_VOLT_3, DAC_D_VOLT_4, DAC_D_VOLT_5, DAC_D_VOLT_6,
-#ifdef ARDUINO_TEENSY41
-  DAC_E_VOLT_3m, DAC_E_VOLT_2m, DAC_E_VOLT_1m, DAC_E_VOLT_0, DAC_E_VOLT_1, DAC_E_VOLT_2, DAC_E_VOLT_3, DAC_E_VOLT_4, DAC_E_VOLT_5, DAC_E_VOLT_6,
-  DAC_F_VOLT_3m, DAC_F_VOLT_2m, DAC_F_VOLT_1m, DAC_F_VOLT_0, DAC_F_VOLT_1, DAC_F_VOLT_2, DAC_F_VOLT_3, DAC_F_VOLT_4, DAC_F_VOLT_5, DAC_F_VOLT_6,
-  DAC_G_VOLT_3m, DAC_G_VOLT_2m, DAC_G_VOLT_1m, DAC_G_VOLT_0, DAC_G_VOLT_1, DAC_G_VOLT_2, DAC_G_VOLT_3, DAC_G_VOLT_4, DAC_G_VOLT_5, DAC_G_VOLT_6,
-  DAC_H_VOLT_3m, DAC_H_VOLT_2m, DAC_H_VOLT_1m, DAC_H_VOLT_0, DAC_H_VOLT_1, DAC_H_VOLT_2, DAC_H_VOLT_3, DAC_H_VOLT_4, DAC_H_VOLT_5, DAC_H_VOLT_6,
-#endif
-  #endif
-  
-  CV_OFFSET_0, CV_OFFSET_1, CV_OFFSET_2, CV_OFFSET_3,
-#ifdef ARDUINO_TEENSY41
-  CV_OFFSET_4, CV_OFFSET_5, CV_OFFSET_6, CV_OFFSET_7,
-#endif
-  ADC_PITCH_C2, ADC_PITCH_C4,
-  CALIBRATION_SCREENSAVER_TIMEOUT,
-  CALIBRATION_EXIT,
-  CALIBRATION_STEP_LAST,
-  CALIBRATION_STEP_FINAL = ADC_PITCH_C4
-};  
+DigitalInputDisplay digital_input_displays[4];
 
-enum CALIBRATION_TYPE {
-  CALIBRATE_NONE,
-  CALIBRATE_OCTAVE,
-  #ifdef VOR
-  CALIBRATE_VBIAS_BIPOLAR,
-  CALIBRATE_VBIAS_ASYMMETRIC,
-  #endif
-  CALIBRATE_ADC_OFFSET,
-  CALIBRATE_ADC_1V,
-  CALIBRATE_ADC_3V,
-  CALIBRATE_DISPLAY,
-  CALIBRATE_SCREENSAVER,
-};
+//        128/6=21                  |                     |
+const char * const start_footer   = "[CANCEL]         [OK]";
+const char * const end_footer     = "[PREV]         [EXIT]";
+const char * const default_footer = "[PREV]         [NEXT]";
+const char * const default_help_r = "[R] => Adjust";
+const char * const select_help    = "[R] => Select";
 
-struct CalibrationStep {
-  CALIBRATION_STEP step;
-  const char *title;
-  const char *message;
-  const char *help; // optional
-  const char *footer;
-
-  CALIBRATION_TYPE calibration_type;
-  int index;
-
-  const char * const *value_str; // if non-null, use these instead of encoder value
-  int min, max;
-};
-
-DAC_CHANNEL step_to_channel(int step) {
-#ifdef ARDUINO_TEENSY41
-  if (step >= DAC_H_VOLT_3m) return DAC_CHANNEL_H;
-  if (step >= DAC_G_VOLT_3m) return DAC_CHANNEL_G;
-  if (step >= DAC_F_VOLT_3m) return DAC_CHANNEL_F;
-  if (step >= DAC_E_VOLT_3m) return DAC_CHANNEL_E;
-#endif
-  if (step >= DAC_D_VOLT_3m) return DAC_CHANNEL_D;
-  if (step >= DAC_C_VOLT_3m) return DAC_CHANNEL_C;
-  if (step >= DAC_B_VOLT_3m) return DAC_CHANNEL_B;
-  /*if (step >= DAC_A_VOLT_3m)*/ 
-  return DAC_CHANNEL_A;
-}
-
-struct CalibrationState {
-  CALIBRATION_STEP step;
-  const CalibrationStep *current_step;
-  int encoder_value;
-
-  SmoothedValue<uint32_t, kCalibrationAdcSmoothing> adc_sum;
-
-  uint16_t adc_1v;
-  uint16_t adc_3v;
-
-  bool used_defaults;
-};
-
-OC::DigitalInputDisplay digital_input_displays[4];
-
-// 128/6=21                  |                     |
-const char *start_footer   = "[CANCEL]         [OK]";
-const char *end_footer     = "[PREV]         [EXIT]";
-const char *default_footer = "[PREV]         [NEXT]";
-const char *default_help_r = "[R] => Adjust";
-const char *select_help    = "[R] => Select";
-
-const CalibrationStep calibration_steps[CALIBRATION_STEP_LAST] = {
+constexpr CalibrationStep calibration_steps[CALIBRATION_STEP_LAST] = {
   { HELLO, "Setup: Calibrate", "Use defaults? ", select_help, start_footer, CALIBRATE_NONE, 0, OC::Strings::no_yes, 0, 1 },
   { CENTER_DISPLAY, "Center Display", "Pixel offset ", default_help_r, default_footer, CALIBRATE_DISPLAY, 0, nullptr, 0, 2 },
 
@@ -569,6 +488,11 @@ void calibration_draw(const CalibrationState &state) {
       y += menu::kMenuLineH;
       graphics.setPrintPos(menu::kIndentDx, y + 2);
       graphics.print((int)OC::ADC::value(ADC_CHANNEL_1), 2);
+      if ( (state.adc_1v && step->calibration_type == CALIBRATE_ADC_1V) ||
+           (state.adc_3v && step->calibration_type == CALIBRATE_ADC_3V) )
+      {
+        graphics.print("  (set)");
+      }
       break;
 
     case CALIBRATE_NONE:
@@ -580,18 +504,15 @@ void calibration_draw(const CalibrationState &state) {
           graphics.print(step->value_str[state.encoder_value]);
       } else {
         graphics.setPrintPos(menu::kIndentDx, y + 2);
+
         if (calibration_data_loaded && state.used_defaults)
-            graphics.print("Overwrite? ");
+          graphics.print("Overwrite? ");
         else
           graphics.print("Save? ");
+
         if (step->value_str)
           graphics.print(step->value_str[state.encoder_value]);
 
-        if (state.used_defaults && calibration_data_loaded) {
-          y += menu::kMenuLineH;
-          graphics.setPrintPos(menu::kIndentDx, y + 2);
-          graphics.print("NB replaces existing!");
-        }
       }
       break;
   }
@@ -676,6 +597,8 @@ void calibration_update(CalibrationState &state) {
       break;
   }
 }
+
+} // namespace OC
 
 /*     loop calibration menu until done       */
 void OC::Ui::Calibrate() {
