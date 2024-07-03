@@ -85,6 +85,7 @@ public:
     void DrawFullScreen() {
       int thing = (current_display == XY_MODE) ? -1 : ((current_display & 0x2) >> 1);
       DrawInputFull(thing);
+      DrawCurrentSetting();
     }
 
     void View() {
