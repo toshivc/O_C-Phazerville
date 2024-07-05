@@ -408,6 +408,7 @@ void Init(bool reset_settings) {
       memcpy(user_patterns, global_settings.user_patterns, sizeof(user_patterns));
 #ifdef ENABLE_APP_CHORDS
       memcpy(user_chords, global_settings.user_chords, sizeof(user_chords));
+      Chords::Validate();
 #else
       memcpy(HS::user_turing_machines, global_settings.user_turing_machines, sizeof(HS::user_turing_machines));
 #endif
