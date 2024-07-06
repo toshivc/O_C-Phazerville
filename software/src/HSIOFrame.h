@@ -7,11 +7,15 @@
  *
  */
 
+#pragma once
+
 #include "HSMIDI.h"
 
 #ifdef ARDUINO_TEENSY41
 namespace OC {
-  extern void ModFilter1(int cv);
+  namespace AudioDSP {
+    extern void Process(const int *values);
+  }
 }
 #endif
 
@@ -237,7 +241,7 @@ typedef struct IOFrame {
                 if (log_this) UpdateLog(message, data1, data2);
             }
         }
-        void Send(int *outvals) {
+        void Send(const int *outvals) {
 
           // first pass - calculate things and turn off notes
           for (int i = 0; i < DAC_CHANNEL_LAST; ++i) {
@@ -359,18 +363,20 @@ typedef struct IOFrame {
             }
         }
     }
+
     void Send() {
-        for (int i = 0; i < DAC_CHANNEL_LAST; ++i) {
-            OC::DAC::set_pitch_scaled(DAC_CHANNEL(i), outputs[i], 0);
-        }
-        if (autoMIDIOut) MIDIState.Send(outputs);
+      for (int i = 0; i < DAC_CHANNEL_LAST; ++i) {
+        OC::DAC::set_pitch_scaled(DAC_CHANNEL(i), outputs[i], 0);
+      }
+      if (autoMIDIOut) MIDIState.Send(outputs);
 
 #ifdef ARDUINO_TEENSY41
-        // HACK - modulate filter with first output from RIGHT side...
-        OC::ModFilter1(outputs[2]);
+      // this relies on the inputs and outputs arrays being contiguous...
+      OC::AudioDSP::Process(inputs);
 #endif
     }
 
 } IOFrame;
 
 } // namespace HS
+
