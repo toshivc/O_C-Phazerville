@@ -67,10 +67,12 @@ enum QUADRANTS_SETTINGS {
     QUADRANTS_CLOCK_DATA2,
     QUADRANTS_CLOCK_DATA3,
     QUADRANTS_CLOCK_DATA4,
-    QUADRANTS_TRIGMAP1,
+    QUADRANTS_TRIGMAP1, // 3 x 5-bit values
     QUADRANTS_TRIGMAP2,
-    QUADRANTS_CVMAP1,
+    QUADRANTS_TRIGMAP3,
+    QUADRANTS_CVMAP1, // 3 x 5-bit values
     QUADRANTS_CVMAP2,
+    QUADRANTS_CVMAP3,
     QUADRANTS_GLOBALS1, // for globals like trig_length
     QUADRANTS_GLOBALS2,
     QUADRANTS_SETTING_LAST
@@ -114,24 +116,38 @@ public:
     // returns true if changed
     bool StoreInputMap() {
       // TODO: cvmap
-      uint32_t trigmap = 0;
+      uint64_t trigmap = 0;
+      uint64_t cvmap = 0;
       for (size_t i = 0; i < 8; ++i) {
-        trigmap |= (uint32_t(HS::trigger_mapping[i] + 1) & 0x0F) << (i*4);
+        trigmap |= (uint64_t(HS::trigger_mapping[i] + 1) & 0x1F) << (i*5 + i/3);
+        cvmap |= (uint64_t(HS::cvmapping[i] + 1) & 0x1F) << (i*5 + i/3);
       }
 
-      bool changed = (trigmap != ( uint32_t(values_[QUADRANTS_TRIGMAP1])
-                                | (uint32_t(values_[QUADRANTS_TRIGMAP2]) << 16) ));
+      bool changed = (
+          trigmap != ( uint64_t(values_[QUADRANTS_TRIGMAP1])
+                    | (uint64_t(values_[QUADRANTS_TRIGMAP2]) << 16)
+                    | (uint64_t(values_[QUADRANTS_TRIGMAP3]) << 32) )
+          ) || (
+          cvmap   != ( uint64_t(values_[QUADRANTS_CVMAP1])
+                    | (uint64_t(values_[QUADRANTS_CVMAP2]) << 16)
+                    | (uint64_t(values_[QUADRANTS_CVMAP3]) << 32) )
+          );
       values_[QUADRANTS_TRIGMAP1] = trigmap & 0xFFFF;
       values_[QUADRANTS_TRIGMAP2] = (trigmap >> 16) & 0xFFFF;
+      values_[QUADRANTS_TRIGMAP3] = (trigmap >> 32) & 0xFFFF;
+      values_[QUADRANTS_CVMAP1] = cvmap & 0xFFFF;
+      values_[QUADRANTS_CVMAP2] = (cvmap >> 16) & 0xFFFF;
+      values_[QUADRANTS_CVMAP3] = (cvmap >> 32) & 0xFFFF;
       return changed;
     }
     void LoadInputMap() {
-      // TODO: cvmap
-      for (size_t i = 0; i < 4; ++i) {
-        int val1 = (uint32_t(values_[QUADRANTS_TRIGMAP1]) >> (i*4)) & 0x0F;
-        int val2 = (uint32_t(values_[QUADRANTS_TRIGMAP2]) >> (i*4)) & 0x0F;
-        if (val1 != 0) HS::trigger_mapping[i] = constrain(val1 - 1, 0, TRIGMAP_MAX);
-        if (val2 != 0) HS::trigger_mapping[i+4] = constrain(val2 - 1, 0, TRIGMAP_MAX);
+      int val;
+      for (size_t i = 0; i < 8; ++i) {
+        val = (uint32_t(values_[QUADRANTS_TRIGMAP1 + i/3]) >> (i%3 * 5)) & 0x1F;
+        if (val != 0) HS::trigger_mapping[i] = constrain(val - 1, 0, TRIGMAP_MAX);
+
+        val = (uint32_t(values_[QUADRANTS_CVMAP1 + i/3]) >> (i%3 * 5)) & 0x1F;
+        if (val != 0) HS::cvmapping[i] = constrain(val - 1, 0, CVMAP_MAX);
       }
     }
 
@@ -431,6 +447,11 @@ public:
             PokePopup(MENU_POPUP);
             // but still draw the applets
             // the popup will linger when moving onto the Config Dummy
+            break;
+
+          case INPUT_SETTINGS:
+            DrawInputMappings();
+            draw_applets = false;
             break;
 
           case QUANTIZER_SETTINGS:
@@ -755,8 +776,8 @@ private:
       HIDE_CONFIG,
       LOADSAVE_POPUP,
       CONFIG_SETTINGS,
-      QUANTIZER_SETTINGS,
       INPUT_SETTINGS,
+      QUANTIZER_SETTINGS,
       SHOWHIDE_APPLETS,
 
       LAST_PAGE = SHOWHIDE_APPLETS
@@ -771,7 +792,10 @@ private:
         SCREENSAVER_MODE,
         CURSOR_MODE,
 
+        // Input Remapping
+        TRIGMAP1, TRIGMAP2, TRIGMAP3, TRIGMAP4,
         CVMAP1, CVMAP2, CVMAP3, CVMAP4,
+        TRIGMAP5, TRIGMAP6, TRIGMAP7, TRIGMAP8,
         CVMAP5, CVMAP6, CVMAP7, CVMAP8,
 
         // Global Quantizers: 4x(Scale, Root, Octave, Mask?)
@@ -790,14 +814,15 @@ private:
             config_page += dir;
             config_page = constrain(config_page, LOADSAVE_POPUP, QUANTIZER_SETTINGS);
 
-            const int cursorpos[] = { 0, LOAD_PRESET, TRIG_LENGTH, QUANT1, SHOWHIDELIST };
+            const int cursorpos[] = { 0, LOAD_PRESET, TRIG_LENGTH, TRIGMAP1, QUANT1, SHOWHIDELIST };
             config_cursor = cursorpos[config_page];
           } else { // move cursor
             config_cursor += dir;
             config_cursor = constrain(config_cursor, 0, MAX_CURSOR);
 
             if (config_cursor < CONFIG_DUMMY) config_page = LOADSAVE_POPUP;
-            else if (config_cursor < QUANT1) config_page = CONFIG_SETTINGS;
+            else if (config_cursor < TRIGMAP1) config_page = CONFIG_SETTINGS;
+            else if (config_cursor < QUANT1) config_page = INPUT_SETTINGS;
             else if (config_cursor < SHOWHIDELIST) config_page = QUANTIZER_SETTINGS;
 
           }
@@ -806,16 +831,33 @@ private:
         }
 
         switch (config_cursor) {
+        case TRIGMAP1:
+        case TRIGMAP2:
+        case TRIGMAP3:
+        case TRIGMAP4:
+            HS::trigger_mapping[config_cursor-TRIGMAP1] = constrain(
+                HS::trigger_mapping[config_cursor-TRIGMAP1] + dir, 0, TRIGMAP_MAX);
+            break;
         case CVMAP1:
         case CVMAP2:
         case CVMAP3:
         case CVMAP4:
+            HS::cvmapping[config_cursor-CVMAP1] =
+              constrain( HS::cvmapping[config_cursor-CVMAP1] + dir, 0, CVMAP_MAX);
+            break;
+        case TRIGMAP5:
+        case TRIGMAP6:
+        case TRIGMAP7:
+        case TRIGMAP8:
+            HS::trigger_mapping[config_cursor-TRIGMAP5 + 4] = constrain(
+                HS::trigger_mapping[config_cursor-TRIGMAP5 + 4] + dir, 0, TRIGMAP_MAX);
+            break;
         case CVMAP5:
         case CVMAP6:
         case CVMAP7:
         case CVMAP8:
-            HS::cvmapping[config_cursor-CVMAP1] =
-              constrain( HS::cvmapping[config_cursor-CVMAP1] + dir, 0, CVMAP_MAX);
+            HS::cvmapping[config_cursor-CVMAP5 + 4] =
+              constrain( HS::cvmapping[config_cursor-CVMAP5 + 4] + dir, 0, CVMAP_MAX);
             break;
         case TRIG_LENGTH:
             HS::trig_length = (uint32_t) constrain( int(HS::trig_length + dir), 1, 127);
@@ -875,6 +917,14 @@ private:
             HS::QuantizerEdit(config_cursor - QUANT1);
             break;
 
+        case TRIGMAP1:
+        case TRIGMAP2:
+        case TRIGMAP3:
+        case TRIGMAP4:
+        case TRIGMAP5:
+        case TRIGMAP6:
+        case TRIGMAP7:
+        case TRIGMAP8:
         case CVMAP1:
         case CVMAP2:
         case CVMAP3:
@@ -899,6 +949,38 @@ private:
         }
     }
 
+    void DrawInputMappings() {
+        gfxHeader("<  Input Mapping  >");
+        gfxIcon(25, 13, TR_ICON); gfxIcon(89, 13, TR_ICON);
+        gfxIcon(25, 26, CV_ICON); gfxIcon(89, 26, CV_ICON);
+        gfxIcon(25, 39, TR_ICON); gfxIcon(89, 39, TR_ICON);
+        gfxIcon(25, 50, CV_ICON); gfxIcon(89, 50, CV_ICON);
+
+        for (int ch=0; ch<4; ++ch) {
+          // Physical trigger input mappings
+          // Physical CV input mappings
+          // Top 2 applets
+          gfxPrint(4 + ch*32, 15, OC::Strings::trigger_input_names_none[ HS::trigger_mapping[ch] ] );
+          gfxPrint(4 + ch*32, 28, OC::Strings::cv_input_names_none[ HS::cvmapping[ch] ] );
+
+          // Bottom 2 applets
+          gfxPrint(4 + ch*32, 41, OC::Strings::trigger_input_names_none[ HS::trigger_mapping[ch + 4] ] );
+          gfxPrint(4 + ch*32, 54, OC::Strings::cv_input_names_none[ HS::cvmapping[ch + 4] ] );
+        }
+
+        gfxDottedLine(64, 11, 64, 63); // vert
+        gfxDottedLine(0, 38, 127, 38); // horiz
+
+        // Cursor location is within a 4x4 grid
+        const int cur_x = (config_cursor-TRIGMAP1) % 4;
+        const int cur_y = (config_cursor-TRIGMAP1) / 4;
+
+        if (isEditing)
+          gfxInvert(4 + 32*cur_x, 14 + 13*cur_y, 19, 9);
+        else
+          gfxCursor(4 + 32*cur_x, 23 + 13*cur_y, 19);
+
+    }
     void DrawQuantizerConfig() {
         gfxHeader("< Quantizer Setup >");
 
@@ -971,30 +1053,7 @@ private:
         gfxPrint(1, 35, "Cursor:  ");
         gfxPrint(cursor_mode_name[HS::cursor_wrap]);
         
-        // Physical CV input mappings
-        for (int ch=0; ch<8; ++ch) {
-          const int x = (32 * ch) % 128;
-          const int y = ch > 3 ? 55 : 45;
-          gfxPrint(1 + x, y, OC::Strings::cv_input_names_none[ HS::cvmapping[ch] ] );
-        }
-
         switch (config_cursor) {
-        case CVMAP1:
-        case CVMAP2:
-        case CVMAP3:
-        case CVMAP4:
-        case CVMAP5:
-        case CVMAP6:
-        case CVMAP7:
-        case CVMAP8:
-        {
-          const int x = 32*(config_cursor-CVMAP1) % 128;
-          const int y = config_cursor > CVMAP4 ? 55 : 45;
-          if (isEditing) gfxInvert(x, y-1, 20, 9);
-          else gfxCursor(1+x, y+8, 19);
-          break;
-        }
-
         case TRIG_LENGTH:
             if (isEditing) gfxInvert(79, 14, 25, 9);
             else gfxCursor(80, 23, 24);
@@ -1066,10 +1125,12 @@ SETTINGS_DECLARE(QuadrantsPreset, QUADRANTS_SETTING_LAST) {
     {0, 0, 65535, "Clock data 2", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 3", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Clock data 4", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Trig Map 1234", NULL, settings::STORAGE_TYPE_U16},
-    {0, 0, 65535, "Trig Map 5678", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Trig Map 123", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Trig Map 456", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "Trig Map 78",  NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "CV Input Map1", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "CV Input Map2", NULL, settings::STORAGE_TYPE_U16},
+    {0, 0, 65535, "CV Input Map3", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Globals1", NULL, settings::STORAGE_TYPE_U16},
     {0, 0, 65535, "Globals2", NULL, settings::STORAGE_TYPE_U16}
 };
