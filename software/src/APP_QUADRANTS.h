@@ -275,7 +275,7 @@ public:
         quad_active_preset = preset;
         for (int h = 0; h < APPLET_SLOTS; h++)
         {
-            int index = my_applet[h];
+            int index = active_applet_index[h];
             if (quad_active_preset->GetAppletId(HEM_SIDE(h)) != HS::available_applets[index].id)
                 doSave = 1;
             quad_active_preset->SetAppletId(HEM_SIDE(h), HS::available_applets[index].id);
@@ -300,10 +300,13 @@ public:
         // initiate actual EEPROM save - ONLY if necessary!
         if (doSave && !skip_eeprom) {
             OC::CORE::app_isr_enabled = false;
-            OC::draw_save_message(60);
+            OC::draw_save_message(16);
             delay(1);
+            OC::draw_save_message(32);
             OC::save_app_data();
+            OC::draw_save_message(64);
             delay(1);
+            OC::draw_save_message(96);
             OC::CORE::app_isr_enabled = true;
         }
 
@@ -337,17 +340,27 @@ public:
     void ProcessQueue() {
       LoadFromPreset(queued_preset);
     }
+    void QueuePresetLoad(int id) {
+      if (HS::clock_m.IsRunning()) {
+        queued_preset = id;
+        HS::clock_m.BeatSync( &QuadrantBeatSync );
+      }
+      else
+        LoadFromPreset(id);
+    }
 
     // does not modify the preset, only the quad_manager
     void SetApplet(HEM_SIDE hemisphere, int index) {
-        HS::available_applets[my_applet[hemisphere]].instance[hemisphere]->Unload();
+        if (active_applet[hemisphere])
+          active_applet[hemisphere]->Unload();
 
-        next_applet[hemisphere] = my_applet[hemisphere] = index;
-        HS::available_applets[index].instance[hemisphere]->BaseStart(hemisphere);
+        next_applet_index[hemisphere] = active_applet_index[hemisphere] = index;
+        active_applet[hemisphere] = HS::available_applets[index].instance[hemisphere];
+        active_applet[hemisphere]->BaseStart(hemisphere);
     }
     void ChangeApplet(HEM_SIDE h, int dir) {
-        int index = HS::get_next_applet_index(next_applet[h], dir);
-        next_applet[h] = index;
+        int index = HS::get_next_applet_index(next_applet_index[h], dir);
+        next_applet_index[h] = index;
     }
 
     bool SelectModeEnabled() {
@@ -369,12 +382,7 @@ public:
             if (message == usbMIDI.ProgramChange) {
                 int slot = device.getData1();
                 if (slot < QUAD_PRESET_COUNT) {
-                  if (HS::clock_m.IsRunning()) {
-                    queued_preset = slot;
-                    HS::clock_m.BeatSync( &QuadrantBeatSync );
-                  }
-                  else
-                    LoadFromPreset(slot);
+                  QueuePresetLoad(slot);
                 }
                 continue;
             }
@@ -398,13 +406,12 @@ public:
         // execute Applets
         for (int h = 0; h < APPLET_SLOTS; h++)
         {
-            if (my_applet[h] != next_applet[h]) {
-              SetApplet(HEM_SIDE(h), next_applet[h]);
+            if (active_applet_index[h] != next_applet_index[h]) {
+              SetApplet(HEM_SIDE(h), next_applet_index[h]);
             }
-            int index = my_applet[h];
 
             // MIDI signals mixed with inputs to applets
-            if (HS::available_applets[index].id != 150) // not MIDI In
+            if (HS::available_applets[ active_applet_index[h] ].id != 150) // not MIDI In
             {
                 ForEachChannel(ch) {
                     int chan = h*2 + ch;
@@ -429,7 +436,7 @@ public:
                     }
                 }
             }
-            HS::available_applets[index].instance[h]->BaseController();
+            active_applet[h]->BaseController();
         }
     }
 
@@ -480,8 +487,7 @@ public:
             draw_applets = false;
           }
           else if (view_state == APPLET_FULLSCREEN) {
-            int index = my_applet[zoom_slot];
-            HS::available_applets[index].instance[zoom_slot]->BaseView(true);
+            active_applet[zoom_slot]->BaseView(true);
             draw_applets = false;
           }
         }
@@ -498,8 +504,7 @@ public:
             for (int h = 0; h < 2; h++)
             {
                 HEM_SIDE slot = HEM_SIDE(h + view_slot[h]*2);
-                int index = my_applet[slot];
-                HS::available_applets[index].instance[slot]->BaseView();
+                active_applet[slot]->BaseView();
 
                 // Applets 3 and 4 get inverted titles
                 if (slot > 1) gfxInvert(1 + h*64, 1, 54, 10);
@@ -546,8 +551,7 @@ public:
             select_mode = -1; // Pushing a button for the selected side turns off select mode
         } else if (view_state != CLOCK_SETUP) {
             // regular applets get button release
-            int index = my_applet[slot];
-            HS::available_applets[index].instance[slot]->OnButtonPress();
+            active_applet[slot]->OnButtonPress();
         }
     }
 
@@ -573,82 +577,74 @@ public:
         bool down = (event.type == UI::EVENT_BUTTON_DOWN);
         HEM_SIDE hemisphere = ButtonToSlot(event);
 
-        if ((config_page || preset_cursor) && !down) {
-            // cancel preset select or config screens
-            preset_cursor = 0;
-            config_page = HIDE_CONFIG;
-            HS::popup_tick = 0;
-            return;
-        }
-        if (view_state != APPLETS && !down) {
-            // cancel anything else
-            view_state = APPLETS;
-            return;
-        }
-
         // -- button down
         if (down) {
-            // dual press for Clock Setup... check first_click, so we only process the 2nd button event
-            if (event.mask == (OC::CONTROL_BUTTON_UP | OC::CONTROL_BUTTON_DOWN) && hemisphere != first_click) {
+            // dual press A+B for Clock Setup... check first_click, so we only process the 2nd button event
+            if (event.mask == (OC::CONTROL_BUTTON_A | OC::CONTROL_BUTTON_B) && hemisphere != first_click) {
                 view_state = CLOCK_SETUP;
                 select_mode = -1;
                 OC::ui.SetButtonIgnoreMask(); // ignore button release
                 return;
             }
-            // dual press for Audio Setup
-            if (event.mask == (OC::CONTROL_BUTTON_UP2 | OC::CONTROL_BUTTON_DOWN2) && hemisphere != first_click) {
-                // TODO: Audio Setup mode and UI
+            // dual press X+Y for Audio Setup
+            if (event.mask == (OC::CONTROL_BUTTON_X | OC::CONTROL_BUTTON_Y) && hemisphere != first_click) {
                 view_state = AUDIO_SETUP;
                 OC::ui.SetButtonIgnoreMask(); // ignore button release
                 return;
             }
-
-            if (OC::CORE::ticks - click_tick < HEMISPHERE_DOUBLE_CLICK_TIME && hemisphere == first_click) {
-                // This is a double-click on one button. Activate corresponding help screen and deactivate select mode.
-                SetFullScreen(hemisphere);
-
-                // reset double-click timer either way
-                click_tick = 0;
-
-                OC::ui.SetButtonIgnoreMask(); // ignore release
+            // dual press A+X for Load Preset
+            if (event.mask == (OC::CONTROL_BUTTON_A | OC::CONTROL_BUTTON_X) && hemisphere != first_click) {
+                ShowPresetSelector();
+                OC::ui.SetButtonIgnoreMask(); // ignore button release
                 return;
             }
 
-            // -- Single click
-            // If a help screen is already selected, and the button is for
-            // the opposite one, go to the other help screen
-            if (view_state == APPLET_FULLSCREEN) {
-                if (zoom_slot != hemisphere)
-                  SetFullScreen(hemisphere);
-                else // Exit help screen if same button is clicked
-                  view_state = APPLETS;
-
-                OC::ui.SetButtonIgnoreMask(); // ignore release
+            // dual press B+Y for Input Mapping
+            if (event.mask == (OC::CONTROL_BUTTON_B | OC::CONTROL_BUTTON_Y) && hemisphere != first_click) {
+                config_page = INPUT_SETTINGS;
+                config_cursor = TRIGMAP1;
+                OC::ui.SetButtonIgnoreMask(); // ignore button release
+                return;
             }
+
+            // -- any single click to exit fullscreen
+            if (view_state == APPLET_FULLSCREEN) {
+              view_state = APPLETS;
+              OC::ui.SetButtonIgnoreMask(); // ignore release
+            }
+
             // mark this single click
-            click_tick = OC::CORE::ticks;
             first_click = hemisphere;
             return;
         }
 
         // -- button release
-        if (view_state != CLOCK_SETUP) {
-            const int index = my_applet[hemisphere];
-            HemisphereApplet* applet = HS::available_applets[index].instance[hemisphere];
 
-            // switching views
-            if (view_slot[hemisphere % 2] != hemisphere / 2) {
-              view_slot[hemisphere % 2] = hemisphere / 2;
-              select_mode = -1;
-            } else if (applet->EditMode()) {
-              // select button becomes aux button while editing a param
-              applet->AuxButton();
-            } else {
-              // Select Mode
-              if (hemisphere == select_mode) select_mode = -1; // Exit Select Mode if same button is pressed
-              else if (view_state == APPLETS) // Otherwise, set Select Mode - UNLESS there's a help screen
-                  select_mode = hemisphere;
-            }
+        // cancel preset select or config screens
+        if (config_page || preset_cursor) {
+            preset_cursor = 0;
+            config_page = HIDE_CONFIG;
+            HS::popup_tick = 0;
+            return;
+        }
+        if (view_state != APPLETS) {
+            // cancel anything else
+            view_state = APPLETS;
+            return;
+        }
+
+        // switching views
+        if (view_slot[hemisphere % 2] != hemisphere / 2) {
+          view_slot[hemisphere % 2] = hemisphere / 2;
+          select_mode = -1;
+        } else if (active_applet[hemisphere]->EditMode()) {
+          // select button becomes aux button while editing a param
+          active_applet[hemisphere]->AuxButton();
+        } else {
+          // Select Mode
+          if (hemisphere == select_mode) select_mode = -1; // Exit Select Mode if same button is pressed
+          else if (view_state == APPLETS) // Otherwise, set Select Mode - UNLESS there's a help screen
+            select_mode = hemisphere;
         }
     }
 
@@ -681,19 +677,22 @@ public:
         } else if (select_mode == slot) {
             ChangeApplet(slot, event.value);
         } else {
-            int index = my_applet[slot];
-            HS::available_applets[index].instance[slot]->OnEncoderMove(event.value);
+            active_applet[slot]->OnEncoderMove(event.value);
         }
     }
 
+    void SetConfigPageFromCursor() {
+      if (config_cursor < CONFIG_DUMMY) config_page = LOADSAVE_POPUP;
+      else if (config_cursor < TRIGMAP1) config_page = CONFIG_SETTINGS;
+      else if (config_cursor < QUANT1) config_page = INPUT_SETTINGS;
+      else if (config_cursor < SHOWHIDELIST) config_page = QUANTIZER_SETTINGS;
+    }
     void ToggleConfigMenu() {
-        if (config_page) {
-          config_page = HIDE_CONFIG;
-        } else {
-          if (config_cursor < CONFIG_DUMMY) config_page = LOADSAVE_POPUP;
-          else if (config_cursor < QUANT1) config_page = CONFIG_SETTINGS;
-          else config_page = QUANTIZER_SETTINGS;
-        }
+      if (config_page) {
+        config_page = HIDE_CONFIG;
+      } else {
+        SetConfigPageFromCursor();
+      }
     }
     void ShowPresetSelector() {
         config_cursor = LOAD_PRESET;
@@ -709,35 +708,60 @@ public:
     void HandleButtonEvent(const UI::Event &event) {
         switch (event.type) {
         case UI::EVENT_BUTTON_DOWN:
-            if (event.control == OC::CONTROL_BUTTON_M) {
-                ToggleClockRun();
-                OC::ui.SetButtonIgnoreMask(); // ignore release and long-press
-                break;
-            }
-            if (HS::q_edit) {
-              if (event.control == OC::CONTROL_BUTTON_UP)
-                HS::NudgeOctave(HS::qview, 1);
-              else if (event.control == OC::CONTROL_BUTTON_DOWN)
-                HS::NudgeOctave(HS::qview, -1);
-              else
-                HS::q_edit = false;
-
-              OC::ui.SetButtonIgnoreMask();
-              break;
-            }
-            // most button-down events fall through here
-        case UI::EVENT_BUTTON_PRESS:
-            if (event.control == OC::CONTROL_BUTTON_L || event.control == OC::CONTROL_BUTTON_R) {
-                DelegateEncoderPush(event);
-            } else
-                DelegateSelectButtonPush(event);
-
+          // Middle button is a modifier while held
+          if (event.control == OC::CONTROL_BUTTON_Z) {
             break;
+          }
+
+          // Quantizer popup editor intercepts everything on-press
+          if (HS::q_edit) {
+            if (event.control == OC::CONTROL_BUTTON_UP)
+              HS::NudgeOctave(HS::qview, 1);
+            else if (event.control == OC::CONTROL_BUTTON_DOWN)
+              HS::NudgeOctave(HS::qview, -1);
+            else
+              HS::q_edit = false;
+
+            OC::ui.SetButtonIgnoreMask();
+            break;
+          }
+
+          // Z-button held down?
+          // shift functions for all buttons
+          if (event.mask & OC::CONTROL_BUTTON_Z) {
+            if (event.control == OC::CONTROL_BUTTON_L) {
+              // Left - Reload last preset
+              QueuePresetLoad(preset_id);
+            } else if (event.control == OC::CONTROL_BUTTON_R) {
+              // Right - Save to last preset
+              StoreToPreset(preset_id);
+            } else {
+              HEM_SIDE hemisphere = ButtonToSlot(event);
+              SetFullScreen(hemisphere);
+            }
+            OC::ui.SetButtonIgnoreMask();
+            break;
+          }
+
+          // most button-down events fall through here
+        case UI::EVENT_BUTTON_PRESS:
+          if (event.control == OC::CONTROL_BUTTON_Z) {
+            ToggleClockRun();
+            break;
+          }
+
+          if (event.control == OC::CONTROL_BUTTON_L || event.control == OC::CONTROL_BUTTON_R) {
+            DelegateEncoderPush(event);
+          } else {
+            DelegateSelectButtonPush(event);
+          }
+
+          break;
 
         case UI::EVENT_BUTTON_LONG_PRESS:
-            if (event.control == OC::CONTROL_BUTTON_DOWN) ToggleConfigMenu();
-            if (event.control == OC::CONTROL_BUTTON_L) ToggleClockRun();
-            break;
+          if (event.control == OC::CONTROL_BUTTON_B) ToggleConfigMenu();
+          if (event.control == OC::CONTROL_BUTTON_L) ToggleClockRun();
+          break;
 
         default: break;
         }
@@ -747,10 +771,11 @@ private:
     int preset_id = 0;
     int queued_preset = 0;
     int preset_cursor = 0;
-    int my_applet[4]; // Indexes to available_applets
+    HemisphereApplet *active_applet[4]; // Pointers to actual applets
+    int active_applet_index[4]; // Indexes to available_applets
                       // Left side: 0,2
                       // Right side: 1,3
-    int next_applet[4]; // queued from UI thread, handled by Controller
+    int next_applet_index[4]; // queued from UI thread, handled by Controller
     uint64_t clock_data, global_data, applet_data[4]; // cache of applet data
     bool view_slot[2] = {0, 0}; // Two applets on each side, only one visible at a time
     bool isEditing = false;
@@ -758,7 +783,6 @@ private:
 
     int select_mode = -1;
     HEM_SIDE zoom_slot; // Which of the hemispheres (if any) is in fullscreen/help mode
-    uint32_t click_tick; // Measure time between clicks for double-click
     HEM_SIDE first_click; // The first button pushed of a double-click set, to see if the same one is pressed
 
     // State machine
@@ -820,11 +844,7 @@ private:
             config_cursor += dir;
             config_cursor = constrain(config_cursor, 0, MAX_CURSOR);
 
-            if (config_cursor < CONFIG_DUMMY) config_page = LOADSAVE_POPUP;
-            else if (config_cursor < TRIGMAP1) config_page = CONFIG_SETTINGS;
-            else if (config_cursor < QUANT1) config_page = INPUT_SETTINGS;
-            else if (config_cursor < SHOWHIDELIST) config_page = QUANTIZER_SETTINGS;
-
+            SetConfigPageFromCursor();
           }
           ResetCursor();
           return;
@@ -881,12 +901,7 @@ private:
             if (config_cursor == SAVE_PRESET)
                 StoreToPreset(preset_cursor-1);
             else {
-              if (HS::clock_m.IsRunning()) {
-                queued_preset = preset_cursor - 1;
-                HS::clock_m.BeatSync( &QuadrantBeatSync );
-              }
-              else
-                LoadFromPreset(preset_cursor-1);
+                QueuePresetLoad(preset_cursor - 1);
             }
 
             preset_cursor = 0; // deactivate preset selection
@@ -954,7 +969,7 @@ private:
         gfxIcon(25, 13, TR_ICON); gfxIcon(89, 13, TR_ICON);
         gfxIcon(25, 26, CV_ICON); gfxIcon(89, 26, CV_ICON);
         gfxIcon(25, 39, TR_ICON); gfxIcon(89, 39, TR_ICON);
-        gfxIcon(25, 50, CV_ICON); gfxIcon(89, 50, CV_ICON);
+        gfxIcon(25, 52, CV_ICON); gfxIcon(89, 52, CV_ICON);
 
         for (int ch=0; ch<4; ++ch) {
           // Physical trigger input mappings
@@ -982,7 +997,7 @@ private:
 
     }
     void DrawQuantizerConfig() {
-        gfxHeader("< Quantizer Setup >");
+        gfxHeader("<  Quantizer Setup");
 
         for (int ch=0; ch<4; ++ch) {
           const int x = 8 + ch*32;
@@ -1033,7 +1048,7 @@ private:
 
     void DrawConfigMenu() {
         // --- Config Selection
-        gfxHeader("< Presets / Config");
+        gfxHeader("< General Settings  >");
 
         gfxPrint(1, 15, "Trig Length: ");
         gfxPrint(HS::trig_length);
