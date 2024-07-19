@@ -32,9 +32,8 @@ public:
 
     void Controller() {
         int signal = In(0);
-        int amplitude = In(1);
-        int output = ProportionCV(amplitude, signal);
-        output += amp_offset_cv;
+        int amplitude = In(1) + amp_offset_cv;
+        int output = Proportion(amplitude, HEMISPHERE_MAX_INPUT_CV, signal);
         output = constrain(output, -HEMISPHERE_MAX_CV, HEMISPHERE_MAX_CV);
 
         if (Gate(0)) Out(0, output); // Normally-off gated VCA output on A
