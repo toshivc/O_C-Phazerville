@@ -309,7 +309,7 @@ private:
         int total_stage_ticks = Proportion(decay[ch], HEM_EG_MAX_VALUE, HEM_EG_MAX_TICKS_AD);
         int ticks_remaining = total_stage_ticks - stage_ticks[ch];
         simfloat amplitude_remaining = amplitude[ch] - int2simfloat(Proportion(sustain[ch], HEM_EG_MAX_VALUE, HEMISPHERE_MAX_CV));
-        if (sustain[ch] == 1) ticks_remaining = 0;
+        if (sustain[ch] == 255) ticks_remaining = 0; // skip decay if sustain is maxed
         if (ticks_remaining <= 0) { // End of decay; move to sustain
             stage[ch] = HEM_EG_SUSTAIN;
             stage_ticks[ch] = 0;
