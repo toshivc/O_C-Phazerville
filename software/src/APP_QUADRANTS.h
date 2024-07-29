@@ -546,12 +546,16 @@ public:
         switch (event.control) {
         default:
         case OC::CONTROL_BUTTON_A:
+          return LEFT_HEMISPHERE;
+          break;
         case OC::CONTROL_BUTTON_X:
-          return view_slot[0] ? LEFT2_HEMISPHERE : LEFT_HEMISPHERE;
+          return LEFT2_HEMISPHERE;
           break;
         case OC::CONTROL_BUTTON_B:
+          return RIGHT_HEMISPHERE;
+          break;
         case OC::CONTROL_BUTTON_Y:
-          return view_slot[1] ? RIGHT2_HEMISPHERE : RIGHT_HEMISPHERE;
+          return RIGHT2_HEMISPHERE;
           break;
         }
     }
@@ -598,7 +602,7 @@ public:
         }
 
         // A/B/X/Y buttons becomes aux button while editing a param
-        if (active_applet[slot]->EditMode()) {
+        if (SlotIsVisible(slot) && active_applet[slot]->EditMode()) {
           active_applet[slot]->AuxButton();
           return true;
         }
@@ -634,6 +638,7 @@ public:
             ClockSetup_instance.OnEncoderMove(event.value);
         } else if (event.mask & (OC::CONTROL_BUTTON_X | OC::CONTROL_BUTTON_Y)) {
             // hold down X or Y to change applet with encoder
+            if (view_state == APPLET_FULLSCREEN) slot = zoom_slot;
             ChangeApplet(slot, event.value);
         } else {
             active_applet[slot]->OnEncoderMove(event.value);
@@ -668,6 +673,12 @@ public:
       zoom_slot = HEM_SIDE(view_slot[h]*2 + h);
     }
 
+    bool SlotIsVisible(HEM_SIDE h) {
+      if (view_state == APPLET_FULLSCREEN)
+        return zoom_slot == h;
+
+      return (view_slot[h % 2] == h / 2);
+    }
     // this brings a specific applet into view on the appropriate side
     void SwitchToSlot(HEM_SIDE h) {
       if (view_slot[h % 2] != h / 2) {
@@ -710,7 +721,11 @@ public:
             case OC::CONTROL_BUTTON_Z:
               // X or Y + Z == go fullscreen
               if (select_mode) {
+                bool h = (event.mask & OC::CONTROL_BUTTON_Y); // left or right
+                zoom_slot = HEM_SIDE(view_slot[h]*2 + h);
                 ToggleFullScreen();
+                select_mode = false;
+                OC::ui.SetButtonIgnoreMask();
                 break;
               }
 
@@ -746,23 +761,24 @@ public:
           break;
 
         case UI::EVENT_BUTTON_PRESS:
-          // A and B switch to full screen on release
-          if (event.control == OC::CONTROL_BUTTON_A || event.control == OC::CONTROL_BUTTON_B) {
-            HEM_SIDE slot = ButtonToSlot(event);
-            if (view_state != APPLET_FULLSCREEN || zoom_slot != slot)
-              SetFullScreen(slot);
-            else
-              view_state = APPLETS;
-          }
+          switch (event.control) {
+            // A/B/X/Y switch to corresponding applet on release
+            case OC::CONTROL_BUTTON_A:
+            case OC::CONTROL_BUTTON_B:
+            case OC::CONTROL_BUTTON_X:
+            case OC::CONTROL_BUTTON_Y:
+            {
+              HEM_SIDE slot = ButtonToSlot(event);
+              if (view_state == APPLET_FULLSCREEN && slot == zoom_slot)
+                view_state = APPLETS;
 
-          // X and Y swap views between North/South
-          if (event.control == OC::CONTROL_BUTTON_X) {
-            SwapViewSlot(0);
+              SwitchToSlot(slot);
+              break;
+            }
+
+            // ignore all other button release events
+            default: break;
           }
-          if (event.control == OC::CONTROL_BUTTON_Y) {
-            SwapViewSlot(1);
-          }
-          // ignore all other button release events
           break;
 
         case UI::EVENT_BUTTON_LONG_PRESS:
