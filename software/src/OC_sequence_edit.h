@@ -143,7 +143,7 @@ void PatternEditor<Owner>::Draw() {
   }
 
   x += 3 + (w >> 0x1) - (num_slots << 0x2); y += 40;
-  #ifdef BUCHLA_4U
+  #ifdef NORTHERNLIGHT
     y += 16;
   #endif
 
@@ -296,7 +296,7 @@ void PatternEditor<Owner>::HandleEncoderEvent(const UI::Event &event) {
        pitch += delta; // fine
       else
         pitch += (delta << 7); // semitone
-      #ifdef BUCHLA_4U
+      #ifdef NORTHERNLIGHT
         CONSTRAIN(pitch, 0x0, 8 * (12 << 7)  - 128);
       #else
         CONSTRAIN(pitch, -3 * (12 << 7), 5 * (12 << 7)  - 128);

@@ -44,7 +44,7 @@
 
 extern uint_fast8_t MENU_REDRAW;
 
-#ifdef BUCHLA_4U
+#ifdef NORTHERNLIGHT
  #define DQ_OFFSET_X 22
 #else
  #define DQ_OFFSET_X 47
@@ -838,7 +838,7 @@ public:
          }
       }
       // scale gate
-      #ifdef BUCHLA_4U
+      #ifdef NORTHERNLIGHT
         aux_sample = (aux_sample_ == ON) ? OC::DAC::get_octave_offset(aux_channel, OCTAVES - OC::DAC::kOctaveZero - 0x2) : OC::DAC::get_zero_offset(aux_channel);
       #else
         aux_sample = (aux_sample_ == ON) ? OC::DAC::get_octave_offset(aux_channel, OCTAVES - OC::DAC::kOctaveZero - 0x1) : OC::DAC::get_zero_offset(aux_channel);

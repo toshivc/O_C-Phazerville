@@ -22,7 +22,7 @@ static constexpr size_t kHistoryDepth = 10;
 #define MAX_NUM_PASSES 1500
 #define CONVERGE_PASSES 5
 
-#if defined(BUCHLA_4U) && !defined(IO_10V)
+#if defined(NORTHERNLIGHT) && !defined(IO_10V)
 const char* const AT_steps[] = {
   " ", " ", " ", " ", " ", // 5 blanks
   "0.0V", "1.2V", "2.4V", "3.6V", "4.8V", "6.0V", "7.2V", "8.4V", "9.6V", "10.8V", " " 
@@ -33,39 +33,33 @@ const char* const AT_steps[] = {
 };
 #endif
 
-// 
-#ifdef BUCHLA_4U
-  constexpr float target_multipliers[OCTAVES] = { 1.0f, 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f, 128.0f, 256.0f, 512.0f };
-#else
-  constexpr float target_multipliers[OCTAVES + 6] = { 0.03125f, 0.0625f, 0.125f, 0.25f, 0.5f, 1.0f, 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f, 128.0f, 256.0f, 512.0f, 1024.0f };
-//  constexpr float target_multipliers[OCTAVES] = { 0.125f, 0.25f, 0.5f, 1.0f, 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f };
-#endif
+constexpr float target_multipliers[OCTAVES + 6] = { 0.03125f, 0.0625f, 0.125f, 0.25f, 0.5f, 1.0f, 2.0f, 4.0f, 8.0f, 16.0f, 32.0f, 64.0f, 128.0f, 256.0f, 512.0f, 1024.0f };
 
-  constexpr float target_multipliers_1V2[OCTAVES] = {
-    0.1767766952966368931843f,
-    0.3149802624737182976666f,
-    0.5612310241546865086093f,
-    1.0f,
-    1.7817974362806785482150f,
-    3.1748021039363991668836f,
-    5.6568542494923805818985f,
-    10.0793683991589855253324f,
-    17.9593927729499718282113f,
-    32.0f
-  };
+constexpr float target_multipliers_1V2[OCTAVES] = {
+  0.1767766952966368931843f,
+  0.3149802624737182976666f,
+  0.5612310241546865086093f,
+  1.0f,
+  1.7817974362806785482150f,
+  3.1748021039363991668836f,
+  5.6568542494923805818985f,
+  10.0793683991589855253324f,
+  17.9593927729499718282113f,
+  32.0f
+};
 
-  constexpr float target_multipliers_2V0[OCTAVES] = {
-    0.3535533905932737863687f,
-    0.5f,
-    0.7071067811865475727373f,
-    1.0f,
-    1.4142135623730951454746f,
-    2.0f,
-    2.8284271247461902909492f,
-    4.0f,
-    5.6568542494923805818985f,
-    8.0f
-  };
+constexpr float target_multipliers_2V0[OCTAVES] = {
+  0.3535533905932737863687f,
+  0.5f,
+  0.7071067811865475727373f,
+  1.0f,
+  1.4142135623730951454746f,
+  2.0f,
+  2.8284271247461902909492f,
+  4.0f,
+  5.6568542494923805818985f,
+  8.0f
+};
 
 namespace OC {
 
@@ -333,24 +327,20 @@ private:
       break;
       case OC::DAC_VOLT_TARGET_FREQUENCIES: 
       {
-        #ifdef BUCHLA_SUPPORT
-        
-          switch(OC::DAC::get_voltage_scaling(channel_)) {
-            
-            case VOLTAGE_SCALING_1_2V_PER_OCT: // 1.2V/octave
-            auto_target_frequencies_[octaves_cnt_]  =  auto_frequency_ * target_multipliers_1V2[octaves_cnt_];
-            break;
-            case VOLTAGE_SCALING_2V_PER_OCT: // 2V/octave
-            auto_target_frequencies_[octaves_cnt_]  =  auto_frequency_ * target_multipliers_2V0[octaves_cnt_];
-            break;
-            default: // 1V/octave
-            auto_target_frequencies_[octaves_cnt_]  =  auto_frequency_ * target_multipliers[octaves_cnt_]; 
-            break;
-          }
-        #else
+        switch(OC::DAC::get_voltage_scaling(channel_))
+        {
+          case VOLTAGE_SCALING_1_2V_PER_OCT: // 1.2V/octave
+          auto_target_frequencies_[octaves_cnt_]  =  auto_frequency_ * target_multipliers_1V2[octaves_cnt_];
+          break;
+          case VOLTAGE_SCALING_2V_PER_OCT: // 2V/octave
+          auto_target_frequencies_[octaves_cnt_]  =  auto_frequency_ * target_multipliers_2V0[octaves_cnt_];
+          break;
+          default: // 1V/octave
           auto_target_frequencies_[octaves_cnt_]  =  auto_frequency_ * target_multipliers[octaves_cnt_ + ZERO_OFFSET]; 
-        #endif
+          break;
+        }
         octaves_cnt_++;
+
         // go to next step, if done:
         if (octaves_cnt_ > ACTIVE_OCTAVES) {
           octaves_cnt_ = 0x0;

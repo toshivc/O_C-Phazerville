@@ -1229,7 +1229,7 @@ void ENVGEN_screensaver() {
   debug::CycleMeasurement render_cycles;
 #endif
 
-  #ifdef BUCHLA_4U
+  #ifdef NORTHERNLIGHT
     RenderFastPreview<0, 0, 32>();
     RenderFastPreview<1, 64, 32>();
     RenderFastPreview<2, 0, 0>();

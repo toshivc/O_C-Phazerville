@@ -13,7 +13,7 @@ typedef int32_t simfloat;
 #endif
 
 // Reference Constants
-#ifdef BUCHLA_4U
+#ifdef NORTHERNLIGHT
 #define PULSE_VOLTAGE 9
 #define HEMISPHERE_MAX_CV 15360
 #define HEMISPHERE_CENTER_CV 7680 // 5V

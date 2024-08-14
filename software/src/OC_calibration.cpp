@@ -37,7 +37,7 @@ bool calibration_data_loaded = false;
 const CalibrationData kCalibrationDefaults = {
   // DAC
   { {
-    #ifdef BUCHLA_cOC 
+    #ifdef NORTHERNLIGHT 
     {197, 6634, 13083, 19517, 25966, 32417, 38850, 45301, 51733, 58180, 64400},
     {197, 6634, 13083, 19517, 25966, 32417, 38850, 45301, 51733, 58180, 64400},
     {197, 6634, 13083, 19517, 25966, 32417, 38850, 45301, 51733, 58180, 64400},
@@ -167,7 +167,7 @@ const CalibrationStep calibration_steps[CALIBRATION_STEP_LAST] = {
   { HELLO, "Setup: Calibrate", "Use defaults? ", select_help, start_footer, CALIBRATE_NONE, 0, OC::Strings::no_yes, 0, 1 },
   { CENTER_DISPLAY, "Center Display", "Pixel offset ", default_help_r, default_footer, CALIBRATE_DISPLAY, 0, nullptr, 0, 2 },
 
-  #if defined(BUCHLA_4U) && !defined(IO_10V)
+  #if defined(NORTHERNLIGHT) && !defined(IO_10V)
     { DAC_A_VOLT_3m, "DAC A 0.0 volts", "-> 0.000V ", default_help_r, default_footer, CALIBRATE_OCTAVE, 0, nullptr, 0, DAC::MAX_VALUE },
     { DAC_A_VOLT_2m, "DAC A 1.2 volts", "-> 1.200V ", default_help_r, default_footer, CALIBRATE_OCTAVE, 1, nullptr, 0, DAC::MAX_VALUE },
     { DAC_A_VOLT_1m, "DAC A 2.4 volts", "-> 2.400V ", default_help_r, default_footer, CALIBRATE_OCTAVE, 2, nullptr, 0, DAC::MAX_VALUE },
@@ -411,7 +411,7 @@ const CalibrationStep calibration_steps[CALIBRATION_STEP_LAST] = {
   { CV_OFFSET_7, "ADC CV8", "ADC value at 0V", default_help_r, default_footer, CALIBRATE_ADC_OFFSET, ADC_CHANNEL_8, nullptr, 0, 4095 },
 #endif
 
-  #if defined(BUCHLA_4U) && !defined(IO_10V)
+  #if defined(NORTHERNLIGHT) && !defined(IO_10V)
     { ADC_PITCH_C2, "ADC cal. octave #1", "CV1: Input 1.2V", "[R] Long press to set", default_footer, CALIBRATE_ADC_1V, 0, nullptr, 0, 0 },
     { ADC_PITCH_C4, "ADC cal. octave #3", "CV1: Input 3.6V", "[R] Long press to set", default_footer, CALIBRATE_ADC_3V, 0, nullptr, 0, 0 },
   #else

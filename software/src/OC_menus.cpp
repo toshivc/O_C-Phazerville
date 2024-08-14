@@ -139,7 +139,7 @@ void scope_render() {
 
   for (weegfx::coord_t x = 0; x < (weegfx::coord_t)kScopeDepth - 1; ++x) {
     size_t index = (x + averaged_scope_tail + 1) % kScopeDepth;
-    #ifdef BUCHLA_4U
+    #ifdef NORTHERNLIGHT
       graphics.setPixel(x, 0 + averaged_scope_history[DAC_CHANNEL_C][index]);
       graphics.setPixel(64 + x, 0 + averaged_scope_history[DAC_CHANNEL_D][index]);
       graphics.setPixel(x, 32 + averaged_scope_history[DAC_CHANNEL_A][index]);

@@ -151,7 +151,7 @@ const char* const lorenz_freq_range_names[5] = {
 
 // TOTAL EEPROM SIZE: 9 bytes
 SETTINGS_DECLARE(LorenzGenerator, LORENZ_SETTING_LAST) {
-  #ifdef BUCHLA_4U
+  #ifdef NORTHERNLIGHT
   { 0, 0, 255, "Freq 1", NULL, settings::STORAGE_TYPE_U8 },
   { 0, 0, 255, "Freq 2", NULL, settings::STORAGE_TYPE_U8 },
   #else

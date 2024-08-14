@@ -14,9 +14,9 @@ namespace OC {
     OC_BUILD_TAG
 #endif
     ;
-#ifdef BUCHLA_cOC
-  const char * const NAME = "NLM card O_C";
-  const char * const SHORT_NAME = "cOC";
+#ifdef NORTHERNLIGHT
+  const char * const NAME = "NLM cOC/hOC/2OC";
+  const char * const SHORT_NAME = "xOC";
 #elif defined(VOR)
   const char * const NAME = "Plum Audio O_C+";
   const char * const SHORT_NAME = "OC+";

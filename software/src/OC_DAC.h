@@ -51,7 +51,7 @@ public:
   static constexpr size_t kHistoryDepth = 8;
   static constexpr uint16_t MAX_VALUE = 65535; // DAC fullscale 
 
-  #ifdef BUCHLA_4U
+  #ifdef NORTHERNLIGHT
     static constexpr int kOctaveZero = 0;
   #elif defined(VOR) 
     static int kOctaveZero;

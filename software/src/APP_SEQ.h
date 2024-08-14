@@ -1853,7 +1853,7 @@ public:
       switch (_mode) {
 
         case GATE_OUT: // gate
-          #ifdef BUCHLA_4U
+          #ifdef NORTHERNLIGHT
           _output = (get_step_gate() == ON) ? OC::DAC::get_octave_offset(dacChannel, OCTAVES - OC::DAC::kOctaveZero - 0x2) : OC::DAC::get_zero_offset(dacChannel);
           #else
           _output = (get_step_gate() == ON) ? OC::DAC::get_octave_offset(dacChannel, OCTAVES - OC::DAC::kOctaveZero - 0x1) : OC::DAC::get_zero_offset(dacChannel);

@@ -202,7 +202,7 @@ const char* const error[] = {
 
 // EEPROM size: 11 bytes * 4 channels == 44 bytes
 SETTINGS_DECLARE(ReferenceChannel, REF_SETTING_LAST) {
-  #ifdef BUCHLA_4U
+  #ifdef NORTHERNLIGHT
   { 0, 0, 9, "Octave", nullptr, settings::STORAGE_TYPE_I8 },
   #elif defined(VOR) 
   {0, -5, 10, "Octave", nullptr, settings::STORAGE_TYPE_I8 },

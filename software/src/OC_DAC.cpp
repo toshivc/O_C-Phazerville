@@ -269,7 +269,7 @@ uint8_t DAC::DAC_scaling[DAC_CHANNEL_LAST];
 
 #if defined(__MK20DX256__)
 void set8565_CHA(uint32_t data) {
-  #ifdef BUCHLA_cOC
+  #if defined(NORTHERNLIGHT) && !defined(NLM_DIY)
   uint32_t _data = data;
   #else
   uint32_t _data = OC::DAC::MAX_VALUE - data;
@@ -285,7 +285,7 @@ void set8565_CHA(uint32_t data) {
 }
 
 void set8565_CHB(uint32_t data) {
-  #ifdef BUCHLA_cOC
+  #if defined(NORTHERNLIGHT) && !defined(NLM_DIY)
   uint32_t _data = data;
   #else
   uint32_t _data = OC::DAC::MAX_VALUE - data;
@@ -301,7 +301,7 @@ void set8565_CHB(uint32_t data) {
 }
 
 void set8565_CHC(uint32_t data) {
-  #ifdef BUCHLA_cOC
+  #if defined(NORTHERNLIGHT) && !defined(NLM_DIY)
   uint32_t _data = data;
   #else
   uint32_t _data = OC::DAC::MAX_VALUE - data;
@@ -317,7 +317,7 @@ void set8565_CHC(uint32_t data) {
 }
 
 void set8565_CHD(uint32_t data) {
-  #ifdef BUCHLA_cOC
+  #if defined(NORTHERNLIGHT) && !defined(NLM_DIY)
   uint32_t _data = data;
   #else
   uint32_t _data = OC::DAC::MAX_VALUE - data;
@@ -336,7 +336,7 @@ void set8565_CHD(uint32_t data) {
 void set8565_CHA(uint32_t data) {
   LPSPI4_TCR = (LPSPI4_TCR & 0xF8000000) | LPSPI_TCR_FRAMESZ(23)
     | LPSPI_TCR_PCS(0) | LPSPI_TCR_RXMSK;
-  #ifdef BUCHLA_cOC
+  #if defined(NORTHERNLIGHT) && !defined(NLM_DIY)
   uint32_t _data = data;
   #else
   uint32_t _data = OC::DAC::MAX_VALUE - data;
@@ -350,7 +350,7 @@ void set8565_CHA(uint32_t data) {
 }
 
 void set8565_CHB(uint32_t data) {
-  #ifdef BUCHLA_cOC
+  #if defined(NORTHERNLIGHT) && !defined(NLM_DIY)
   uint32_t _data = data;
   #else
   uint32_t _data = OC::DAC::MAX_VALUE - data;
@@ -363,7 +363,7 @@ void set8565_CHB(uint32_t data) {
   LPSPI4_TDR = _data;
 }
 void set8565_CHC(uint32_t data) {
-  #ifdef BUCHLA_cOC
+  #if defined(NORTHERNLIGHT) && !defined(NLM_DIY)
   uint32_t _data = data;
   #else
   uint32_t _data = OC::DAC::MAX_VALUE - data;
@@ -376,7 +376,7 @@ void set8565_CHC(uint32_t data) {
   LPSPI4_TDR = _data;
 }
 void set8565_CHD(uint32_t data) {
-  #ifdef BUCHLA_cOC
+  #if defined(NORTHERNLIGHT) && !defined(NLM_DIY)
   uint32_t _data = data;
   #else
   uint32_t _data = OC::DAC::MAX_VALUE - data;

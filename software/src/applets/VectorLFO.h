@@ -222,7 +222,7 @@ private:
         osc[ch] = WaveformManager::VectorOscillatorFromWaveform(waveform);
         waveform_number[ch] = waveform;
         osc[ch].SetFrequency(freq[ch]);
-#ifdef BUCHLA_4U
+#ifdef NORTHERNLIGHT
         osc[ch].Offset((12 << 7) * 4);
         osc[ch].SetScale((12 << 7) * 4);
 #else

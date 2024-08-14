@@ -46,7 +46,7 @@
 extern uint_fast8_t MENU_REDRAW;
 // OC::UiMode ui_mode = OC::UI_MODE_MENU;
 
-#ifdef BUCHLA_4U
+#ifdef NORTHERNLIGHT
  #define QQ_OFFSET_X 20
 #else
  #define QQ_OFFSET_X 31

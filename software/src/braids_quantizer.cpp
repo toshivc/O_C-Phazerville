@@ -57,7 +57,7 @@ int32_t Quantizer::Process(int32_t pitch, int32_t root, int32_t transpose) {
   }
 
   pitch -= root;
-  #ifdef BUCHLA_4U
+  #ifdef NORTHERNLIGHT
     pitch -= ((12 << 7) << 2);
   #else
     pitch -= ((12 << 7) << 1);
@@ -120,7 +120,7 @@ int32_t Quantizer::Process(int32_t pitch, int32_t root, int32_t transpose) {
     pitch = codeword_;
   }
   pitch += root;
-  #ifdef BUCHLA_4U
+  #ifdef NORTHERNLIGHT
     pitch += ((12 << 7) << 2);
   #else
     pitch += ((12 << 7) << 1);

@@ -14,8 +14,8 @@ for item in flags:
         custom_defines += " -DFLIP_180"
     if f.startswith('VOR'):
         custom_defines += " -DVOR"
-    if f.startswith('BUCHLA'):
-        custom_defines += " -DBUCHLA_cOC -DBUCHLA_4U"
+    if f.startswith('BUCHLA') or f.startswith('NLM') or f.startswith('NORTHERN'):
+        custom_defines += " -DNORTHERNLIGHT"
     if f.startswith('CALIBR8'):
         custom_defines += " -DENABLE_APP_CALIBR8OR"
     if f.startswith('SCENE'):
