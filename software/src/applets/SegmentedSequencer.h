@@ -8,12 +8,13 @@ public:
     }
 
     enum SegSeqCursor {
-      NUM_SEGMENT, RANDOMIZE, KEY, SCALE, PITCH_RANGE, DENSITY, TIME,
+      NUM_SEGMENT, RANDOMIZE, SELECTED_SEG, KEY, SCALE, PITCH_RANGE, DENSITY, TIME,
       DURATION,
     };
 
     void Start() {
         num_segments = 4;  // Default to 4 segments
+        edit_segment = 0;
         current_segment = 0;
         step_counter = 0;
         for (int i = 0; i < SEQ_MAX_SEGMENTS; ++i) {
@@ -54,16 +55,17 @@ public:
 
     void OnEncoderMove(int direction) {
         if (!EditMode()) { // move cursor
-        MoveCursor(cursor, direction, 7);
+        MoveCursor(cursor, direction, 8);
         return;
         }
 
 
-        Segment& seg = segments[current_segment];
+        Segment& seg = segments[edit_segment];
         switch(cursor) {
             case NUM_SEGMENT: num_segments = constrain(num_segments + direction, 1, SEQ_MAX_SEGMENTS); break;
             case RANDOMIZE: 
-            if(direction>1){RandomizeAllSegments();}else{RandomizeSegment(current_segment);}
+            if(direction>1){RandomizeAllSegments();}else{RandomizeSegment(edit_segment);}
+            case SELECTED_SEG: edit_segment = constrain(edit_segment + direction, 0, num_segments-1); break;
             case KEY: seg.key = constrain(seg.key + direction, 0, 11); break;
             case SCALE: seg.scale = constrain(seg.scale + direction, 0, 15); break;
             case PITCH_RANGE: seg.pitch_range = constrain(seg.pitch_range + direction, 0, 14); break;
@@ -72,7 +74,7 @@ public:
             case DURATION: seg.duration = constrain(seg.duration + direction, 0, 14); break;
             
         }
-        GenerateSegment(current_segment);
+        GenerateSegment(edit_segment);
     }
  
 
@@ -180,31 +182,32 @@ private:
         gfxIcon(43,13, RANDOM_ICON);
         
         gfxPrint(1, 25, "S ");
-        gfxPrint(current_segment + 1);
+        gfxPrint(edit_segment + 1);
         gfxPrint(":");
-        gfxPrint(OC::Strings::note_names_unpadded[segments[current_segment].key]);
+        gfxPrint(OC::Strings::note_names_unpadded[segments[edit_segment].key]);
         gfxPrint(38, 25, "");
-        gfxPrint(OC::scale_names_short[segments[current_segment].scale]);
+        gfxPrint(OC::scale_names_short[segments[edit_segment].scale]);
         
         gfxPrint(1, 35, "Rng:");
-        gfxPrint(segments[current_segment].pitch_range);
+        gfxPrint(segments[edit_segment].pitch_range);
         
         gfxPrint(1, 45, "Den:");
-        gfxPrint(segments[current_segment].density);
+        gfxPrint(segments[edit_segment].density);
         
         const char* time_sigs[] = {"2/4", "3/4", "4/4", "5/4"};
-        gfxPrint(1, 55, time_sigs[segments[current_segment].time_signature]);
+        gfxPrint(1, 55, time_sigs[segments[edit_segment].time_signature]);
         gfxPrint(24, 55, "Dur:");
-        gfxPrint(segments[current_segment].duration);
+        gfxPrint(segments[edit_segment].duration);
 
 
        switch (cursor){
         case NUM_SEGMENT: gfxCursor(28, 23, 12); break;
         case RANDOMIZE: gfxCursor(41,23,11); break;
-        case KEY: gfxCursor(24, 33, 12); break;
+        case SELECTED_SEG: gfxCursor(12, 33, 8); break;
+        case KEY: gfxCursor(24, 33, 14); break;
         case SCALE: gfxCursor(38, 33, 24); break;
-        case PITCH_RANGE: gfxCursor(24,43,12); break;
-        case DENSITY: gfxCursor(24, 53, 12); break;
+        case PITCH_RANGE: gfxCursor(24,43,10); break;
+        case DENSITY: gfxCursor(24, 53, 10); break;
         case TIME: gfxCursor(1, 63, 20); break;
         case DURATION: gfxCursor(46,63,12); break;
        }
