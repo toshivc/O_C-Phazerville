@@ -88,6 +88,7 @@ class_name class_name ## _instance[2]
 #include "applets/SequenceX.h"
 #include "applets/Seq32.h"
 #include "applets/SeqPlay7.h"
+#include "applets/SegmentedSequencer.h"         //added
 #include "applets/ShiftGate.h"
 #include "applets/Shredder.h"
 #include "applets/Shuffle.h"
@@ -111,6 +112,8 @@ class_name class_name ## _instance[2]
 #include "applets/hMIDIIn.h"
 #include "applets/hMIDIOut.h"
 
+
+CREATE_APPLET(SegmentedSequencer);      //added
 
 CREATE_APPLET(Cumulus);
 CREATE_APPLET(ADSREG);
@@ -241,6 +244,7 @@ CREATE_APPLET(VectorMorph);
     DECLARE_APPLET( 40, 0x40, Schmitt), \
     DECLARE_APPLET( 23, 0x80, Scope), \
     DECLARE_APPLET( 75, 0x02, Seq32), \
+    DECLARE_APPLET(100, 0x02, SegmentedSequencer), \
     DECLARE_APPLET( 76, 0x02, SeqPlay7), \
     DECLARE_APPLET( 14, 0x02, SequenceX), \
     DECLARE_APPLET( 48, 0x45, ShiftGate), \
