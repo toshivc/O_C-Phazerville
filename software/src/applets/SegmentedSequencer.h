@@ -64,7 +64,7 @@ public:
         switch(cursor) {
             case NUM_SEGMENT: num_segments = constrain(num_segments + direction, 1, SEQ_MAX_SEGMENTS); break;
             case RANDOMIZE: 
-            if(direction>1){RandomizeAllSegments();}else{RandomizeSegment(edit_segment);}
+            if(direction>1){RandomizeAllSegments();}else{RandomizeSegment(edit_segment);}; break;
             case SELECTED_SEG: edit_segment = constrain(edit_segment + direction, 0, num_segments-1); break;
             case KEY: seg.key = constrain(seg.key + direction, 0, 11); break;
             case SCALE: seg.scale = constrain(seg.scale + direction, 0, 15); break;
@@ -201,7 +201,7 @@ private:
 
 
        switch (cursor){
-        case NUM_SEGMENT: gfxCursor(28, 23, 12); break;
+        case NUM_SEGMENT: gfxCursor(30, 23, 8); break;
         case RANDOMIZE: gfxCursor(41,23,11); break;
         case SELECTED_SEG: gfxCursor(12, 33, 8); break;
         case KEY: gfxCursor(24, 33, 14); break;
