@@ -8,7 +8,7 @@ public:
     }
 
     enum SegSeqCursor {
-      NUM_SEGMENT, RANDOMIZE, SELECTED_SEG, KEY, SCALE, PITCH_RANGE, DENSITY, TIME,
+      NUM_SEGMENT, RANDOMIZE, PITCH_RANGE, SELECTED_SEG, TIME, KEY, SCALE, DENSITY, 
       DURATION,
     };
 
@@ -17,6 +17,7 @@ public:
         edit_segment = 0;
         current_segment = 0;
         step_counter = 0;
+        rand_all_apply_anim = 0;
         for (int i = 0; i < SEQ_MAX_SEGMENTS; ++i) {
             segments[i] = {0, 0, 7, 2, 7, 7};  // Default values
         }
@@ -62,15 +63,21 @@ public:
 
         Segment& seg = segments[edit_segment];
         switch(cursor) {
-            case NUM_SEGMENT: num_segments = constrain(num_segments + direction, 1, SEQ_MAX_SEGMENTS); break;
+            case NUM_SEGMENT: 
+            num_segments = constrain(num_segments + direction, 1, SEQ_MAX_SEGMENTS); 
+            if (edit_segment>num_segments){
+                edit_segment=num_segments-2;}  //change currently selected seg to be in range
+                break;  
+            
             case RANDOMIZE: 
-            if(direction>1){RandomizeAllSegments();}else{RandomizeSegment(edit_segment);}; break;
+            if(direction>0){RandomizeAllSegments();}else{RandomizeSegment(edit_segment);}; break;
+           
+            case PITCH_RANGE: seg.pitch_range = constrain(seg.pitch_range + direction, 0, 14); break;
             case SELECTED_SEG: edit_segment = constrain(edit_segment + direction, 0, num_segments-1); break;
+            case TIME: seg.time_signature = constrain(seg.time_signature + direction, 0, 3); break;
             case KEY: seg.key = constrain(seg.key + direction, 0, 11); break;
             case SCALE: seg.scale = constrain(seg.scale + direction, 0, 15); break;
-            case PITCH_RANGE: seg.pitch_range = constrain(seg.pitch_range + direction, 0, 14); break;
             case DENSITY: seg.density = constrain(seg.density + direction, 0, 14); break;
-            case TIME: seg.time_signature = constrain(seg.time_signature + direction, 0, 3); break;
             case DURATION: seg.duration = constrain(seg.duration + direction, 0, 14); break;
             
         }
@@ -114,6 +121,9 @@ private:
     uint8_t edit_segment;       //segment that is being edited
     uint32_t step_counter;
     int cursor;
+
+    //display
+    uint8_t rand_all_apply_anim = 0; // Countdown to animate icons for regenerate of all segments
 
     uint8_t notes[SEQ_MAX_STEPS];
     uint32_t gates;
@@ -161,6 +171,7 @@ private:
         for (int i = 0; i < num_segments; ++i) {
             RandomizeSegment(i);
         }
+        rand_all_apply_anim = 160; // Show that regeneration for all egments (anim for this many display updates)
     }
 
     void RandomizeSegment(int index) {
@@ -179,37 +190,56 @@ private:
 
         gfxPrint(1, 15, "Segs:");
         gfxPrint(30, 15, num_segments);
-        gfxIcon(43,13, RANDOM_ICON);
+        gfxIcon(43,14, RANDOM_ICON);
         
-        gfxPrint(1, 25, "S ");
-        gfxPrint(edit_segment + 1);
-        gfxPrint(":");
-        gfxPrint(OC::Strings::note_names_unpadded[segments[edit_segment].key]);
-        gfxPrint(38, 25, "");
-        gfxPrint(OC::scale_names_short[segments[edit_segment].scale]);
-        
-        gfxPrint(1, 35, "Rng:");
+        gfxPrint(1, 25, "Rng:");
         gfxPrint(segments[edit_segment].pitch_range);
         
-        gfxPrint(1, 45, "Den:");
-        gfxPrint(segments[edit_segment].density);
-        
+        //draw segments with randomization anim
+        int rand_y_offset = 0;
+        if (rand_all_apply_anim > 0) {
+            --rand_all_apply_anim;
+        }
+
+        for (int i =0; i < num_segments; ++i){
+            if (20*(8-i) > rand_all_apply_anim && rand_all_apply_anim > 20*(7-i)) {     //add a y offset to icons for 20
+                rand_y_offset = 2;
+            } 
+            else {rand_y_offset = 0;}
+
+            if (i == edit_segment){
+                gfxRect(i*8+1, 35-rand_y_offset, 6, 8); //draw selected segment with a solid box
+            }else if(i==current_segment){
+                gfxFrame(i*8+1, 35-rand_y_offset, 6, 8); //draw playing segment with a large hollow box
+            }else{
+                gfxFrame(i*8+2, 35-rand_y_offset, 5, 7); //draw all other segments with a small hollow box
+            }
+        }
+
         const char* time_sigs[] = {"2/4", "3/4", "4/4", "5/4"};
-        gfxPrint(1, 55, time_sigs[segments[edit_segment].time_signature]);
-        gfxPrint(24, 55, "Dur:");
+        gfxPrint(1, 45, time_sigs[segments[edit_segment].time_signature]);
+        gfxPrint(24,45,"");
+        gfxPrint(OC::Strings::note_names_unpadded[segments[edit_segment].key]);
+        gfxPrint(38, 45, "");
+        gfxPrint(OC::scale_names_short[segments[edit_segment].scale]);
+       
+        
+        gfxPrint(1, 55, "Den:");
+        gfxPrint(segments[edit_segment].density);
+        gfxPrint(32, 55, "Dur:");
         gfxPrint(segments[edit_segment].duration);
 
 
        switch (cursor){
         case NUM_SEGMENT: gfxCursor(30, 23, 8); break;
         case RANDOMIZE: gfxCursor(41,23,11); break;
-        case SELECTED_SEG: gfxCursor(12, 33, 8); break;
-        case KEY: gfxCursor(24, 33, 14); break;
-        case SCALE: gfxCursor(38, 33, 24); break;
-        case PITCH_RANGE: gfxCursor(24,43,10); break;
-        case DENSITY: gfxCursor(24, 53, 10); break;
-        case TIME: gfxCursor(1, 63, 20); break;
-        case DURATION: gfxCursor(46,63,12); break;
+        case PITCH_RANGE: gfxCursor(24,33,10); break;
+        case SELECTED_SEG: gfxCursor(1, 43, 62, 1); break;
+        case TIME: gfxCursor(1, 53, 20); break;
+        case KEY: gfxCursor(24, 53, 14); break;
+        case SCALE: gfxCursor(38, 53, 24); break;
+        case DENSITY: gfxCursor(24, 63, 10); break;
+        case DURATION: gfxCursor(52,63,12); break;
        }
     }
 
