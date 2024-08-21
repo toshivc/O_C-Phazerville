@@ -207,12 +207,14 @@ private:
             } 
             else {rand_y_offset = 0;}
 
-            if (i == edit_segment){
-                gfxRect(i*8+1, 35-rand_y_offset, 6, 8); //draw selected segment with a solid box
+            if (i==edit_segment && i == current_segment){
+                gfxRect(i*8+1, 34-rand_y_offset, 6, 8); //draw selected segment that is playing with a large solid box
+            }else if(i == edit_segment){
+                gfxRect(i*8+2, 35-rand_y_offset, 5, 6); //draw selected segment with a small solid box
             }else if(i==current_segment){
-                gfxFrame(i*8+1, 35-rand_y_offset, 6, 8); //draw playing segment with a large hollow box
+                gfxFrame(i*8+1, 34-rand_y_offset, 6, 8); //draw playing segment with a large hollow box
             }else{
-                gfxFrame(i*8+2, 35-rand_y_offset, 5, 7); //draw all other segments with a small hollow box
+                gfxFrame(i*8+2, 35-rand_y_offset, 5, 6); //draw all other segments with a small hollow box
             }
         }
 
