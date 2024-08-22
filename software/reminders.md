@@ -38,3 +38,47 @@
 | 4/4   C   AEOL   |
 |
 |------------------|
+
+## Working Principle
+Segments
+* The generated sequence is split into musical bars or segments.
+* The number of segments in the sequence is determined by the `num_segments`.
+* The maximum `num_segments` is defined by `SEQ_MAX_SEGS` which by default is 8.
+* Each segment has a `time_signature`. Available time signatures include: 2/4, 3/4, 4/4, 5/4. This determines how long each segment is
+* Each segment has its own `key` and `scale`. This determines how each segment, or bar, should be quantized to musical pitches.
+
+Phrases
+* Each segment consists of a sequence of note pitches and gates that are generated.
+* Segments are constructed in musical phrases. These are short components of a melodic idea.
+* Phrases have a `phrase_length` which determines how long the phrase can be. Prases can be as short as a quater note and as long as a semibreve.
+* Phrases can go over the bar line. In other words, they can start before in one segment and end in the next segment.
+* `Phrase_repetition_probability` decides how likely it is that a phase is repeated. At its lowest value the phrase is entirely new, in the middle the phrase repeats some parts but changes or adds new parts, and at its maximum is entirely repeated.
+* When some or all of a phrase is repeated, it is borrowed from a previously generated phrase. 
+    * For musical results, when repeating in multiple phrases, it should  somehow borrow from the same phrase. For instance it should be possible to have the phrase sequence ABACABAD where A is borrowed from alot, B is borrowed from sometimes and C and D are unique. Also the order of borrowing is important. Often in music phrases are repeated in even intervals, and seperated by other new phrases. For instance the call and response.
+
+Gate Generation
+* Gates are generated for each phrase.
+* Generating the gates has a `note_density` which detemines how many notes are in the phrase. The remaining inactive gates are rests.
+* Every note also has a `note_duration_probability` which determines the probability of how long the note is. At its minimum notes can be as short as semi-quaver, and at is maximum they can be held for a semibreve.
+* The interconnectedness of these two parameters determine the rest duration.Some example scenarios illustrate the concept: 
+    * Low `note_density` and low `note_duration_probability` gives few short stacatto notes and long rests.
+    * Low `note_density` and high `note_duration_probability` gives few notes with long duration and short rests.
+    * High `note_density` and low `note_duration_probability` gives many short notes with short rests
+    * High `note_density` and high `note_duration_probability` gives many long notes with very short rests.
+
+TODO Pitch Generation
+* For each note that is generated, a pitch is also generated.
+* `pitch_range` constrains the generated sequence within a specified range. At its minimum the range is roughly a 5th. At its maximum pitches can have a range up to 3 octaves.
+* The `center_pitch` determines the offset of the sequence pitch. at low values generated sequence tend to be closer to the bass register, whil at higher values sequences are in the soprano range.
+* However when constructing these segments (ie not repeating them or repeating only some of the phrase) lets use `pitch_interval_distribution` to determine the pitches.
+
+Generation
+* All 'randomisation' of the values discussed above are done with a seed. This allows deterministic generation of sequences.
+* By using a seed, sequences can be recalled later.
+* To avoid stuttering, Amortizing is implemented to split the generation of the sequence over multiple frames.
+
+
+
+Some additional notes
+* Global parameters for all segments includes: `pitch_range`, `center_pitch`, `note_density`, `note_duration_probability`, `pitch_interval_distribution`
+* Local parameters for each segment includes: `time_signature`, `key`, `scale`, `phrase_repetition_probability`, `phrase_length`
