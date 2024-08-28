@@ -51,6 +51,9 @@ public:
       void ToggleStep(int idx) {
         muted ^= (0x01 << idx);
       }
+      void SetMute(int idx, bool set = true) {
+        muted = (muted & ~(0x01 << idx)) | ((set & 0x01) << idx);
+      }
       bool Muted(int idx) {
         return (muted >> idx) & 0x01;
       }
@@ -62,8 +65,9 @@ public:
         // reset case
         if (clocked && step_index < 0) {
             step_index = 0;
+            divmult[step_index].last_clock = last_clock;
             last_clock = OC::CORE::ticks;
-            return StepActive(step_index) && divmult[step_index].Tick(true);
+            return divmult[step_index].Tick(true) && StepActive(step_index);
         }
 
         trigout = divmult[step_index].Tick(clocked);
@@ -205,7 +209,10 @@ public:
             Pack(data, PackLocation {ch*NUM_STEPS*b + i*b, b}, val);
           }
           if (offset)
-            Pack(data, PackLocation { size_t(60 + ch*2), 2 }, 1);
+            Pack(data, PackLocation { size_t(60 + ch*2), 1 }, 1);
+
+          if (!div_seq[ch].StepActive(0))
+            Pack(data, PackLocation { size_t(61 + ch*2), 1 }, 1);
         }
         return data;
     }
@@ -213,13 +220,16 @@ public:
     void OnDataReceive(uint64_t data) {
         const size_t b = 6; // bitsize
         ForEachChannel(ch) {
-            int offset = Unpack(data, PackLocation { size_t(60 + ch*2), 2 }) ? 16 : 0;
+            int offset = Unpack(data, PackLocation { size_t(60 + ch*2), 1 }) ? 16 : 0;
             for (size_t i = 0; i < NUM_STEPS; i++) {
                 div_seq[ch].divmult[i].steps = Unpack(data, PackLocation {ch*NUM_STEPS*b + i*b, b}) - offset;
                 div_seq[ch].divmult[i].steps = constrain(div_seq[ch].divmult[i].steps, -MAX_DIV, MAX_DIV);
             }
             // step 1 cannot be zero
             if (div_seq[ch].divmult[0].steps == 0) ++div_seq[ch].divmult[0].steps;
+
+            bool first_step_mute = Unpack(data, PackLocation{ size_t(61 + ch*2), 1});
+            div_seq[ch].SetMute(0, first_step_mute);
         }
         Reset();
     }
