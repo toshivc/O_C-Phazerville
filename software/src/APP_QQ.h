@@ -37,6 +37,7 @@
 #include "braids_quantizer.h"
 #include "braids_quantizer_scales.h"
 #include "OC_menus.h"
+#include "OC_visualfx.h"
 #include "OC_scales.h"
 #include "OC_scale_edit.h"
 #include "OC_strings.h"
