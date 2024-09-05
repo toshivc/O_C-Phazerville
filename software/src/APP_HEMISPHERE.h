@@ -43,8 +43,10 @@
 
 #include "hemisphere_config.h"
 
-// We depend on Calibr8or now
+#ifdef ENABLE_APP_CALIBR8OR
+// We depend on Calibr8or to save quantizer settings
 #include "APP_CALIBR8OR.h"
+#endif
 
 // The settings specify the selected applets, and 64 bits of data for each applet,
 // plus 64 bits of data for the ClockSetup applet (which includes some misc config).
@@ -297,9 +299,32 @@ public:
 
         // initiate actual EEPROM save - ONLY if necessary!
         if (doSave && !skip_eeprom) {
+#ifdef ENABLE_APP_CALIBR8OR
           // call Calibr8or so it remembers quantizer settings
           // this also takes care of the EEPROM save
           Calibr8or_instance.SavePreset();
+#else
+        // initiate actual EEPROM save
+        OC::CORE::app_isr_enabled = false;
+        OC::draw_save_message(16);
+        delay(1);
+        OC::draw_save_message(32);
+        OC::save_app_data();
+        OC::draw_save_message(64);
+
+        const uint32_t timeout = 100;
+        uint32_t start = millis();
+        while(millis() < start + timeout) {
+          GRAPHICS_BEGIN_FRAME(true);
+          graphics.setPrintPos(13, 18);
+          graphics.print("Settings saved");
+          graphics.setPrintPos(31, 27);
+          graphics.print("to EEPROM!");
+          GRAPHICS_END_FRAME();
+        }
+
+        OC::CORE::app_isr_enabled = true;
+#endif
         }
 
     }
