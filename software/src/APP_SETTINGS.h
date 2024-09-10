@@ -42,7 +42,12 @@ public:
   };
 
   void Start() { }
-  void Resume() { }
+  void Resume() {
+    if (calibration_mode && !calibration_complete) {
+      // restart calibration if you exit and come back
+      Calibration();
+    }
+  }
 
   void Controller()
   {
@@ -67,7 +72,9 @@ public:
           case HELLO:
             if (calibration_state.encoder_value) {
               SERIAL_PRINTLN("Reset to defaults...");
+              uint32_t flags = OC::calibration_data.flags & CALIBRATION_FLAG_ENCODER_MASK;
               OC::calibration_reset();
+              OC::calibration_data.flags |= flags; // preserve encoder config
               calibration_state.used_defaults = true;
             }
             break;
@@ -156,9 +163,6 @@ public:
 
       OC::calibration_update(calibration_state);
       return;
-    }
-
-    if (calibration_mode && calibration_complete) {
     }
 
     #ifdef PEWPEWPEW
