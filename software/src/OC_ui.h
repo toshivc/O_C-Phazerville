@@ -79,7 +79,6 @@ public:
   UiMode Splashscreen(bool &reset_settings);
   bool ConfirmReset();
   void DebugStats();
-  void Calibrate();
   void AppSettings();
   UiMode DispatchEvents(const OC::App *app);
 
