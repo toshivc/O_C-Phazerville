@@ -358,6 +358,10 @@ typedef struct IOFrame {
 
     // --- Soft IO ---
     void Out(DAC_CHANNEL channel, int value) {
+        // rising edge detection for trigger loopback
+        if (value > GATE_THRESHOLD && outputs[channel] < GATE_THRESHOLD)
+          clockout_q[channel] = true;
+
         output_diff[channel] = value - outputs[channel];
         outputs[channel] = value;
     }
