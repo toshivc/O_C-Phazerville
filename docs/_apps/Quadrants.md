@@ -3,7 +3,7 @@ layout: default
 ---
 # Quadrants
 
-![O_CT4.1 Control Guide](https://raw.githubusercontent.com/PaulStoffregen/O_C_T41/main/docs/front_panel_desc.png)
+![O_CT4.1 Control Guide](images/front_panel_desc.png)
 
 **Quadrants** is essentially a copy of Hemispheres, upgraded to host **four** applets at a time to take advantage of new 8-channel hardware shields with Teensy 4.1.
 
