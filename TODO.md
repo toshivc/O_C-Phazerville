@@ -1,18 +1,31 @@
-TODO
+TODO (Roadmap)
 ===
 
-* Fully merge "abandoned/refactoring" branch from pld
+# v1.9
+* Unipolar variant of SequenceX?
+* T4.1 - expand to 8 channels: Piqued, Quadraturia, Captain MIDI
+
+# v2.0
+* **Fully merge "abandoned/refactoring" branch from pld**
+  - this was mostly done on the dev/2.0 branch, needs rebase
 * Auto-tuner with floor/ceiling detection (fail gracefully)
-* generalize applet params for flexible assignment, extra virtual I/O
+* generalized AppletParams for flexible assignment, extra virtual I/O
+  - MIDI Learn for anything
+* Audio Applets for T4.1
+* Integrate Calibr8or with DAC for global tracking adjustments
+
+# ???
+* MIDI looper applet!
 * Update Boilerplates - I just assume this needs attention
-* Polyphonic MIDI input tracking
+* better Polyphonic MIDI input tracking
 * MIDI output for all apps?
 
-[APP IDEAS]
+# APP IDEAS
 * Two Spheres (two applets in series on each side)
 * Snake Game
 
-[DONE]
+# [DONE]
+* Multipliers in DivSeq (maybe a separate applet)
 * Runtime filtering/hiding of Applets
 * QUADRANTS
 * Automatic stop for internal Clock
