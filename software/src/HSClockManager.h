@@ -315,7 +315,9 @@ public:
         return midi_out_enabled && Tock(MIDI_CLOCK);
     }
 
-    bool EndOfBeat(int ch = 0) {return count[ch] == 1;}
+    bool EndOfBeat(int ch = 0) {
+      return beat_tick == OC::CORE::ticks;
+    }
 
     bool Cycle(int ch = 0) {return cycle;}
 };
