@@ -75,6 +75,7 @@ class_name class_name ## _instance[2]
 #include "applets/MixerBal.h"
 #include "applets/MultiScale.h"
 #include "applets/Palimpsest.h"
+#include "applets/Phraser.h"
 #include "applets/Pigeons.h"
 #include "applets/PolyDiv.h"
 #include "applets/ProbabilityDivider.h"
@@ -114,6 +115,7 @@ class_name class_name ## _instance[2]
 
 
 CREATE_APPLET(SegmentedSequencer);      //added
+CREATE_APPLET(Phraser);                 
 
 CREATE_APPLET(Cumulus);
 CREATE_APPLET(ADSREG);
@@ -233,6 +235,7 @@ CREATE_APPLET(VectorMorph);
     DECLARE_APPLET( 33, 0x10, MixerBal), \
     DECLARE_APPLET( 73, 0x08, MultiScale), \
     DECLARE_APPLET( 20, 0x02, Palimpsest), \
+    DECLARE_APPLET( 101,0x02, Phraser),\
     DECLARE_APPLET( 71, 0x02, Pigeons), \
     DECLARE_APPLET( 72, 0x06, PolyDiv), \
     DECLARE_APPLET( 59, 0x04, ProbabilityDivider), \

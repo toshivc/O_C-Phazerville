@@ -18,6 +18,16 @@ The SegmentedSequencer is an applet for the eurorack module O_c that generates m
 - Phrases can cross segment boundaries, allowing for musical ideas to flow naturally across bar lines.
 - `phrase_repetition_probability` determines likelihood and extent of phrase repetition.
 
+### Phrase Repetition
+- Controlled by `phrase_repetition_probability`:
+  - At 0: generates an entirely new phrase
+  - At maximum: repeats an entire phrase
+  - In between: repeats a proportional amount of the steps in a phrase
+- When repeating, priority is given to:
+  1. Changing pitches
+  2. Adding new notes
+  3. Removing notes
+
 ### Gate Generation
 - Gates are generated probabilistically for each phrase.
 - `note_density` determines how many notes are in the phrase.
@@ -30,15 +40,7 @@ The SegmentedSequencer is an applet for the eurorack module O_c that generates m
 - Melodic contour is considered per phrase, with a continuous parameter controlling the tendency for pitch movement (ascending to descending).
 - Pitch sequence is generated before quantization to allow seamless transitions between segments.
 
-### Phrase Repetition
-- Controlled by `phrase_repetition_probability`:
-  - At 0: generates an entirely new phrase
-  - At maximum: repeats an entire phrase
-  - In between: repeats a proportional amount of the phrase
-- When repeating, priority is given to:
-  1. Changing pitches
-  2. Adding new notes
-  3. Removing notes
+
 
 ### Generation and Playback
 - Randomization uses a seed for deterministic generation and recall of sequences.
@@ -68,4 +70,11 @@ The SegmentedSequencer is an applet for the eurorack module O_c that generates m
 - Large jumps or undesired intervals may occur due to quantization between segments.
 - The use of a seed for randomization ensures that sequences can be deterministically generated and recalled.
 
-
+# scratchpad
+### event approach ideas
+* Instead of defining a sequence by steps that are on or off, define it by an event with a length.
+* events have the following attributes
+  * `length`: how many steps the event happens for
+  * `event_type`: either a note (on) or a rest (off)
+  * `phrase_start_flag`: indicates that the event is the start of a phrase.
+*   

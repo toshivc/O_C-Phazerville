@@ -46,20 +46,13 @@ public:
         DrawInterface();
     }
 
-    /*void OnButtonPress() {
-        if (cursor == NUM_SEGMENT) {
-            RandomizeAllSegments();
-        } else {
-            //RandomizeSegment(current_segment);
-        }
-    }*/
 
     void OnEncoderMove(int direction) {
         if (!EditMode()) { // move cursor
         MoveCursor(cursor, direction, 8);
         return;
         }
-
+    
 
         Segment& seg = segments[edit_segment];
         switch(cursor) {

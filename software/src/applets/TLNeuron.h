@@ -20,49 +20,77 @@
 
 // How fast the axon pulses when active
 #define HEM_TLN_ACTIVE_TICKS 1500
+#define NUM_DENDRITES 5
+#define NUM_AXONS 2
 
 class TLNeuron : public HemisphereApplet {
 public:
+    // Enum for cursor management (optional, can be expanded)
+    enum TLNeuronCursor {
+        OUTPUTAXON,
+        DENDRITE1,
+        DENDRITE2,
+        DENDRITE3,
+        DENDRITE4,
+        DENDRITE5,
+        AXON,
+        LAST_SETTING = AXON
+    };
+
 
     const char* applet_name() { // Maximum 10 characters
         return "TL Neuron";
     }
 
     void Start() {
-        selected = 0;
+        cursor = 0;
+        //selected = 0;
     }
 
     void Controller() {
-        // Summing function: add up the three weights
-        int sum = 0;
-        ForEachChannel(ch)
-        {
-            if (Gate(ch)) {
-                sum += dendrite_weight[ch];
-                dendrite_activated[ch] = 1;
-            } else {
-                dendrite_activated[ch] = 0;
+        
+        
+        //Update outputs for each axon
+        for(int a = 0; a < NUM_AXONS; a++){
+            // Summing function: add up the 5 weights
+            int sum = 0;
+
+            ForEachChannel(ch){
+                //gate dendrites (1 and 2)
+                if (Gate(ch)) {
+                    sum += dendrite_weight[a][ch];
+                    dendrite_activated[a][ch] = 1;
+                } else {
+                    dendrite_activated[a][ch] = 0;
+                }
+
+                //CV dendrites (3 and 4)
+                if (In(ch) > (HEMISPHERE_MAX_INPUT_CV / 2)) {
+                    sum += dendrite_weight[a][2+ch];
+                    dendrite_activated[a][2+ch] = 1;
+                } else {
+                    dendrite_activated[a][2+ch] = 0;
+                }
             }
-        }
-        if (In(0) > (HEMISPHERE_MAX_INPUT_CV / 2)) {
-            sum += dendrite_weight[2];
-            dendrite_activated[2] = 1;
-        } else {
-            dendrite_activated[2] = 0;
-        }
+            //Feedback dendrite (5)
+            if (axon_activated[a^1]) {
+                sum += dendrite_weight[a][4];
+                dendrite_activated[a][4] = 1;
+            } else {
+                dendrite_activated[a][4] = 0;
+            }
 
-        // Threshold function: fire the axon if the sum is GREATER THAN the threshhold
-        // Both outputs have the same signal, in case you want to feed an output back
-        // to an input.
-        if (!axon_activated) axon_radius = 5;
-        axon_activated = (sum > threshold);
-        ForEachChannel(ch) GateOut(ch, axon_activated);
-
-        // Increase the axon radius via timer
-        if (--axon_countdown < 0) {
-            axon_countdown = HEM_TLN_ACTIVE_TICKS;
-            ++axon_radius;
-            if (axon_radius > 14) axon_radius = 5;
+            // Threshold function: fire the axon if the sum is GREATER THAN the threshhold
+            if (!axon_activated[a]) axon_radius[a] = 5;
+            axon_activated[a] = (sum > threshold[a]);
+            GateOut(a, axon_activated[a]);
+            
+            // Increase the axon radius via timer
+            if (--axon_countdown[a] < 0) {
+                axon_countdown[a] = HEM_TLN_ACTIVE_TICKS;
+                ++axon_radius[a];
+                if (axon_radius[a] > 14) axon_radius[a] = 5;
+            }
         }
     }
 
@@ -72,84 +100,130 @@ public:
         DrawStates();
     }
 
-    void OnButtonPress() {
-        if (++selected > 3) selected = 0;
-        ResetCursor();
-    }
 
     void OnEncoderMove(int direction) {
-        if (selected < 3) {
-            dendrite_weight[selected] = constrain(dendrite_weight[selected] + direction, -9, 9);
-        } else {
-            threshold = constrain(threshold + direction, -27, 27);
+        if (!EditMode()) { // move cursor
+        MoveCursor(cursor, direction, LAST_SETTING);
+        return;
+        }
+        
+        switch(cursor) {
+        case OUTPUTAXON: selected_axon = constrain(selected_axon + direction, 0, 1); break;
+        case DENDRITE1:
+        case DENDRITE2:
+        case DENDRITE3:
+        case DENDRITE4:
+        case DENDRITE5:{
+            dendrite_weight[selected_axon][cursor-1] = constrain(dendrite_weight[selected_axon][cursor-1] + direction, -9, 9);
+        }; break;
+        case AXON: threshold[selected_axon] = constrain(threshold[selected_axon] + direction, -27, 27); break;
         }
     }
 
     uint64_t OnDataRequest() {
         uint64_t data = 0;
-        Pack(data, PackLocation {0,5}, dendrite_weight[0] + 9);
-        Pack(data, PackLocation {5,5}, dendrite_weight[1] + 9);
-        Pack(data, PackLocation {10,5}, dendrite_weight[2] + 9);
-        Pack(data, PackLocation {15,6}, threshold + 27);
+        Pack(data, PackLocation {0,5}, dendrite_weight[0][0] + 9);
+        Pack(data, PackLocation {5,5}, dendrite_weight[0][1] + 9);
+        Pack(data, PackLocation {10,5}, dendrite_weight[0][2] + 9);
+        Pack(data, PackLocation {15,6}, threshold[0] + 27);
         return data;
     }
 
     void OnDataReceive(uint64_t data) {
-        dendrite_weight[0] = Unpack(data, PackLocation {0,5}) - 9;
-        dendrite_weight[1] = Unpack(data, PackLocation {5,5}) - 9;
-        dendrite_weight[2] = Unpack(data, PackLocation {10,5}) - 9;
-        threshold = Unpack(data, PackLocation {15,6}) - 27;
+        dendrite_weight[0][0] = Unpack(data, PackLocation {0,5}) - 9;
+        dendrite_weight[0][1] = Unpack(data, PackLocation {5,5}) - 9;
+        dendrite_weight[0][2] = Unpack(data, PackLocation {10,5}) - 9;
+        threshold[0] = Unpack(data, PackLocation {15,6}) - 27;
     }
 
 protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "1,2=Dendrites 1,2";
-        help[HEMISPHERE_HELP_CVS]      = "2=Dendrite3";
-        help[HEMISPHERE_HELP_OUTS]     = "A,B=Axon Output";
-        help[HEMISPHERE_HELP_ENCODER]  = "T=Set P=Select";
+        help[HEMISPHERE_HELP_CVS]      = "1,2=Dendrites 3,4";
+        help[HEMISPHERE_HELP_OUTS]     = "A,B=Axon Outputs";
+        help[HEMISPHERE_HELP_ENCODER]  = "Weights & Threshold";
         //                               "------------------" <-- Size Guide
     }
     
 private:
-    int selected; // Which thing is selected (Dendrite 1, 2, 3 weights; Axon threshold)
-    int dendrite_weight[3] = {5, 5, 0};
-    int threshold = 9;
-    bool dendrite_activated[3];
-    bool axon_activated;
-    int axon_radius = 5;
-    int axon_countdown;
+    
+    int cursor; // Which thing is selected (Dendrite 1, 2, 3, 4, FB weights; Axon threshold)
+    //int selected; 
+    int selected_axon = 0;
+    int dendrite_weight[NUM_AXONS][NUM_DENDRITES] = {{5, 5, 0, 0, 0}, {0, 0, 0, 0, 0}};
+    int threshold[NUM_AXONS] = {9,9};
+    bool dendrite_activated[NUM_AXONS][NUM_DENDRITES];
+    bool axon_activated[NUM_AXONS];
+    int axon_radius[NUM_AXONS] = {5,5};
+    int axon_countdown[NUM_AXONS];
+    
 
     void DrawDendrites() {
-        for (int d = 0; d < 3; d++)
-        {
-            int weight = dendrite_weight[d];
-            byte indent = d == 1 ? 4 : 0;
-            gfxCircle(9 + indent, 21 + (16 * d), 8); // Dendrite
-            gfxPrint((weight < 0 ? 1 : 6) + indent , 18 + (16 * d), weight);
-            if (selected == d && CursorBlink()) gfxCircle(9 + indent, 21 + (16 * d), 7);
+        int dendrite_location[NUM_DENDRITES][2]= {
+            {9, 31},   
+            {32-9, 20},
+            {32+9, 20},
+            {64-9, 31},
+            {13, 50},
+        };
+        
+        dendrite_location[4][0] = selected_axon ? 13 : 64-13; 
+
+        for (int d = 0; d < NUM_DENDRITES; d++)
+        {        
+            int weight = dendrite_weight[selected_axon][d];
+            gfxCircle(dendrite_location[d][0],dendrite_location[d][1], 8); // Dendrite
+            gfxPrint(dendrite_location[d][0] + (weight < 0 ? -6 : -3) , dendrite_location[d][1]-3, weight); //add (weight < 0 ? 1 : 6) to offset weight into center of circle
+            if (EditMode()){
+                if (cursor == d + 1 ) gfxCircle(dendrite_location[d][0],dendrite_location[d][1], 7);
+            } else {
+                if (cursor == d + 1 && CursorBlink()) gfxCircle(dendrite_location[d][0],dendrite_location[d][1], 7);
+            }
+
+            //Draw the synapses
+            gfxDottedLine(dendrite_location[d][0], dendrite_location[d][1], (selected_axon ? 39 : 24), 41, dendrite_activated[selected_axon][d] ? 1 : 3);  
         }
     }
 
     void DrawAxon() {
-        gfxCircle(48, 37, 12);
-        int x = 41; // Starting x position for number
-        if (threshold < 10 && threshold > -10) x += 5; // Shove over a bit if a one-digit number
-        if (threshold < 0) x -= 5; // Pull back if a sign is necessary
-        gfxPrint(x, 34, threshold);
-        if (selected == 3 && CursorBlink()) gfxCircle(48, 37, 11);
+        
+        int axon_x = selected_axon ? 64-19 : 19;
+        const int axon_y = 51;
+        
+        //Draw axon
+        gfxCircle(axon_x, axon_y, 12);
+        //Print threshold        
+        int x = CenterDigits(axon_x, threshold[selected_axon]);
+        gfxPrint(x-3, axon_y-3, threshold[selected_axon]);
+
+
+        //Draw Axon highlight if it is selected
+        if (EditMode()){
+            if (cursor == AXON ) gfxCircle(axon_x, axon_y, 11);
+        } else {
+            if (cursor == AXON && CursorBlink()) gfxCircle(axon_x, axon_y, 11);
+        }
+
+        //Draw Axon activation
+        if (axon_activated[selected_axon]) {
+            gfxCircle(axon_x, axon_y, 12);
+            gfxCircle(axon_x, axon_y, axon_radius[selected_axon]);
+        } 
     }
 
     void DrawStates() {
-        for (int d = 0; d < 3; d++)
-        {
-            byte indent = d == 1 ? 4 : 0;
-            gfxDottedLine(17 + indent, 21 + (16 * d), 36, 37, dendrite_activated[d] ? 1 : 3); // Synapse
-        }
+        //Draw which axon is selected
+        gfxPrint(5, 13, selected_axon?"B":"A");
+        if (cursor == OUTPUTAXON){
+            gfxCursor(5, 21, 7);
+        }            
+    }
 
-        if (axon_activated) {
-            gfxCircle(48, 37, 12);
-            gfxCircle(48, 37, axon_radius);
-        }
+    int CenterDigits(int starting_x, int value){
+        int x = starting_x; // Starting x position for number
+        if (value > 9 || value < -9) x -= 2; // Shove left a bit if a two-digit number
+        if (value < 0) x -= 3; // Pull back if a sign is necessary
+        return x;
     }
 };
