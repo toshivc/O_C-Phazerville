@@ -182,7 +182,7 @@ private:
             }
 
             //Draw the synapses
-            gfxDottedLine(dendrite_location[d][0], dendrite_location[d][1], (selected_axon ? 39 : 24), 41, dendrite_activated[selected_axon][d] ? 1 : 3);  
+            gfxDottedLine(dendrite_location[d][0], dendrite_location[d][1], (selected_axon ? 39 : 25), 41, dendrite_activated[selected_axon][d] ? 1 : 3);  
         }
     }
 
@@ -222,7 +222,7 @@ private:
 
     int CenterDigits(int starting_x, int value){
         int x = starting_x; // Starting x position for number
-        if (value > 9 || value < -9) x -= 2; // Shove left a bit if a two-digit number
+        //if (value > 9 || value < -9) x -= 2; // Shove left a bit if a two-digit number
         if (value < 0) x -= 3; // Pull back if a sign is necessary
         return x;
     }
