@@ -350,7 +350,11 @@ void gfxPrint(int x_adv, int num) { // Print number with character padding
 
 /* Convert CV value to voltage level and print  to two decimal places */
 void gfxPrintVoltage(int cv) {
+#ifdef NORTHERNLIGHT
+    int v = (cv * 120) / (12 << 7);
+#else
     int v = (cv * 100) / (12 << 7);
+#endif
     bool neg = v < 0 ? 1 : 0;
     if (v < 0) v = -v;
     int wv = v / 100; // whole volts
