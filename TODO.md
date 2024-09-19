@@ -16,6 +16,8 @@ TODO (Roadmap)
 
 # ???
 * MIDI looper applet!
+* Implement some MIDI SysEx commands, sheesh
+  - WebMIDI interface
 * Update Boilerplates - I just assume this needs attention
 * better Polyphonic MIDI input tracking
 * MIDI output for all apps?
