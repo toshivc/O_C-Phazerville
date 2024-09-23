@@ -7,6 +7,9 @@ layout: default
 
 **TB-3PO** is a TB-303 style, pitch CV and gate pattern generator robot, capable of fixed-time, exponential slides on the pitch CV for that secret TB sauce. It will do mono-pitched style 303 lines on one end, or full-range, Turing Machine style stuff on the other, all designed and tuned for musicality and calls/responses in live wiggling.
 
+* [Video overview](https://www.youtube.com/watch?v=AHC2zWnkjJY)
+* [Synth Dad Tutorial](https://youtu.be/m08NMHuhFnE)
+
 ### I/O
 
 |        | 1/3 | 2/4 |
@@ -14,10 +17,6 @@ layout: default
 | TRIG   | Clock | Reset / Regenerate |
 | CV INs | Transpose | Density |
 | OUTs   | Pitch CV (with glide) | Gate (3v normal, 5v accent) |
-
-
-* Video overview: https://www.youtube.com/watch?v=AHC2zWnkjJY
-* Synth Dad Tutorial: https://youtu.be/m08NMHuhFnE
 
 ### UI Controls
 * Sets the seed as unlocked or locked
@@ -61,11 +60,14 @@ When the cursor is on Density, it can be changed directly by turning the encoder
 Turning the encoder while nonzero CV is applied will show the encoder's value alongside a "knob" icon momentarily, so the offset can be edited precisely even while CV is modulating it.
 Note that if the encoder value is set to -7 then the full range of density values is available by applying CV 0-5v.
 
-## Scale
-Sets the quantization scale to use for the pattern, and makes only those notes available to the pattern generator. It affects the current output CV immediately and applies to the pattern on the next clock.
+### Density Automation
+Phazerville makes it easy to twist up new pattern variations with a step-wise recording buffer of the encoder setting. It can be used in lieu of, or in addition to, an external CV modulation source. Use the AuxButton while Density is highlighted to (dis-)engage automation playback. It will record changes while editing the parameter, and play them back otherwise.
 
-## Root Note
-Sets the root note from C to B, transposing the entire pattern. The octave can also be changed by scrolling beyond these notes. Due to space restrictions, the root note is saved but its octave is not.
+## Quantizer Select
+_(updated in PSv1.8)_
+Sets the quantization scale/mask and root note to use for the pattern, and makes only those notes available to the pattern generator. It affects the current output CV immediately and applies to the pattern on the next clock.
+
+While this parameter is highlighted for editing, press the AuxButton (select button) to use the popup editor for the selected [global Quantizer](Hemisphere-Quantizer-Setup).
 
 ## Pattern Length
 Sets the length of the pattern from 1-32 steps. This doesn't alter the pattern apart from setting the loop point.
@@ -86,4 +88,4 @@ Like on the TB-303, each step can have Gate, Accent, Glide, +octave or -octave s
   - UP and DOWN arrows indicate if the current step is transposed up or down by one octave, respectively
 
 ## Credits
-Authored by Logarhythm1, with extensive modifications by djphazer
+Authored by Logarhythm1, with various modifications by djphazer
