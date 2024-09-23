@@ -42,7 +42,7 @@ just_the_docs:
       name: Applets
       nav_fold: true
 
-footer_content: "This documentation is part of the <a href=\"https://github.com/djphazer/O_C-Phazerville\">Phazerville Suite O_C firmware project</a>, published with Github Pages"
+footer_content: "This documentation is part of the <a href=\"https://github.com/djphazer/O_C-Phazerville\">Phazerville Suite O_C firmware project</a>, published with Github Pages. A Google Analytics tag is being used to collect basic, anonymous traffic statistics data."
 
 gh_edit_link: true
 gh_edit_link_text: "Edit this page on GitHub"
