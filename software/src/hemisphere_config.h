@@ -94,6 +94,7 @@ class_name class_name ## _instance[2]
 #include "applets/Shredder.h"
 #include "applets/Shuffle.h"
 #include "applets/Slew.h"
+#include "applets/Sprouts.h"
 #include "applets/Squanch.h"
 #include "applets/Stairs.h"
 #include "applets/Strum.h"
@@ -115,7 +116,9 @@ class_name class_name ## _instance[2]
 
 
 CREATE_APPLET(SegmentedSequencer);      //added
-CREATE_APPLET(Phraser);                 
+CREATE_APPLET(Phraser); 
+CREATE_APPLET(Sprouts);    
+
 
 CREATE_APPLET(Cumulus);
 CREATE_APPLET(ADSREG);
@@ -254,6 +257,7 @@ CREATE_APPLET(VectorMorph);
     DECLARE_APPLET( 58, 0x01, Shredder), \
     DECLARE_APPLET( 36, 0x04, Shuffle), \
     DECLARE_APPLET( 19, 0x01, Slew), \
+    DECLARE_APPLET( 102, 0x02, Sprouts),\
     DECLARE_APPLET( 46, 0x08, Squanch), \
     DECLARE_APPLET( 61, 0x01, Stairs), \
     DECLARE_APPLET( 74, 0x08, Strum), \
