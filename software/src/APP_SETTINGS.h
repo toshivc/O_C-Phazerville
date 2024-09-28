@@ -367,10 +367,9 @@ static size_t Settings_save(void *storage) {return 0;}
 static size_t Settings_restore(const void *storage) {return 0;}
 
 void Settings_isr() {
-#ifdef PEWPEWPEW
+  // Usually you would call BaseController, but Calibration is a special case.
+  // We don't want the automatic frame Load() and Send() calls from this App.
   Settings_instance.Controller();
-#endif
-// skip the Controller to avoid I/O conflict with Calibration
   return;
 }
 
