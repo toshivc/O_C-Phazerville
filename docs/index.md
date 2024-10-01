@@ -13,6 +13,8 @@ nav_order: 1
 > 
 > &mdash; _[DJ Phazer](https://ko-fi.com/djphazer)_
 
+![Various O_C modules running the firmware](images/three_criminals.jpg)
+
 ## Key Features:
 * More apps now fit on the same hardware (you can even [choose your own selection](https://github.com/djphazer/O_C-Phazerville/discussions/38))
 * Many new and improved [Hemisphere applets](App-and-Applet-Index#hemisphere-applets)
