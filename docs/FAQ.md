@@ -54,13 +54,13 @@ To disable external clock sync, set `Sync` to 0
 
 ## Q3: What is the deal with the quantizer engines? <a id='quantizers'>
 
-A: Instead of single, individual quantizers built into each applet, applets now share access to pool of 8 quantizer engines (Q1 - Q8) which can be configured in either a pop-up window, or in the [configuration menu](Hemispher-Quantizer-Setup). Each quantizer engine includes a root note, scale, octave adjustment, and note mask.
+A: Instead of single, individual quantizers built into each applet, applets now share access to pool of 8 quantizer engines (Q1 - Q8) which can be configured in either a pop-up window, or in the [configuration menu](Hemisphere-Quantizer-Setup). Each quantizer engine includes a root note, scale, octave adjustment, and note mask.
 
 To switch between quantizer engines in an applet, select the quantizer parameter for editing and adjust with the LEFT or RIGHT encoder, depending on hemisphere context. Some applets allow CV modulation of quantizer engine, with semitone modulation resolution. While selecting, a black pop-up window will be visible.
 
 To edit the active quantizer engine in an applet, select the quantizer parameter for editing and press the Aux Button: UP or DOWN depending on hemisphere context. This will open an inverted (white) pop-up window. Use the LEFT encoder to select the Quantizer parameter to edit, and adjust with the RIGHT encoder. The first parameter of the note mask is a rotation value. Press UP to raise the octave, or press DOWN to lower it.
 
-Or, see the [configuration menu](Hemispher-Quantizer-Setup) to edit all 8 engines.
+Or, see the [configuration menu](Hemisphere-Quantizer-Setup) to edit all 8 engines.
 
 <hr>
 
