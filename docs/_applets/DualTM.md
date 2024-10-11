@@ -3,7 +3,7 @@ layout: default
 ---
 # DualTM
 
-![Screenshot 2024-06-13 14-45-21](https://github.com/djphazer/O_C-Phazerville/assets/109086194/5b0be757-9e41-42b6-8f5f-b7590a91e740)
+![DualTM Screenshot](images/DualTM.png)
 
 Adapted from the original [**ShiftReg**](https://github.com/Chysn/O_C-HemisphereSuite/wiki/Shift-Register-(formerly-Turing)) applet, this pair of 32-bit shift registers is designed to be the ultimate source of generative sequences. Digital inputs 1 & 2 are still _Clock_ & _p-gate_, respectively. The CV inputs and outputs are assignable.
 
@@ -37,6 +37,9 @@ Each output can be assigned to one of the following:
 * Mod 2 - unquantized bipolar modulation from SECOND register
 * Trigger 1 - output trigger pulse when current bit is 1 on the FIRST register
 * Trigger 2 - output trigger pulse when current bit is 1 on the SECOND register
+* TrigPitch 1 or 2 - combination of Trigger and Pitch output modes
+  - a varying quantized voltage with a high pulse at the beginning, optional decay from Slew
+  - (useful for pinging filters or oscillators for pitched percussion or PEW PEW noizes)
 * Gate 1 - hold high if current bit is 1 on FIRST register
 * Gate 2 - hold high if current bit is 1 on SECOND register
 * Gate 1+2 - two-level gate output from the sum of the current bits
