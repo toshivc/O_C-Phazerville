@@ -26,6 +26,10 @@ public:
     qselect = io_offset;
   }
 
+  void Reset() {
+    index = -1;
+  }
+
   void Controller() {
 
     // TODO:
@@ -35,18 +39,23 @@ public:
     //   - Just advance index (allowing repeated notes)
     //   - Start another, overlapping strum
     bool index_out_of_bounds = index < 0 || index >= length;
+    bool step_advance = !stepmode;
 
     if (EndOfADCLag(0)) {
       countdown = 0;
       inc = 1;
       if (index_out_of_bounds)
         index = 0;
+      index_out_of_bounds = 0;
+      step_advance = true;
     }
     if (EndOfADCLag(1)) {
       countdown = 0;
       inc = -1;
       if (index_out_of_bounds)
         index = length - 1;
+      index_out_of_bounds = 0;
+      step_advance = true;
     }
 
     spacing_mod = spacing;
@@ -59,7 +68,7 @@ public:
     else
       Modulate(spacing_mod, 1, HEM_BURST_SPACING_MIN, HEM_BURST_SPACING_MAX);
 
-    if (countdown <= 0 && !index_out_of_bounds && inc != 0) {
+    if (step_advance && countdown <= 0 && !index_out_of_bounds && inc != 0) {
       int raw_pitch = In(0);
       HS::Quantize(qselect_mod, raw_pitch);
       disp = HS::GetLatestNoteNumber(qselect_mod);
@@ -89,14 +98,18 @@ public:
     if (cursor == QUANT)
       gfxSpicyCursor(1, 23, 13);
 
-    if (show_encoder) {
-      gfxPrint(8 + pad(100, spacing), 25, spacing);
-      --show_encoder;
+    if (stepmode) {
+      gfxPrint(8, 25, "[step]");
     } else {
-      gfxPrint(8 + pad(100, spacing_mod), 25, spacing_mod);
-      if (spacing_mod != spacing) gfxIcon(1, 23, CV_ICON);
+      if (show_encoder) {
+        gfxPrint(8 + pad(100, spacing), 25, spacing);
+        --show_encoder;
+      } else {
+        gfxPrint(8 + pad(100, spacing_mod), 25, spacing_mod);
+        if (spacing_mod != spacing) gfxIcon(1, 23, CV_ICON);
+      }
+      gfxPrint(28, 25, "ms");
     }
-    gfxPrint(28, 25, "ms");
     if (cursor == SPACING)
       gfxSpicyCursor(1, 33, 27);
 
@@ -145,7 +158,7 @@ public:
       }
     }
     if (cursor == LENGTH) {
-      gfxCursor(0, num_top + 8, min(6 * col_width, 63));
+      gfxSpicyCursor(0, num_top + 8, min(6 * col_width, 63));
     }
   }
 
@@ -155,9 +168,14 @@ public:
   void AuxButton() {
     if (cursor == QUANT)
       HS::QuantizerEdit(qselect);
+
     if (cursor == SPACING) {
       qmod = !qmod;
     }
+    if (cursor == LENGTH) {
+      stepmode = !stepmode;
+    }
+
     isEditing = false;
   }
 
@@ -171,6 +189,7 @@ public:
       qselect = constrain(qselect + direction, 0, QUANT_CHANNEL_COUNT - 1);
       break;
     case SPACING:
+      stepmode = false;
       spacing = constrain(spacing + direction, HEM_BURST_SPACING_MIN,
                           HEM_BURST_SPACING_MAX);
       show_encoder = HEMISPHERE_PULSE_ANIMATION_TIME;
@@ -243,6 +262,7 @@ private:
   int8_t qselect = 0;
   int8_t qselect_mod = 0;
   bool qmod = 0; // switch CV between spacing and qselect
+  bool stepmode = 0;
 
   int cursor = 0;
 
