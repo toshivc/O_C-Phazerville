@@ -227,71 +227,83 @@ public:
       }
 
       // event handling from Ui::Calibrate()
-      if (event.type == UI::EVENT_BUTTON_DOWN)
-        return;
-
-      switch (event.control) {
-        case CONTROL_BUTTON_L:
-          if (calibration_state.step == HELLO) calibration_complete = 1; // Way out --jj
-          if (calibration_state.step > CENTER_DISPLAY)
-            calibration_state.step = static_cast<CALIBRATION_STEP>(calibration_state.step - 1);
-          break;
-        case CONTROL_BUTTON_R:
+      if (event.type == UI::EVENT_BUTTON_DOWN) {
+        // act-on-press for right encoder
+        if (event.control == CONTROL_BUTTON_R) {
           // Special case these values to read, before moving to next step
           if (calibration_state.step < CALIBRATION_EXIT)
             calibration_state.step = static_cast<CALIBRATION_STEP>(calibration_state.step + 1);
           else
             calibration_complete = true;
-          break;
-        case CONTROL_ENCODER_L:
-          if (calibration_state.step > HELLO) {
-            calibration_state.step = static_cast<CALIBRATION_STEP>(calibration_state.step + event.value);
-            CONSTRAIN(calibration_state.step, CENTER_DISPLAY, CALIBRATION_EXIT);
-          }
-          break;
-        case CONTROL_ENCODER_R:
-          calibration_state.encoder_value += event.value;
-          break;
-        case CONTROL_BUTTON_UP:
-        case CONTROL_BUTTON_DOWN:
-          if (UI::EVENT_BUTTON_LONG_PRESS == event.type) {
-            const CalibrationStep *step = calibration_state.current_step;
 
-            // long-press DOWN to measure ADC points
-            switch (step->step) {
-              case ADC_PITCH_C2:
-                calibration_state.adc_1v = OC::ADC::value(ADC_CHANNEL_1);
-                break;
-              case ADC_PITCH_C4:
-                calibration_state.adc_3v = OC::ADC::value(ADC_CHANNEL_1);
-                break;
-              default: break;
-            }
+          // ignore release and long-press during calibration
+          OC::ui.SetButtonIgnoreMask();
+        }
+      } else {
+        // press, long-press, or encoder movements
+        switch (event.control) {
+          case CONTROL_BUTTON_L:
+            if (calibration_state.step == HELLO) calibration_complete = 1; // Way out --jj
+            if (calibration_state.step > CENTER_DISPLAY)
+              calibration_state.step = static_cast<CALIBRATION_STEP>(calibration_state.step - 1);
+            break;
+          case CONTROL_BUTTON_R:
+            break;
 
-            // long-press DOWN to auto-scale DAC values on current channel
-            int volts = step->index + DAC::kOctaveZero;
-            if (step->calibration_type == CALIBRATE_OCTAVE && volts > 0) {
-              int ch = step_to_channel(step->step);
-              uint16_t first = OC::calibration_data.dac.calibrated_octaves[ch][0];
-              uint16_t second = OC::calibration_data.dac.calibrated_octaves[ch][volts];
-              int interval = (second - first) / volts;
-
-              for (int i = 1; i < OCTAVES; ++i) {
-                first += interval;
-                OC::calibration_data.dac.calibrated_octaves[ch][i] = first;
-              }
+          case CONTROL_ENCODER_L:
+            if (calibration_state.step > HELLO) {
+              calibration_state.step = static_cast<CALIBRATION_STEP>(calibration_state.step + event.value);
+              CONSTRAIN(calibration_state.step, CENTER_DISPLAY, CALIBRATION_EXIT);
             }
             break;
-          }
+          case CONTROL_ENCODER_R:
+            calibration_state.encoder_value += event.value;
+            break;
 
-          if (calibration_state.step == HELLO || calibration_state.step == CALIBRATION_EXIT)
-            OC::ui.configure_encoders(calibration_data.next_encoder_config());
-          else if (calibration_state.step > CENTER_DISPLAY)
-            calibration_state.encoder_value += (event.control == CONTROL_BUTTON_UP ? 128 : -128);
+          case CONTROL_BUTTON_UP:
+          case CONTROL_BUTTON_DOWN:
+            if (UI::EVENT_BUTTON_LONG_PRESS == event.type) {
+              const CalibrationStep *step = calibration_state.current_step;
 
-          break;
-        default:
-          break;
+              // long-press DOWN to measure ADC points
+              switch (step->step) {
+                case ADC_PITCH_C2:
+                  calibration_state.adc_1v = OC::ADC::value(ADC_CHANNEL_1);
+                  break;
+                case ADC_PITCH_C4:
+                  calibration_state.adc_3v = OC::ADC::value(ADC_CHANNEL_1);
+                  break;
+                default: break;
+              }
+
+              // long-press DOWN to auto-scale DAC values on current channel
+              int volts = step->index + DAC::kOctaveZero;
+              if (step->calibration_type == CALIBRATE_OCTAVE && volts > 0) {
+                int ch = step_to_channel(step->step);
+                uint16_t first = OC::calibration_data.dac.calibrated_octaves[ch][0];
+                uint16_t second = OC::calibration_data.dac.calibrated_octaves[ch][volts];
+                int interval = (second - first) / volts;
+
+                for (int i = 1; i < OCTAVES; ++i) {
+                  first += interval;
+                  OC::calibration_data.dac.calibrated_octaves[ch][i] = first;
+                }
+              }
+              break;
+            }
+
+            // regular press cycles thru encoder orientations on first/last screen
+            if (calibration_state.step == HELLO || calibration_state.step == CALIBRATION_EXIT)
+              OC::ui.configure_encoders(calibration_data.next_encoder_config());
+            /* shortcut for jumping DAC values quicker...
+            else if (calibration_state.step > CENTER_DISPLAY)
+              calibration_state.encoder_value += (event.control == CONTROL_BUTTON_UP ? 128 : -128);
+            */
+
+            break;
+          default:
+            break;
+        }
       }
 
       if (calibration_complete) {

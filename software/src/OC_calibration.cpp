@@ -412,11 +412,11 @@ const CalibrationStep calibration_steps[CALIBRATION_STEP_LAST] = {
 #endif
 
   #if defined(NORTHERNLIGHT) && !defined(IO_10V)
-    { ADC_PITCH_C2, "ADC cal. octave #1", "CV1: Input 1.2V", "[R] Long press to set", default_footer, CALIBRATE_ADC_1V, 0, nullptr, 0, 0 },
-    { ADC_PITCH_C4, "ADC cal. octave #3", "CV1: Input 3.6V", "[R] Long press to set", default_footer, CALIBRATE_ADC_3V, 0, nullptr, 0, 0 },
+    { ADC_PITCH_C2, "ADC cal. octave #1", "CV1: Input 1.2V", "Hold [DOWN] to set", default_footer, CALIBRATE_ADC_1V, 0, nullptr, 0, 0 },
+    { ADC_PITCH_C4, "ADC cal. octave #3", "CV1: Input 3.6V", "Hold [DOWN] to set", default_footer, CALIBRATE_ADC_3V, 0, nullptr, 0, 0 },
   #else
-    { ADC_PITCH_C2, "CV Scaling 1V", "CV1: Input 1V (C2)", "[R] Long press to set", default_footer, CALIBRATE_ADC_1V, 0, nullptr, 0, 0 },
-    { ADC_PITCH_C4, "CV Scaling 3V", "CV1: Input 3V (C4)", "[R] Long press to set", default_footer, CALIBRATE_ADC_3V, 0, nullptr, 0, 0 },
+    { ADC_PITCH_C2, "CV Scaling 1V", "CV1: Input 1V (C2)", "Hold [DOWN] to set", default_footer, CALIBRATE_ADC_1V, 0, nullptr, 0, 0 },
+    { ADC_PITCH_C4, "CV Scaling 3V", "CV1: Input 3V (C4)", "Hold [DOWN] to set", default_footer, CALIBRATE_ADC_3V, 0, nullptr, 0, 0 },
   #endif
   
   // Changing screensaver to screen blank, and seconds to minutes
