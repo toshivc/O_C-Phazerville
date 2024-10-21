@@ -212,6 +212,8 @@ public:
     for (size_t i = 0; i < MAX_CHORD_LENGTH; i++) {
       Pack(data, PackLocation{25 + i * 6, 6}, intervals[i] - MIN_INTERVAL);
     }
+    Pack(data, PackLocation{61, 1}, stepmode);
+    Pack(data, PackLocation{62, 1}, qmod);
     return data;
   }
 
@@ -226,6 +228,8 @@ public:
     for (size_t i = 0; i < MAX_CHORD_LENGTH; i++) {
       intervals[i] = Unpack(data, PackLocation{25 + i * 6, 6}) + MIN_INTERVAL;
     }
+    stepmode = Unpack(data, PackLocation{61, 1});
+    qmod = Unpack(data, PackLocation{62, 1});
   }
 
 protected:
