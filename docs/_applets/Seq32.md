@@ -15,7 +15,7 @@ _**Important:**_ In addition to storing applet settings in a Preset, a manual [E
 
 |        |         1/3        |        2/4          |
 | ------ | :----------------: | :-----------------: |
-| TRIG   |        Clock       |       Reset         |
+| TRIG   |        Clock       |       Reset (Rest in Rec. Mode)        |
 | CV INs | Transpose<br>(or Pitch CV for Record) | Sequence Select<br>(or Accent gate) |
 | OUTs   |        Pitch       |    Gate/Trigger     |
 
@@ -34,7 +34,7 @@ _**Important:**_ In addition to storing applet settings in a Preset, a manual [E
 
 ### AuxButton Actions
 With certain parameters highlighted for editing, the select button will execute a secondary action:
-* Pattern# - Clear pattern
+* Pattern # - Clear pattern
 * Length - Randomize current pattern completely
 * Transpose - Randomize pitches of current pattern, using transpose as the range
 * Accent Gate Length - toggles a slight portamento on accented notes
@@ -44,6 +44,6 @@ With certain parameters highlighted for editing, the select button will execute 
 Use the encoder to move the cursor to a step, and push to toggle editing the note value. While editing, use the AuxButton to toggle Mute. Double-click to toggle Accent, indicated by a solid square.
 
 ### Record mode
-When the small record icon is engaged, the cursor is locked and stepwise CV recording is active. When a Clock trigger is received, CV1 is captured as pitch, CV2 is measured as Accent (gate threshold at 2v), and the sequencer advances. A Reset trigger does the same, except it mutes the step to insert a rest before advancing.
+When the small record icon is engaged, stepwise CV recording is active. When a Clock trigger is received, CV1 is captured as pitch, CV2 is measured as Accent (gate threshold at 2v), and the sequencer advances. A Reset trigger does the same, except it inserts a muted step (a rest) before advancing.
 
-While record mode is engaged, the encoder will move the playhead, and AuxButton toggles mute for the current note.
+While record mode is engaged, the encoder will move the playhead, and AuxButton toggles mute for the current note. Pressing the encoder disengages record mode.
