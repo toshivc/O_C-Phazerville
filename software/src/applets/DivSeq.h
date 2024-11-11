@@ -35,7 +35,8 @@ public:
         STEP1B, STEP2B, STEP3B, STEP4B, STEP5B,
         MUTE1A, MUTE2A, MUTE3A, MUTE4A, MUTE5A,
         MUTE1B, MUTE2B, MUTE3B, MUTE4B, MUTE5B,
-        LAST_SETTING = MUTE5B
+        RE_ZAP,
+        LAST_SETTING = RE_ZAP
     };
 
     struct DivSequence {
@@ -45,6 +46,9 @@ public:
       uint8_t muted = 0x0; // bitmask
       uint32_t last_clock = 0;
 
+      int Get(int s) {
+        return divmult[s].steps;
+      }
       void Set(int s, int div) {
         divmult[s].Set(div);
       }
@@ -111,6 +115,18 @@ public:
     }
 
     void Start() {
+      ForEachChannel(ch) {
+        int total = 16 + ch*16;
+        for (int i = 0; i < NUM_STEPS - 1; ++i) {
+          int val = random(total);
+          if (1 == val)
+            div_seq[ch].Set(i, -random(7)-1);
+          else
+            div_seq[ch].Set(i, val);
+          total -= val;
+        }
+        div_seq[ch].Set(NUM_STEPS - 1, total);
+      }
       Reset();
     }
 
@@ -166,6 +182,12 @@ public:
     }
 
     void OnButtonPress() {
+        if (RE_ZAP == cursor) {
+          Start();
+          cursor = 0;
+          return;
+        }
+
         if (cursor >= MUTE1A && !EditMode()) {
             const int ch = (cursor - MUTE1A) / NUM_STEPS;
             const int s = (cursor - MUTE1A) % NUM_STEPS;
@@ -191,7 +213,7 @@ public:
         if (ch > 1) // mutes
             div_seq[ch-2].ToggleStep(s);
         else {
-            const int div = div_seq[ch].divmult[s].steps + direction;
+            const int div = div_seq[ch].Get(s) + direction;
             div_seq[ch].Set(s, div);
         }
     }
@@ -256,6 +278,15 @@ private:
     ProbLoopLinker *loop_linker = loop_linker->get();
 
     void DrawInterface() {
+      if (RE_ZAP == cursor) {
+        gfxIcon(28, 22, DOWN_ICON);
+        gfxIcon(18, 32, RIGHT_ICON);
+        gfxIcon(28, 32, ZAP_ICON);
+        gfxIcon(38, 32, LEFT_ICON);
+        gfxIcon(28, 42, UP_ICON);
+        return;
+      }
+
       // divisions
       ForEachChannel(ch) {
         const size_t x = 31*ch;
