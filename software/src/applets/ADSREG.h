@@ -80,10 +80,10 @@ public:
             stage[ch] = HEM_EG_NO_STAGE;
 
             //-ghostils:Initialize ADSR channels independently
-            attack[ch] = 20;
+            attack[ch] = 10 + ch * 10;
             decay[ch] = 30;
             sustain[ch] = 120;
-            release[ch] = 25;
+            release[ch] = 25 + ch * 10;
             release_mod[ch] = 0;
         }
 
@@ -146,7 +146,7 @@ public:
       if (++edit_stage > HEM_EG_RELEASE) {
         edit_stage = HEM_EG_ATTACK;
         curEG ^= 1;
-        }
+      }
     }
 
     void OnEncoderMove(int direction) {
@@ -160,23 +160,25 @@ public:
     }
 
     uint64_t OnDataRequest() {
-        //-ghostils:Update to use an array and snapshot the values using curEG as the index
         uint64_t data = 0;
-        Pack(data, PackLocation {0,8}, attack[curEG]);
-        Pack(data, PackLocation {8,8}, decay[curEG]);
-        Pack(data, PackLocation {16,8}, sustain[curEG]);
-        Pack(data, PackLocation {24,8}, release[curEG]);
+        for(size_t ch = 0; ch < 2; ++ch) {
+          Pack(data, PackLocation {ch*32 + 0,8}, attack[ch]);
+          Pack(data, PackLocation {ch*32 + 8,8}, decay[ch]);
+          Pack(data, PackLocation {ch*32 + 16,8}, sustain[ch]);
+          Pack(data, PackLocation {ch*32 + 24,8}, release[ch]);
+        }
         return data;
     }
 
     void OnDataReceive(uint64_t data) {
-        //-ghostils:Update to use an array and snapshot the values using curEG as the index
-        attack[curEG] = Unpack(data, PackLocation {0,8});
-        decay[curEG] = Unpack(data, PackLocation {8,8});
-        sustain[curEG] = Unpack(data, PackLocation {16,8});
-        release[curEG] = Unpack(data, PackLocation {24,8});
+      for(size_t ch = 0; ch < 2; ++ch) {
+        attack[ch] =  Unpack(data, PackLocation {ch*32 + 0,8});
+        decay[ch] =   Unpack(data, PackLocation {ch*32 + 8,8});
+        sustain[ch] = Unpack(data, PackLocation {ch*32 + 16,8});
+        release[ch] = Unpack(data, PackLocation {ch*32 + 24,8});
+      }
 
-        if (attack[curEG] == 0) Start(); // If empty data, initialize
+      if (attack[curEG] == 0) Start(); // If empty data, initialize
     }
 
 protected:
@@ -203,12 +205,11 @@ private:
     //-ghostils:TODO Modify to adjust independently for each envelope, we won't be able to do both Attack and Release simultaneously so we either have to build a menu or just do Release.
     //-Parameterize 
 
-    int attack_mod; // Modification to attack from CV1
-
+    //int attack_mod; // Modification to attack from CV1
     int release_mod[2]; // Modification to release from CV2
 
     //-ghostils:Additions for tracking multiple ADSR's in each Hemisphere:
-    int curEG;
+    bool curEG;
 
     // Stage management
     int stage[2]; // The current ASDR stage of the current envelope
