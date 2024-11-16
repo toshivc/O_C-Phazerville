@@ -594,12 +594,23 @@ private:
     void DrawIndicator() {
         gfxLine(0, 45, 63, 45);
         gfxLine(0, 62, 63, 62);
-        for (int b = 0; b < 32; ++b)
+
+        const int ii = (length <= 16) ? 16 : 32;
+        for (int b = 0; b < ii; ++b)
         {
             int v = (reg[0] >> b) & 0x01;
             int v2 = (reg[1] >> b) & 0x01;
-            if (v) gfxRect(62 - (2 * b), 47, 1, 7);
-            if (v2) gfxRect(62 - (2 * b), 54, 1, 7);
+            if (v) gfxRect(62 - (64/ii * b) - 16/ii, 47, 32/ii, 7);
+            if (v2) gfxRect(62 - (64/ii * b) - 16/ii, 54, 32/ii, 7);
+        }
+
+        // I'm sure these two can be combined with more math.
+        if (length < 16) {
+          const int x_ = 4 * (16 - length);
+          gfxDottedLine(x_, 45, x_, 62);
+        } else if (length > 16 && length < 32) {
+          const int x_ = 2 * (32 - length) - 1;
+          gfxDottedLine(x_, 45, x_, 62);
         }
     }
 
