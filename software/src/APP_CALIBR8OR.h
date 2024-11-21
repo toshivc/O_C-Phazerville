@@ -202,7 +202,7 @@ Calibr8orPreset cal8_presets[NR_OF_PRESETS];
 class Calibr8or : public HSApplication {
 public:
     Calibr8or() {
-        for (int i = DAC_CHANNEL_A; i < DAC_CHANNEL_LAST; ++i) {
+        for (int i = 0; i < DAC_CHANNEL_LAST; ++i) {
             channel[i].chan_ = DAC_CHANNEL(i);
         }
     }

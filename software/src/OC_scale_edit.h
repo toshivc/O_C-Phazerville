@@ -413,7 +413,7 @@ void ScaleEditor<Owner>::HandleEncoderEvent(const UI::Event &event) {
         case _SCALING:
         {
          int item = scaling_cursor_pos_ + event.value;
-         CONSTRAIN(item, DAC_CHANNEL_A, DAC_CHANNEL_LAST - 0x1);
+         CONSTRAIN(item, 0, DAC_CHANNEL_LAST - 0x1);
          scaling_cursor_pos_ = item;
         }
         break;
