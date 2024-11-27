@@ -59,7 +59,7 @@ class TB_3PO: public HemisphereApplet {
 
     num_steps = 16;
 
-    gate_off_clock = 0;
+    gate_off_tick = 0;
     cycle_time = 0;
 
     curr_gate_cv = 0;
@@ -82,7 +82,7 @@ class TB_3PO: public HemisphereApplet {
   }
 
   void Controller() {
-    const int this_tick = OC::CORE::ticks;
+    const uint32_t this_tick = OC::CORE::ticks;
 
     if (Clock(1) || manual_reset_flag) {
       Reset();
@@ -129,16 +129,16 @@ class TB_3PO: public HemisphereApplet {
       if (step_is_gated(step) || step_is_slid(step_pv)) {
         curr_gate_cv = step_is_accent(step) ? HEMISPHERE_MAX_CV : HEMISPHERE_3V_CV;
 
-        int gate_time = (cycle_time / 2); // multiplier of 2
-        gate_off_clock = this_tick + gate_time;
+        uint32_t gate_time = (cycle_time / 2); // multiplier of 2
+        gate_off_tick = this_tick + gate_time;
       }
 
       curr_step_semitone = get_semitone_for_step(step);
 
     }
 
-    if (curr_gate_cv > 0 && gate_off_clock > 0 && this_tick >= gate_off_clock) {
-      gate_off_clock = 0;
+    if (curr_gate_cv > 0 && gate_off_tick > 0 && this_tick >= gate_off_tick) {
+      gate_off_tick = 0;
 
       if (!step_is_slid(step)) {
         curr_gate_cv = 0;
@@ -341,8 +341,8 @@ private:
   uint8_t current_pattern_scale_size; // Track what size scale was used to render the current pattern (for change detection)
 
   // For gate timing as ~32nd notes at tempo, detect clock rate like a clock multiplier
-  int gate_off_clock; // Scheduled cycle at which the gate should be turned off (when applicable)
-  int cycle_time; // Cycle time between the last two clock inputs
+  uint32_t gate_off_tick; // Scheduled cycle at which the gate should be turned off (when applicable)
+  uint32_t cycle_time; // Cycle time between the last two clock inputs
 
   // CV output values
   int32_t curr_gate_cv = 0;

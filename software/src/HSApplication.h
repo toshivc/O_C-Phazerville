@@ -200,7 +200,7 @@ public:
     // Buffered I/O functions for use in Views
     int ViewIn(int ch) {return frame.inputs[ch];}
     int ViewOut(int ch) {return frame.outputs[ch];}
-    int ClockCycleTicks(int ch) {return frame.cycle_ticks[ch];}
+    uint32_t ClockCycleTicks(int ch) {return frame.cycle_ticks[ch];}
 
     /* ADC Lag: There is a small delay between when a digital input can be read and when an ADC can be
      * read. The ADC value lags behind a bit in time. So StartADCLag() and EndADCLag() are used to
