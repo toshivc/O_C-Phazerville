@@ -20,12 +20,16 @@
 
 #include <Arduino.h>
 #include <EEPROM.h>
+#include "HSUtils.h"
 #include "OC_apps.h"
 #include "OC_calibration.h"
 #include "OC_ui.h"
 #include "HSApplication.h"
 #include "OC_strings.h"
 #include "src/drivers/display.h"
+#ifdef PEWPEWPEW
+#include "util/pewpewsplash.h"
+#endif
 
 extern "C" void _reboot_Teensyduino_();
 
@@ -427,6 +431,11 @@ void Settings_menu() {
 
 void Settings_screensaver() {
 #ifdef PEWPEWPEW
+    for (int i = 0; i < (pewpew_width * pewpew_height / 64); ++i) {
+      // TODO: the problem here is that one byte in XBM is a row of 8 pixels,
+      //       while one byte in the framebuffer is a column of 8 pixels
+      gfxBitmap((i & 0x1)*64, (i>>1)*8, 64, pewpew_bits + i*64);
+    }
     Settings_instance.PEWPEW();
 #endif
 }
