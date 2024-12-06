@@ -309,6 +309,8 @@ public:
                   first += interval;
                   OC::calibration_data.dac.calibrated_octaves[ch][i] = first;
                 }
+
+                calibration_state.auto_scale_set[ch] = true;
               }
               break;
             }
