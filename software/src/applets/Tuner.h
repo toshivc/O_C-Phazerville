@@ -64,8 +64,10 @@ public:
         AllowRestart();
     }
     void Unload() {
+      if (TUNER_ENABLED) {
         freq_measure.end();
         OC::DigitalInputs::reInit();
+      }
     }
 
     void Controller() {
