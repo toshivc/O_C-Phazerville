@@ -249,6 +249,8 @@ class TB_3PO: public HemisphereApplet {
     //Pack(data, PackLocation { 0, 8 }, GetScale(0));
     //Pack(data, PackLocation { 8, 4 }, GetRootNote(0));
 
+    Pack(data, PackLocation { 0, 1 }, lock_seed);
+
     Pack(data, PackLocation { 12, 4 }, density_encoder);
     Pack(data, PackLocation { 16, 16 }, seed);
     // old octave setting was here:
@@ -261,6 +263,7 @@ class TB_3PO: public HemisphereApplet {
   }
 
   void OnDataReceive(uint64_t data) {
+    lock_seed = Unpack(data, PackLocation { 0, 1 });
 
     density_encoder = Unpack(data, PackLocation { 12, 4 });
     seed = Unpack(data, PackLocation { 16, 16 });
