@@ -12,6 +12,7 @@
 #include "OC_menus.h"
 #include "OC_ui.h"
 #include "OC_options.h"
+#include "PhzIcons.h"
 #include "src/drivers/display.h"
 
 #ifdef VOR
@@ -255,9 +256,19 @@ UiMode Ui::Splashscreen(bool &reset_settings) {
     graphics.print(" ");
     graphics.print(OC::Strings::BUILD_TAG);
 
+    const uint8_t *iconroulette[] = {
+      PhzIcons::clockDivider, PhzIcons::clockSkip,
+      PhzIcons::clock_warp_A, PhzIcons::clock_warp_B,
+      PhzIcons::polyDiv,
+      ZAP_ICON
+    };
+
+    static int pick = 0;
+    if (now % 50 == 0) pick = random(6);
     // pew pew?
     for (int i = 0; i < 124; i+=8)
-      graphics.drawBitmap8(i, 56, 8, ZAP_ICON);
+      graphics.drawBitmap8(i, 56, 8, iconroulette[pick]);
+
     // chargin mah lazerrrr
     weegfx::coord_t w = (now-start)*128 / (SPLASHSCREEN_DELAY_MS/6);
     w %= 256;

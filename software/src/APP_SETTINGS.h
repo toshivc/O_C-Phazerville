@@ -23,6 +23,7 @@
 #include "HSUtils.h"
 #include "OC_apps.h"
 #include "OC_calibration.h"
+#include "OC_core.h"
 #include "OC_ui.h"
 #include "HSApplication.h"
 #include "OC_strings.h"
@@ -178,6 +179,11 @@ public:
       return;
     }
 
+    if (CORE::ticks % 3200 == 0) {
+      pick_left = random(8);
+      pick_right = random(8);
+    }
+
     #ifdef PEWPEWPEW
         HS::frame.Load();PewPewTime.PEWPEW(Clock(3)<<1|Clock(0));}
         struct{bool go=0;int idx=0;struct{uint8_t x,y;int x_v,y_v;}pewpews[8];
@@ -189,13 +195,21 @@ public:
     #endif
   }
 
+  const uint8_t *iconography[8] = {
+    PhzIcons::voltage, ZAP_ICON,
+    PhzIcons::pigeons, PhzIcons::camels,
+    PhzIcons::legoFace, PhzIcons::tb3P0,
+    PhzIcons::drLoFi, PhzIcons::umbrella,
+  };
+  int pick_left = 0, pick_right = 0;
+
     void View() {
       if (calibration_mode) {
         OC::calibration_draw(calibration_state);
         return;
       }
 
-        gfxHeader("Setup / About");
+        gfxHeader("Setup/About");
         gfxIcon(80, 0, OC::calibration_data.flipscreen() ? DOWN_ICON : UP_ICON);
         gfxIcon(90, 0, OC::calibration_data.flipcontrols() ? LEFT_ICON : RIGHT_ICON);
 
@@ -208,16 +222,19 @@ public:
         gfxPrint(100, 0, "T3.2");
         #endif
 
-        gfxIcon(0, 15, ZAP_ICON);
-        gfxIcon(120, 15, ZAP_ICON);
+        gfxIcon(0, 15, iconography[pick_left]);
+        gfxIcon(120, 15, iconography[pick_right]);
         #ifdef PEWPEWPEW
         gfxPrint(21, 15, "PEW! PEW! PEW!");
         #else
         gfxPrint(12, 15, "Phazerville Suite");
         #endif
-        gfxPrint(0, 25, OC::Strings::VERSION);
-        gfxPrint(0, 35, OC::Strings::BUILD_TAG);
-        gfxPrint(0, 45, "github.com/djphazer");
+        gfxIcon(0, 25, PhzIcons::full_book);
+        gfxPrint(10, 25, OC::Strings::VERSION);
+        gfxIcon(0, 35, PhzIcons::runglBook);
+        gfxPrint(10, 35, OC::Strings::BUILD_TAG);
+        gfxIcon(0, 45, PhzIcons::frontBack);
+        gfxPrint(10, 45, "github.com/djphazer");
         gfxPrint(0, 55, reflash ? "[Reflash]" : "[CALIBRATE]   [RESET]");
     }
 
