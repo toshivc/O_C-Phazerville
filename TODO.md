@@ -2,12 +2,13 @@ TODO (Roadmap)
 ===
 
 # v1.9
+* Config files on LittleFS / SD for T4.x
 * Unipolar variant of SequenceX?
 * T4.1 - expand to 8 channels: Piqued, Quadraturia, Captain MIDI
 
 # v2.0
 * **Fully merge "abandoned/refactoring" branch from pld**
-  - this was mostly done on the dev/2.0 branch, needs rebase
+  - this is partially done on the dev/2.0 branch
 * Auto-tuner with floor/ceiling detection (fail gracefully)
 * generalized AppletParams for flexible assignment, extra virtual I/O
   - MIDI Learn for anything
@@ -15,12 +16,13 @@ TODO (Roadmap)
 * Integrate Calibr8or with DAC for global tracking adjustments
 
 # ???
-* MIDI looper applet!
-* Implement some MIDI SysEx commands, sheesh
-  - WebMIDI interface
 * Update Boilerplates - I just assume this needs attention
-* better Polyphonic MIDI input tracking
-* MIDI output for all apps?
+* MORE MIDI STUFF:
+    - MIDI looper applet!
+    - better Polyphonic MIDI input tracking
+    - MIDI output for all apps?
+    - Implement some MIDI SysEx commands, sheesh
+    - WebMIDI interface
 
 # APP IDEAS
 * Two Spheres (two applets in series on each side)
