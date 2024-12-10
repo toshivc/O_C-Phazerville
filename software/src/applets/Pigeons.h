@@ -41,6 +41,9 @@ public:
     const char* applet_name() {
         return "Pigeons";
     }
+    const uint8_t* applet_icon() {
+      return (OC::CORE::ticks & (1<<13))? SINGING_PIGEON_ICON: SILENT_PIGEON_ICON;
+    }
 
     void Start() {
         ForEachChannel(ch) {

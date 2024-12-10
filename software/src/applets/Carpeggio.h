@@ -37,6 +37,7 @@ public:
     const char* applet_name() {
         return "Carpeggio";
     }
+    const uint8_t* applet_icon() { return PhzIcons::carpeggio; }
 
     void Start() {
         step = 0;

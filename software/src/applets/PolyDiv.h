@@ -57,6 +57,7 @@ public:
     const char* applet_name() {
         return "PolyDiv";
     }
+    const uint8_t* applet_icon() { return PhzIcons::polyDiv; }
 
     void Start() {
     }

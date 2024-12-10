@@ -6,6 +6,7 @@ public:
     const char* applet_name() {
         return "Game/Life";
     }
+    const uint8_t* applet_icon() { return PhzIcons::gameOfLife; }
 
     void Start() {
         for (int i = 0; i < 80; i++) board[i] = 0;

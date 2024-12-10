@@ -34,6 +34,7 @@ public:
     const char* applet_name() {
         return "Burst";
     }
+    const uint8_t* applet_icon() { return PhzIcons::burst; }
 
     void Start() {
         cursor = 0;

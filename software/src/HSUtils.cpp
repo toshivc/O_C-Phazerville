@@ -414,8 +414,13 @@ void gfxIcon(int x, int y, const uint8_t *data) {
     gfxBitmap(x, y, 8, data);
 }
 
-void gfxHeader(const char *str) {
-  gfxPrint(1, 1, str);
+void gfxHeader(const char *str, const uint8_t *icon) {
+  int x = 1;
+  if (icon) {
+    gfxIcon(x, 1, icon);
+    x += 8;
+  }
+  gfxPrint(x, 1, str);
   gfxLine(0, 10, 127, 10);
   gfxLine(0, 11, 127, 11);
 }

@@ -29,6 +29,7 @@ public:
     const char* applet_name() {
         return "Shredder";
     }
+    const uint8_t* applet_icon() { return PhzIcons::shredder; }
 
     void Start() {
         step = 0;

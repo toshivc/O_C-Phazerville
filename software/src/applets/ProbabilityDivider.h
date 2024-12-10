@@ -35,6 +35,7 @@ public:
     const char* applet_name() {
         return "ProbDiv";
     }
+    const uint8_t* applet_icon() { return PhzIcons::probDiv; }
 
     void Start() {
         weight_1 = 0;

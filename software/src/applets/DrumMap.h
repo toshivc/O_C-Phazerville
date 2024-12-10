@@ -38,6 +38,7 @@ public:
     const char* applet_name() {
         return "DrumMap";
     }
+    const uint8_t* applet_icon() { return PhzIcons::drumMap; }
 
     void Start() {
         step = 0;
@@ -324,7 +325,7 @@ private:
         DrawSlider(32,45,28,_chaos, MAX_VAL, cursor == 6);
         
         // step count in header
-        gfxPrint((step < 9 ? 49 : 43),2,step+1);
+        gfxPrint((step < 9 ? 51 : 45),2,step+1);
 
         // cursor for non-knobs
         if (cursor <= 1)

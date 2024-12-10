@@ -66,6 +66,7 @@ public:
     const char* applet_name() { // Maximum 10 characters
         return "ADSR EG";
     }
+    const uint8_t* applet_icon() { return PhzIcons::ADSR_EG; }
 
     void Start() {
         edit_stage = 0;

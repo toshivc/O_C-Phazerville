@@ -37,6 +37,7 @@ static constexpr int MAX_LENGTH = 16;
     const char* applet_name() {
         return "ShiftReg";
     }
+    const uint8_t* applet_icon() { return PhzIcons::DualTM; }
 
     void Start() {
         reg = random(0, 65535);

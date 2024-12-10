@@ -39,6 +39,7 @@
 #include "util/util_math.h"
 #include "bjorklund.h"
 #include "HSicons.h"
+#include "PhzIcons.h"
 #include "HSClockManager.h"
 
 #include "HSUtils.h"
@@ -55,6 +56,8 @@ typedef struct Applet {
 } Applet;
 
 extern IOFrame frame;
+
+static constexpr bool ALWAYS_SHOW_ICONS = false;
 } // namespace HS
 
 using namespace HS;
@@ -65,6 +68,7 @@ public:
     static const char* help[HELP_LABEL_COUNT];
 
     virtual const char* applet_name() = 0; // Maximum of 9 characters
+    virtual const uint8_t* applet_icon() { return nullptr; }
     const char* const OutputLabel(int ch) {
       return OC::Strings::capital_letters[ch + io_offset];
     }
@@ -440,10 +444,14 @@ public:
         }
     }
 
-    void gfxHeader(const char *str) {
-        gfxPrint(1, 2, str);
-        gfxDottedLine(0, 10, 62, 10);
-        //gfxLine(0, 11, 62, 11);
+    void gfxHeader(const char *str, const uint8_t *icon = nullptr) {
+      int x = 4;
+      if (icon) {
+        gfxIcon(x-3, 2, icon);
+        x += 6;
+      }
+      gfxPrint(x, 2, str);
+      gfxDottedLine(0, 10, 62, 10);
     }
 
     void DrawSlider(uint8_t x, uint8_t y, uint8_t len, uint8_t value, uint8_t max_val, bool is_cursor) {

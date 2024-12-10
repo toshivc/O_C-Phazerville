@@ -26,6 +26,7 @@ public:
     const char* applet_name() {
         return "Palimpsest";
     }
+    const uint8_t* applet_icon() { return PhzIcons::palimpsest; }
 
     void Start() {
         brush = 0;

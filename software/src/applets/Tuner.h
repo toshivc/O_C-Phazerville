@@ -51,6 +51,7 @@ public:
     const char* applet_name() {
         return "Tuner";
     }
+    const uint8_t* applet_icon() { return PhzIcons::tuner; }
 
     void Start() {
         A4_Hz = 440;

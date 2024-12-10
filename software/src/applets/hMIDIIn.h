@@ -39,6 +39,7 @@ public:
     const char* applet_name() {
         return "MIDIIn";
     }
+    const uint8_t* applet_icon() { return PhzIcons::midiIn; }
 
     void Start() {
         ForEachChannel(ch)

@@ -21,6 +21,7 @@
 class Strum : public HemisphereApplet {
 public:
   const char *applet_name() { return "Strum"; }
+  const uint8_t *applet_icon() { return PhzIcons::strum; }
 
   void Start() { 
     qselect = io_offset;

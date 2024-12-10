@@ -31,6 +31,7 @@ public:
     const char* applet_name() {
         return "BootsNCat";
     }
+    const uint8_t* applet_icon() { return PhzIcons::boots_n_cats; }
 
     void Start() {
         tone[0] = 32; // Bass drum freq

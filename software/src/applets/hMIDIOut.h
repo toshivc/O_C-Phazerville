@@ -39,6 +39,7 @@ public:
     const char* applet_name() { // Maximum 10 characters
         return "MIDIOut";
     }
+    const uint8_t* applet_icon() { return PhzIcons::midiOut; }
 
     void Start() {
         channel = 0; // Default channel 1

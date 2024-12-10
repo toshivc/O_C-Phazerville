@@ -30,8 +30,9 @@ public:
     static constexpr int SEQX_MAX_VALUE = 30;
 
     const char* applet_name() { // Maximum 10 characters
-        return "SequenceX";
+        return "Seq8";
     }
+    const uint8_t* applet_icon() { return PhzIcons::sequenceX; }
 
     void Start() {
         Randomize();

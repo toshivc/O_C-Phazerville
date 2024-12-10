@@ -40,6 +40,7 @@ public:
     const char* applet_name() { // Maximum 10 characters
         return "Dr. LoFi";
     }
+    const uint8_t* applet_icon() { return PhzIcons::drLoFi; }
 
     void Start() {
         countdown = HEM_LOFI_PCM_SPEED;

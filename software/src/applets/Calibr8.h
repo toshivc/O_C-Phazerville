@@ -36,6 +36,7 @@ public:
     const char* applet_name() {
         return "Calibr8";
     }
+    const uint8_t* applet_icon() { return PhzIcons::calibr8; }
 
     void Start() {
         clocked_mode = false;
@@ -63,7 +64,6 @@ public:
     }
 
     void View() {
-        gfxHeader(applet_name());
         DrawInterface();
     }
 

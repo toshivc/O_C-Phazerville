@@ -17,7 +17,8 @@ public:
     MAX_CURSOR = ONESHOT_MODE
   };
 
-  const char *applet_name() { return "Ebb & LFO"; }
+  const char *applet_name() { return "Ebb&LFO"; }
+  const uint8_t *applet_icon() { return PhzIcons::ebb_n_Flow; }
 
   void Start() {
     phase = 0;

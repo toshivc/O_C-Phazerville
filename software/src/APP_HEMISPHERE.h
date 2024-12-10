@@ -1101,7 +1101,6 @@ private:
     }
 
     void DrawAppletList() {
-      // TODO: list all applets just like the main app menu
       const size_t LineH = 12;
 
       int y = (64 - (5 * LineH)) / 2;
@@ -1110,11 +1109,13 @@ private:
            current <= showhide_cursor.last_visible();
            ++current, y += LineH) {
 
-        gfxIcon(1, y + 1, HS::applet_is_hidden(current) ? CHECK_OFF_ICON : CHECK_ON_ICON);
-        gfxPrint( 11, y + 2, HS::available_applets[current].instance[0]->applet_name());
+        if (!HS::applet_is_hidden(current))
+          gfxIcon(  12, y + 1, HS::available_applets[current].instance[0]->applet_icon());
+        gfxPrint( 23, y + 2, HS::available_applets[current].instance[0]->applet_name());
 
         if (current == showhide_cursor.cursor_pos())
-          gfxInvert(0, y, 127, LineH - 1);
+          gfxIcon(1, y + 1, RIGHT_ICON);
+          //gfxInvert(0, y, 127, LineH - 1);
       }
     }
     void DrawConfigMenu() {
@@ -1187,9 +1188,11 @@ private:
             if (!hem_presets[i].is_valid())
                 gfxPrint(18, y, "(empty)");
             else {
-                gfxPrint(18, y, hem_presets[i].GetApplet(0)->applet_name());
+                gfxIcon(18, y, hem_presets[i].GetApplet(0)->applet_icon());
+                gfxPrint(26, y, hem_presets[i].GetApplet(0)->applet_name());
                 gfxPrint(", ");
                 gfxPrint(hem_presets[i].GetApplet(1)->applet_name());
+                gfxIcon(120, y, hem_presets[i].GetApplet(1)->applet_icon());
             }
 
             y += 10;

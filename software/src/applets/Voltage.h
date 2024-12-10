@@ -26,6 +26,7 @@ public:
     const char* applet_name() {
         return "Voltage";
     }
+    const uint8_t* applet_icon() { return PhzIcons::voltage; }
 
     void Start() {
         voltage[0] = (5 * (12 << 7)) / VOLTAGE_INCREMENTS; // 5V

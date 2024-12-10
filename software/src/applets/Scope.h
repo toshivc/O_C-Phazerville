@@ -35,6 +35,7 @@ public:
     const char* applet_name() {
         return "Scope";
     }
+    const uint8_t* applet_icon() { return PhzIcons::scope; }
 
     void Start() {
         last_bpm_tick = OC::CORE::ticks;

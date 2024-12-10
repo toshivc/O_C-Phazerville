@@ -36,6 +36,7 @@ public:
     const char* applet_name() {
         return "ProbMeloD";
     }
+    const uint8_t* applet_icon() { return PhzIcons::probMeloD; }
 
     void Start() {
         down = 1;

@@ -45,6 +45,7 @@ class TB_3PO: public HemisphereApplet {
     const char * applet_name() { // Maximum 10 characters
       return "TB-3PO";
     }
+    const uint8_t* applet_icon() { return PhzIcons::tb3P0; }
 
   void Start() {
     manual_reset_flag = 0;

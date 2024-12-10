@@ -32,6 +32,7 @@ public:
     const char* applet_name() {
         return "Squanch";
     }
+    const uint8_t* applet_icon() { return PhzIcons::squanch; }
 
     void Start() {
     }

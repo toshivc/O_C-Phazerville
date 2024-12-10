@@ -31,6 +31,7 @@ public:
     const char* applet_name() {
         return "CVRec";
     }
+    const uint8_t* applet_icon() { return PhzIcons::cvRec; }
 
     void Start() {
         segment.Init(SegmentSize::BIG_SEGMENTS);

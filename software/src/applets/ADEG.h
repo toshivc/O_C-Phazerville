@@ -30,6 +30,7 @@ public:
     const char* applet_name() { // Maximum 10 characters
         return "AD EG";
     }
+    const uint8_t* applet_icon() { return PhzIcons::AD_EG; }
 
     void Start() {
         signal = 0;

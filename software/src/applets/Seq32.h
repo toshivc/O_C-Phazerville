@@ -56,6 +56,7 @@ public:
     const char* applet_name() { // Maximum 10 characters
         return "Seq32";
     }
+    const uint8_t* applet_icon() { return PhzIcons::seq32; }
 
     void Start() {
     }

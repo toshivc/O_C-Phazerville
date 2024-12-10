@@ -40,6 +40,7 @@ public:
     const char* applet_name() {
         return "BugCrack";
     }
+    const uint8_t* applet_icon() { return PhzIcons::bugCrack; }
 
     void Start() {
         tone_kick = 32;

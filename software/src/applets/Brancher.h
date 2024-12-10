@@ -27,6 +27,7 @@ public:
     const char* applet_name() {
         return "Brancher";
     }
+    const uint8_t* applet_icon() { return PhzIcons::brancher; }
 
     void Start() {
         p = 50;

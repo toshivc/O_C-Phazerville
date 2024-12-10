@@ -33,6 +33,7 @@ public:
     const char* applet_name() {
         return "Calculate";
     }
+    const uint8_t* applet_icon() { return PhzIcons::calculate; }
 
     void Start() {
         selected = 0;

@@ -31,6 +31,7 @@ public:
     const char* applet_name() {
         return "\"A\"SR";
     }
+    const uint8_t* applet_icon() { return PhzIcons::ASR; }
 
     void Start() {
         buffer_m.SetIndex(1);

@@ -23,6 +23,7 @@
 class Chordinator : public HemisphereApplet {
 public:
   const char *applet_name() { return "Chordnate"; }
+  const uint8_t* applet_icon() { return PhzIcons::chordinate; }
 
   void Start() {
     continuous[0] = 1;

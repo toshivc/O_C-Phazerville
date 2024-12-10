@@ -44,6 +44,7 @@ public:
     const char* applet_name() {
         return "Logic";
     }
+    const uint8_t* applet_icon() { return PhzIcons::logic; }
 
     void Start() {
         selected = 0;

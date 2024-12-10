@@ -26,6 +26,7 @@ public:
     const char* applet_name() {
         return "ScaleDuet";
     }
+    const uint8_t* applet_icon() { return PhzIcons::scaleDuet; }
 
     void SetMask(uint16_t &mask) {
         quant.Configure(OC::Scales::GetScale(OC::Scales::SCALE_SEMI), mask);

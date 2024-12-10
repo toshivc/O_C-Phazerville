@@ -29,6 +29,7 @@ public:
     const char* applet_name() {
         return "VectorLFO";
     }
+    const uint8_t* applet_icon() { return PhzIcons::vectorLFO; }
 
     static constexpr int min_freq = 8;
     static constexpr int max_freq = 100000;

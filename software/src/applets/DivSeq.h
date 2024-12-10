@@ -113,6 +113,7 @@ public:
     const char* applet_name() {
         return "DivSeq";
     }
+    const uint8_t* applet_icon() { return PhzIcons::divSeq; }
 
     void Start() {
       ForEachChannel(ch) {

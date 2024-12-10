@@ -53,6 +53,7 @@ public:
     const char* applet_name() {
         return "ClockSet";
     }
+    const uint8_t* applet_icon() { return CLOCK_ICON; }
 
     void Start() { }
 

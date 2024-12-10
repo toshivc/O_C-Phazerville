@@ -28,6 +28,7 @@ public:
     const char* applet_name() {
         return "MultiScale";
     }
+    const uint8_t* applet_icon() { return PhzIcons::multiscale; }
 
     void SetMask(uint16_t &mask) {
         quant.Configure(OC::Scales::GetScale(OC::Scales::SCALE_SEMI), mask);

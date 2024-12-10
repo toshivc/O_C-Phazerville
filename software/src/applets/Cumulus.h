@@ -46,6 +46,7 @@ public:
     const char* applet_name() {
         return "Cumulus";
     }
+    const uint8_t* applet_icon() { return PhzIcons::cumulus; }
 
     void Start() {
         cursor = 0;
@@ -170,7 +171,7 @@ private:
 
     void DrawSelector() {
         a_display = isEditing ? outmode[0] : a_mod;
-        gfxBitmap(1, 15, 8, BEAKER_ICON);
+        gfxIcon(1, 15, CLOCK_ICON);
         gfxPrint(12, 15, OP_NAMES[accoperator]);
 
         char outlabel[] = { (char)('A' + io_offset), ':', '\0' };

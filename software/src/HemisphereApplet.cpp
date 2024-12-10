@@ -19,7 +19,7 @@ void HemisphereApplet::BaseController() {
 
 void HemisphereApplet::BaseView(bool full_screen) {
     //if (HS::select_mode == hemisphere)
-    gfxHeader(applet_name());
+    gfxHeader(applet_name(), (HS::ALWAYS_SHOW_ICONS || full_screen) ? applet_icon() : nullptr);
     // If active, draw the full screen view instead of the application screen
     if (full_screen) this->DrawFullScreen();
     else this->View();

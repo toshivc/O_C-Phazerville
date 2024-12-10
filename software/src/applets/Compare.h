@@ -26,6 +26,7 @@ public:
     const char* applet_name() {
         return "Compare";
     }
+    const uint8_t* applet_icon() { return PhzIcons::compare; }
 
     void Start() {
         level = 128;

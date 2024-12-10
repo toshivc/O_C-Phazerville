@@ -30,6 +30,7 @@ public:
     const char* applet_name() {
         return "AttenOff";
     }
+    const uint8_t* applet_icon() { return PhzIcons::dualAttenuverter; }
 
     void Start() {
         ForEachChannel(ch) level[ch] = ATTENOFF_MAX_LEVEL;

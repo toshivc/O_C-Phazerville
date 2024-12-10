@@ -35,8 +35,9 @@ public:
     ClkDivMult divmult[4];
 
     const char* applet_name() {
-        return "Clock Div";
+        return "Clk Div";
     }
+    const uint8_t* applet_icon() { return PhzIcons::clockDivider; }
 
     void Start() {
       divmult[0].steps = 2;

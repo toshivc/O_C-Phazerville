@@ -52,6 +52,7 @@ public:
     const char* applet_name() {
         return "EuclidX";
     }
+    const uint8_t* applet_icon() { return PhzIcons::euclidX; }
 
     void Start() {
         ForEachChannel(ch)

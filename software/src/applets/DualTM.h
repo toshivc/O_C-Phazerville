@@ -91,6 +91,9 @@ public:
     const char* applet_name() {
         return "DualTM";
     }
+    const uint8_t* applet_icon() {
+        return PhzIcons::DualTM;
+    }
 
     void Start() {
         reg[0] = random(0xFFFFFFFF);

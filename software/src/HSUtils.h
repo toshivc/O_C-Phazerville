@@ -154,7 +154,7 @@ void gfxDottedLine(int x, int y, int x2, int y2, uint8_t p = 2);
 void gfxCircle(int x, int y, int r);
 void gfxBitmap(int x, int y, int w, const uint8_t *data);
 void gfxIcon(int x, int y, const uint8_t *data);
-void gfxHeader(const char *str);
+void gfxHeader(const char *str, const uint8_t *icon = nullptr);
 
 static constexpr uint8_t pad(int range, int number) {
     uint8_t padding = 0;

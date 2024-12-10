@@ -22,8 +22,9 @@ class ClockSkip : public HemisphereApplet {
 public:
 
     const char* applet_name() {
-        return "ClockSkip";
+        return "Clk Skip";
     }
+    const uint8_t* applet_icon() { return PhzIcons::clockSkip; }
 
     void Start() {
         ForEachChannel(ch)
