@@ -21,6 +21,9 @@ namespace OC {
 #elif defined(VOR)
   const char * const NAME = "Plum Audio O_C+";
   const char * const SHORT_NAME = "OC+";
+#elif defined(__IMXRT1062__)
+  const char * const NAME = "O_C T4.x";
+  const char * const SHORT_NAME = "o_C";
 #else
   const char * const NAME = "Ornaments & Crimes";
   const char * const SHORT_NAME = "o_C";
