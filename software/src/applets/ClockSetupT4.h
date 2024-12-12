@@ -112,11 +112,25 @@ public:
         if (button_ticker) --button_ticker;
     }
 
+    void DrawIndicator() {
+      // Clock indicator icons overlay
+      if (HS::clock_m.IsRunning() || HS::clock_m.IsPaused()) {
+        graphics.clearRect(59, 4, 10, 10);
+
+        if (HS::clock_m.IsPaused()) {
+          gfxFrame(59, 4, 10, 10);
+          gfxIcon(60, 5, PAUSE_ICON);
+        } else {
+          gfxIcon(60, 5, HS::clock_m.Cycle() ? METRO_L_ICON : METRO_R_ICON);
+        }
+      }
+    }
     void View() {
       if (OC::CORE::ticks - view_tick > 1000) {
         slide_anim = SLIDEOUT_TIME;
       }
       view_tick = OC::CORE::ticks;
+      if (cursor >= OUTSKIP1) DrawIndicator();
       DrawInterface();
     }
 
@@ -323,11 +337,13 @@ private:
         gfxLine(0, 10, 127, 10);
       */
       if (cursor < OUTSKIP1) {
+        // upper section
         graphics.clearRect(0, 0, 128, 24);
 
         gfxDottedLine(0, 21, 127, 21);
         gfxLine(0, 22, 127, 22);
       } else {
+        // lower section
         graphics.clearRect(0, 41, 128, 23);
 
         gfxLine(0, 42, 127, 42);

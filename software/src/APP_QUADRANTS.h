@@ -480,7 +480,7 @@ public:
           if (view_state == APPLET_FULLSCREEN) {
             active_applet[zoom_slot]->BaseView(true);
             // Applets 3 and 4 get inverted titles
-            if (zoom_slot > 1) gfxInvert(1 + (zoom_slot%2)*64, 1, 54, 10);
+            if (zoom_slot > 1) gfxInvert(1 + (zoom_slot%2)*64, 1, 63, 10);
           } else {
             // only two applets visible at a time
             for (int h = 0; h < 2; h++)
@@ -489,7 +489,7 @@ public:
                 active_applet[slot]->BaseView();
 
                 // Applets 3 and 4 get inverted titles
-                if (slot > 1) gfxInvert(1 + h*64, 1, 54, 10);
+                if (slot > 1) gfxInvert(1 + h*64, 1, 63, 10);
             }
 
             // vertical separator
@@ -501,16 +501,11 @@ public:
             graphics.drawFrame(0, 0, 128, 64);
           }
 
-          // Clock indicator icons in header
-          if (HS::clock_m.IsRunning()) {
-              gfxIcon(56, 1, HS::clock_m.Cycle() ? METRO_L_ICON : METRO_R_ICON);
-          } else if (HS::clock_m.IsPaused()) {
-              gfxIcon(56, 1, PAUSE_ICON);
-          }
-
           // Clock setup is an overlay
           if (view_state == CLOCK_SETUP) {
             ClockSetup_instance.View();
+          } else {
+            ClockSetup_instance.DrawIndicator();
           }
         }
 

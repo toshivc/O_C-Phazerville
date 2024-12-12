@@ -560,16 +560,11 @@ public:
             graphics.drawLine(63, 0, 63, 63, 2);
           }
 
-          // Clock indicator icons in header
-          if (HS::clock_m.IsRunning()) {
-              gfxIcon(56, 1, HS::clock_m.Cycle() ? METRO_L_ICON : METRO_R_ICON);
-          } else if (HS::clock_m.IsPaused()) {
-              gfxIcon(56, 1, PAUSE_ICON);
-          }
-
           // clock screen is an overlay
           if (clock_setup) {
             ClockSetup_instance.View();
+          } else {
+            ClockSetup_instance.DrawIndicator();
           }
         }
 

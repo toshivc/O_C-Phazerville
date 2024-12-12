@@ -102,11 +102,25 @@ public:
         if (button_ticker) --button_ticker;
     }
 
+    void DrawIndicator() {
+      // Clock indicator icons overlay
+      if (clock_m.IsRunning() || clock_m.IsPaused()) {
+        graphics.clearRect(59, 4, 10, 10);
+
+        if (clock_m.IsPaused()) {
+          gfxFrame(59, 4, 10, 10);
+          gfxIcon(60, 5, PAUSE_ICON);
+        } else {
+          gfxIcon(60, 5, clock_m.Cycle() ? METRO_L_ICON : METRO_R_ICON);
+        }
+      }
+    }
     void View() {
       if (OC::CORE::ticks - view_tick > 1000) {
         slide_anim = SLIDEOUT_TIME;
       }
       view_tick = OC::CORE::ticks;
+      if (cursor >= OUTSKIP1) DrawIndicator();
       DrawInterface();
     }
 
