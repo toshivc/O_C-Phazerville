@@ -434,6 +434,7 @@ private:
     case 4:
       apply_density();
       regenerate_phase = 0;
+      randomSeed(micros()); // restore true random
       break;
     default:
       break;
