@@ -92,9 +92,11 @@ static PROGMEM const uint8_t adc2_pin_to_channel[] = {
 /*static*/ void ADC::Init(CalibrationData *calibration_data, bool flip180)
 {
   if (flip180) {
-    ADC_CHANNEL_1=3, ADC_CHANNEL_2=2, ADC_CHANNEL_3=1, ADC_CHANNEL_4=0;
 #if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
-    ADC_CHANNEL_5=7, ADC_CHANNEL_6=6, ADC_CHANNEL_7=5, ADC_CHANNEL_8=4;
+    ADC_CHANNEL_1=7, ADC_CHANNEL_2=6, ADC_CHANNEL_3=5, ADC_CHANNEL_4=4;
+    ADC_CHANNEL_5=3, ADC_CHANNEL_6=2, ADC_CHANNEL_7=1, ADC_CHANNEL_8=0;
+#else
+    ADC_CHANNEL_1=3, ADC_CHANNEL_2=2, ADC_CHANNEL_3=1, ADC_CHANNEL_4=0;
 #endif
   }
 

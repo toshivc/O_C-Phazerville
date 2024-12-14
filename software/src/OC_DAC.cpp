@@ -63,9 +63,11 @@ void DAC::Init(CalibrationData *calibration_data, bool flip180) {
   
   restore_scaling(0x0);
   if (flip180) {
-    DAC_CHANNEL_A=3, DAC_CHANNEL_B=2, DAC_CHANNEL_C=1, DAC_CHANNEL_D=0;
 #if defined(__IMXRT1062__) && defined(ARDUINO_TEENSY41)
-    DAC_CHANNEL_E=7, DAC_CHANNEL_F=6, DAC_CHANNEL_G=5, DAC_CHANNEL_H=4;
+    DAC_CHANNEL_A=7, DAC_CHANNEL_B=6, DAC_CHANNEL_C=5, DAC_CHANNEL_D=4;
+    DAC_CHANNEL_E=3, DAC_CHANNEL_F=2, DAC_CHANNEL_G=1, DAC_CHANNEL_H=0;
+#else
+    DAC_CHANNEL_A=3, DAC_CHANNEL_B=2, DAC_CHANNEL_C=1, DAC_CHANNEL_D=0;
 #endif
   }
 
