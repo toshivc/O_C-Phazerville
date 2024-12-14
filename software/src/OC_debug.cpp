@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "HSicons.h"
 #include "OC_ADC.h"
 #include "OC_digital_inputs.h"
 #include "OC_config.h"
@@ -152,11 +153,6 @@ static void debug_menu_adc() {
   };
   graphics.setPrintPos(2, 52);
   graphics.printf("T1=%u T2=%u T3=%u T4=%u", trigz[0], trigz[1], trigz[2], trigz[3]);
-
-//      graphics.setPrintPos(2, 42);
-//      graphics.print((long)ADC::busy_waits());
-//      graphics.setPrintPos(2, 42); graphics.print(ADC::fail_flag0());
-//      graphics.setPrintPos(2, 52); graphics.print(ADC::fail_flag1());
 }
 
 #ifdef ARDUINO_TEENSY41
@@ -199,6 +195,15 @@ static void debug_menu_audio() {
 }
 #endif
 
+#ifdef PEWPEWPEW
+static void debug_menu_pewpewpew() {
+  int i = 0;
+  do {
+    graphics.drawBitmap8(i*8 % 120, (i+8) % 56, 8, ZAP_ICON);
+  } while (++i < (millis() / 10 % 64));
+}
+#endif
+
 struct DebugMenu {
   const char *title;
   void (*display_fn)();
@@ -234,37 +239,42 @@ static const DebugMenu debug_menus[] = {
 #ifdef ASR_DEBUG  
   { " ASR", ASR_debug },
 #endif // ASR_DEBUG
- { nullptr, nullptr }
+#ifdef PEWPEWPEW
+  { " ", debug_menu_pewpewpew },
+#endif
 };
 
 void Ui::DebugStats() {
   SERIAL_PRINTLN("DEBUG/STATS MENU");
 
-  const DebugMenu *current_menu = &debug_menus[0];
+  int current_menu_index = 0;
   bool exit_loop = false;
   while (!exit_loop) {
+    const auto &current_menu = debug_menus[current_menu_index];
 
     GRAPHICS_BEGIN_FRAME(false);
       graphics.setPrintPos(2, 2);
-      graphics.printf("%d/%u", (int)(current_menu - &debug_menus[0]) + 1, ARRAY_SIZE(debug_menus) - 1);
-      graphics.print(current_menu->title);
-      current_menu->display_fn();
+      graphics.printf("%d/%u", current_menu_index + 1, ARRAY_SIZE(debug_menus));
+      graphics.print(current_menu.title);
+      current_menu.display_fn();
     GRAPHICS_END_FRAME();
 
     while (event_queue_.available()) {
       UI::Event event = event_queue_.PullEvent();
-      if (CONTROL_BUTTON_R == event.control && UI::EVENT_BUTTON_PRESS == event.type) {
-        exit_loop = true;
-      } else if (CONTROL_BUTTON_L == event.control && UI::EVENT_BUTTON_PRESS == event.type) {
-        ++current_menu;
-        if (!current_menu->title || !current_menu->display_fn)
-          current_menu = &debug_menus[0];
+      if (UI::EVENT_ENCODER == event.type && CONTROL_ENCODER_L == event.control) {
+        current_menu_index = current_menu_index + event.value;
+      } else if (UI::EVENT_BUTTON_PRESS == event.type) {
+        if (CONTROL_BUTTON_R == event.control)
+          exit_loop = true;
+        if (CONTROL_BUTTON_L == event.control)
+          ++current_menu_index;
       }
     }
+    CONSTRAIN(current_menu_index, 0, (int)ARRAY_SIZE(debug_menus) - 1);
   }
 
   event_queue_.Flush();
   event_queue_.Poke();
 }
 
-}; // namespace OC
+} // namespace OC
