@@ -230,7 +230,7 @@ UiMode Ui::Splashscreen(bool &reset_settings) {
     GRAPHICS_BEGIN_FRAME(true);
 
     menu::DefaultTitleBar::Draw();
-    graphics.print("Welcome 2 Phazerville");
+    graphics.print(OC::Strings::NAME);
     weegfx::coord_t y = menu::CalcLineY(0);
 
     graphics.setPrintPos(menu::kIndentDx, y + menu::kTextDy);
@@ -252,6 +252,8 @@ UiMode Ui::Splashscreen(bool &reset_settings) {
       graphics.setPrintPos(menu::kIndentDx, y + menu::kTextDy);
     }
     graphics.print(OC::Strings::VERSION);
+    graphics.print(" ");
+    graphics.print(OC::Strings::BUILD_TAG);
 
     // pew pew?
     for (int i = 0; i < 124; i+=8)
