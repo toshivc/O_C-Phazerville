@@ -276,6 +276,7 @@ void FASTRUN loop() {
       MENU_REDRAW = 1;
 
     static size_t cap_idx = 0;
+    static elapsedMicros cap_send_time = 0;
     // check for request from PC to capture the screen
     if (Serial && Serial.available() > 0) {
       do { Serial.read(); } while (Serial.available() > 0);
@@ -285,10 +286,11 @@ void FASTRUN loop() {
 
     // check for frame buffer to have capture data ready
     const uint8_t *capture_data = display::frame_buffer.captured();
-    if (capture_data && MENU_REDRAW) {
+    if (capture_data && cap_send_time > 950) {
+      cap_send_time = 0;
       capture_data += cap_idx; // start where we left off
 
-      // limit to n bytes every 1ms
+      // limit to n bytes every 950 micros
       const size_t chunk_size = 32;
       for (size_t i=0; i < chunk_size; i++) {
         uint8_t n = *capture_data++;
