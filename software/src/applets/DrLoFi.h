@@ -64,7 +64,7 @@ public:
                     //ClockOut(1);
                 }
 
-                int cv = SmoothedIn(0);
+                int cv = In(0);
 
                 // bitcrush the input
                 cv = cv >> depth;
