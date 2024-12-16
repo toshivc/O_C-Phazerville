@@ -396,6 +396,10 @@ public:
         graphics.invertRect(x + gfx_offset, y, w, h);
     }
 
+    void gfxClear(int x, int y, int w, int h) {
+        graphics.clearRect(x + gfx_offset, y, w, h);
+    }
+
     void gfxLine(int x, int y, int x2, int y2) {
         graphics.drawLine(x + gfx_offset, y, x2 + gfx_offset, y2);
     }

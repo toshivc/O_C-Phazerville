@@ -323,9 +323,9 @@ private:
         // chaos
         gfxPrint(1,45,"CHAOS");
         DrawSlider(32,45,28,_chaos, MAX_VAL, cursor == 6);
-        
-        // step count in header
-        gfxPrint((step < 9 ? 51 : 45),2,step+1);
+
+        // step count as progress bar
+        gfxFrame(0, 10, (step+1)*2, 3);
 
         // cursor for non-knobs
         if (cursor <= 1)
@@ -345,13 +345,13 @@ private:
         if (value_animation > 0 && cursor >= 2 && cursor <= 6) {
           int val = *VALUE_MAP[cursor-2];
           int xPos = 23;
+          int yPos = 4 + 10 * (cursor/2);
           int w = 3 * 6 + 1;
           int h = 10;
-          gfxRect(xPos, 0, w, h);
-          gfxInvert(xPos, 0, w, h);
-          gfxPos(xPos, 1);
+          gfxClear(xPos, yPos, w, h);
+          gfxPos(xPos, yPos+1);
           graphics.printf("%3d", val);
-          gfxInvert(xPos, 0, w, h);
+          gfxInvert(xPos, yPos, w, h);
         }
     }
 
