@@ -13,7 +13,9 @@ Or you can roll your own! Generate a [custom firmware](https://github.com/djphaz
 
 ### Flipped Operation
 
-Files with "_flipped" are for running the module upside-down.
+As of v1.8.3, flipping the screen/controls is a calibration option. No need for a special "_flipped" build!
+
+In [Setup/About](Setup-About), you'll see two arrows in the title bar. Up/Down indicates screen flip; Left/Right indicates controls & IO reversal. If you need to change either, dual-press the UP+DOWN buttons to cycle through. Return to main menu and it will save; power cycle to take effect.
 
 ### VOR
 
