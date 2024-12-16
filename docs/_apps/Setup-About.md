@@ -16,6 +16,10 @@ On the calibration confirmation screen, you can toggle user calibration / settin
     * _Note: this will accept the displayed encoder reversal setting_
 * To cancel, press the LEFT encoder (Cancel)
 
+## Flipped Screen / Controls
+_(new in v1.8.3)_
+Next to "Setup/About" you'll see two arrows in the title bar. Up/Down indicates screen flip; Left/Right indicates controls & IO reversal. If you need to change either, dual-press the UP+DOWN buttons to cycle through. Return to main menu and it will save; power cycle to take effect.
+
 ### Encoder scrolling direction reversal
 
 There is no cursor wrapping in the calibration routine, so note the displayed list of encoder scrolling reversals at the calibration confirmation screen.

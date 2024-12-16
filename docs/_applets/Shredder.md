@@ -22,6 +22,7 @@ layout: default
  * Quantized channels
  * Quantizer edit
  * Auxbutton: Shred selected channel (Highlight channel octave range and press the select button — UP or DOWN, depending on Hemisphere)
+ * (new in v1.8.3) Shred-on-Reset toggle, per channel (highlighted means that channel will be randomized on Reset)
 
 _Note: Due to memory limitations, generated sequences cannot be saved. However, all parameters will be saved and new sequences will be generated from those settings on power up._
 
