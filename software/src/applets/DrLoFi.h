@@ -31,8 +31,6 @@
 #define PCM_TO_CV(S) Proportion((int)S - 127, 127, CLIPLIMIT)
 #define CV_TO_PCM(S) Proportion(constrain(S, -CLIPLIMIT, CLIPLIMIT), CLIPLIMIT, 127) + 127
 
-DMAMEM uint8_t lofi_pcm_buffer[HEM_LOFI_PCM_BUFFER_SIZE];
-
 class DrLoFi : public HemisphereApplet {
 public:
     const int length = HEM_LOFI_PCM_BUFFER_SIZE;
@@ -47,6 +45,12 @@ public:
         // this might take too long, which causes crashes. It's not crucial.
         //for (int i = 0; i < HEM_LOFI_PCM_BUFFER_SIZE; i++) lofi_pcm_buffer[i] = 127;
         cursor = 1; //for gui
+        lofi_pcm_buffer = new uint8_t[HEM_LOFI_PCM_BUFFER_SIZE];
+        AllowRestart();
+    }
+
+    void Unload() override {
+        delete lofi_pcm_buffer;
     }
 
     void Controller() {
@@ -155,6 +159,8 @@ private:
     uint8_t rate_mod = rate;
     int depth = 0; // bit reduction depth aka bitcrush
     int cursor; //for gui
+
+    uint8_t* lofi_pcm_buffer;
     
     void DrawWaveform() {
         int inc = rate_mod/2 + 1;
