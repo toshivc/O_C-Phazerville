@@ -3,34 +3,35 @@ layout: default
 ---
 # Setup / About
 
-_(TODO: screenshots)_
+![Setup/About Screenshot](images/Setup_About.png)
 
-Press the LEFT encoder to enter the Calibration routine
+* Press the LEFT encoder to enter the Calibration routine
+* Press the RIGHT encoder to reset calibration / settings to defaults - press RIGHT again to confirm (LEFT to cancel)
 
-Press the RIGHT encoder to reset calibration / settings to defaults - press RIGHT again to confirm (LEFT to cancel)
-
-On the calibration confirmation screen, you can toggle user calibration / settings or default
-* Rotate RIGHT encoder to change
-* To edit user calibration, select "No", and press the RIGHT encoder (OK)
-* To accept the defaults, select "Yes", and press the RIGHT encoder (OK)
-    * _Note: this will accept the displayed encoder reversal setting_
-* To cancel, press the LEFT encoder (Cancel)
-
-## Flipped Screen / Controls
+### Flipped Screen / Controls
 _(new in v1.8.3)_
 Next to "Setup/About" you'll see two arrows in the title bar. Up/Down indicates screen flip; Left/Right indicates controls & IO reversal. If you need to change either, dual-press the UP+DOWN buttons to cycle through. Return to main menu and it will save; power cycle to take effect.
 
-### Encoder scrolling direction reversal
+_Notice:_ The calibration routine is agnostic of screen or I/O flip... DAC A and CV1 are addressed as if in normal module orientation.
 
-There is no cursor wrapping in the calibration routine, so note the displayed list of encoder scrolling reversals at the calibration confirmation screen.
+### Encoder Orientation
+Depending on your hardware variant (and your personal preference), one or both encoders may need to be reversed.
+On the calibration confirmation page OR last page, press either of the UP or DOWN buttons to select encoder reversal for L, R, both (LR), or neither (normal).
 
-In the calibration confirmation page OR last page, press either of the UP and DOWN buttons to select encoder reversal for L, R, both (LR), or neither (normal).
+As of v1.8.3, if you change the encoder setting on the first page, you can still cancel and the setting will be saved when you return to the main menu.
 
-If you want to use non-default calibration, you will need to scroll through the entire calibration routine to save the encoder reversal setting (you will have another opportunity to edit encoder settings at the last page).
+## Calibration Routine
 
-Press the RIGHT encoder to accept the listed encoder reversal settings.
+![Setup: Calibrate](images/cal_start.png)
 
-## Calibration routine
+On the initial calibration screen, you can choose to start fresh or edit existing settings:
+* Rotate RIGHT encoder to change ("Yes"/"No")
+* To **edit calibration**, select "No", and press the RIGHT encoder (OK)
+* To **reset calibration** to the defaults, select "Yes", and press the RIGHT encoder (OK)
+    - Recommended for fresh builds
+    - _Note: the displayed encoder reversal setting will not be disturbed_
+    - App settings are also preserved when resetting calibration.
+* To cancel, press the LEFT encoder (Cancel)
 
 To change pages:
 * Rotate the LEFT encoder to paginate, or
@@ -40,19 +41,34 @@ To change pages:
 To edit the current page parameter:
 * Rotate the RIGHT encoder
 
-Pages:
-* (1) Center Display horizontal pixel offset
-* (2-11) DAC A -3v through 6v
-* (12-21) DAC B -3v through 6v 
-* (22-31) DAC C -3v through 6v
-* (32-41) DAC D -3v through 6v
-* (42) ADC CV1 
-    * _All ADC values should be around 0v (-1v < > +1v)_
-* (43) ADC CV2
-* (44) ADC CV3
-* (45) ADC CV4
-* (46-47) CV Scaling 1v and 3v (long-press DOWN button to set)
-* (48) Screen blank time
-* (49) Save and adjust encoder direction
+### Pages
+
+![Center Display](images/cal_screen.png)
+* Horizontal pixel offset for centering the display.
+
+![DAC Calibration minimum](images/cal_dac1.png)
+![DAC Calibration maximum](images/cal_dac2.png)
+
+DAC calibration tends to be very linear. You only need to calibrate the minimum and maximum values and the firmware can interpolate in between. For each output:
+* Measure the voltage with a precision multimeter
+* Use the right encoder to make the multimeter agree with the value in the title bar
+* Long-press DOWN on each maximum to interpolate the intermediate values. A checkmark will appear.
+
+![ADC Offset](images/cal_adc1.png)
+ADC offset for 0v
+    * _All ADC values should be around 0v (-1 < > +1)_
+
+![ADC Scaling 1v](images/cal_adc2.png)
+![ADC Scaling 3v](images/cal_adc3.png)
+* Scaling for the CV inputs
+    - connect DAC A to CV1
+    - on OCP hardware, make sure the attenuator is fully open (CW)
+    - long-press DOWN button to set each point (1v and 3v)
+
+![Screen Blank](images/cal_screenblank.png)
+* Timeout for the screensaver or blank screen
+
+![Calibration complete](images/cal_complete.png)
+* Save and adjust encoder direction
     * Press UP and DOWN buttons to select encoder reversal for L, R, both (LR), or neither (normal)
     * Select "Yes" to save and "No" to cancel, and press the RIGHT encoder to exit
