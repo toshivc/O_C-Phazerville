@@ -134,7 +134,7 @@ private:
     
     void DrawInterface() {
         // Show Link icon if linked with another ASR
-        if (buffer_m.IsLinked() && hemisphere == RIGHT_HEMISPHERE) gfxIcon(56, 1, LINK_ICON);
+        if (buffer_m.IsLinked() && hemisphere == RIGHT_HEMISPHERE) gfxIcon(25, 1, LINK_ICON);
 
         // Index (shared between all instances of ASR)
         uint8_t ix = buffer_m.GetIndex() + index_mod;
