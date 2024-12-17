@@ -397,24 +397,12 @@ public:
     }
 
     void View() {
-        if (clock_setup) {
-            ClockSetup_instance.View();
-            return;
-        }
-
         if (autotuner.active()) {
             autotuner.Draw();
             return;
         }
 
         gfxHeader("Calibr8or");
-
-        // Metronome icon
-        if (HS::clock_m.IsRunning()) {
-            gfxIcon(56, 1, HS::clock_m.Cycle() ? METRO_L_ICON : METRO_R_ICON);
-        } else if (HS::clock_m.IsPaused()) {
-            gfxIcon(56, 1, PAUSE_ICON);
-        }
 
         if (preset_select) {
             gfxPrint(70, 1, "- Presets");
@@ -429,6 +417,13 @@ public:
 
         if (HS::q_edit)
           PokePopup(QUANTIZER_POPUP);
+
+        // Clock screen is an overlay
+        if (clock_setup) {
+            ClockSetup_instance.View();
+        } else {
+            ClockSetup_instance.DrawIndicator();
+        }
 
         // Overlay popup window last
         if (OC::CORE::ticks - HS::popup_tick < HEMISPHERE_CURSOR_TICKS) {
