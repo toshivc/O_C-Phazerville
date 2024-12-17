@@ -598,7 +598,7 @@ private:
         gfxLine(0, 45, 63, 45);
         gfxLine(0, 62, 63, 62);
 
-        const int ii = (length <= 16) ? 16 : 32;
+        const int ii = (len_mod <= 16) ? 16 : 32;
         for (int b = 0; b < ii; ++b)
         {
             int v = (reg[0] >> b) & 0x01;
@@ -608,11 +608,11 @@ private:
         }
 
         // I'm sure these two can be combined with more math.
-        if (length < 16) {
-          const int x_ = 4 * (16 - length);
+        if (len_mod < 16) {
+          const int x_ = 4 * (16 - len_mod);
           gfxDottedLine(x_, 45, x_, 62);
-        } else if (length > 16 && length < 32) {
-          const int x_ = 2 * (32 - length) - 1;
+        } else if (len_mod > 16 && len_mod < 32) {
+          const int x_ = 2 * (32 - len_mod) - 1;
           gfxDottedLine(x_, 45, x_, 62);
         }
     }
