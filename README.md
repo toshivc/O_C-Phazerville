@@ -3,8 +3,9 @@
 Phazerville Suite - an active o_C firmware fork
 ===
 [![SynthDad's video overview](http://img.youtube.com/vi/XRGlAmz3AKM/0.jpg)](http://www.youtube.com/watch?v=XRGlAmz3AKM "Phazerville; newest firmware for Ornament and Crime. Tutorial and patch ideas")
+[![SynthDad's v1.7 update](http://img.youtube.com/vi/bziSog_xscA/0.jpg)](http://www.youtube.com/watch?v=bziSog_xscA "Ornament and Crime Phazerville 1.7: What's new in this big release!")
 
-Watch SynthDad's **video overview** (above) or check the [**project website**](https://firmware.phazerville.com) for more info.
+Watch SynthDad's **video overviews** (above) or check the [**project website**](https://firmware.phazerville.com) for more info.
 
 [Download a **Release**](https://github.com/djphazer/O_C-Phazerville/releases) or [Request a **Custom Build**](https://github.com/djphazer/O_C-Phazerville/discussions/38).
 
