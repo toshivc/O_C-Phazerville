@@ -33,6 +33,8 @@ On the initial calibration screen, you can choose to start fresh or edit existin
     - App settings are also preserved when resetting calibration.
 * To cancel, press the LEFT encoder (Cancel)
 
+### Pages
+
 To change pages:
 * Rotate the LEFT encoder to paginate, or
 * Press the RIGHT encoder to go to the next page
@@ -41,10 +43,9 @@ To change pages:
 To edit the current page parameter:
 * Rotate the RIGHT encoder
 
-### Pages
-
 ![Center Display](images/cal_screen.png)
-* Horizontal pixel offset for centering the display.
+
+Horizontal pixel offset for centering the display.
 
 ![DAC Calibration minimum](images/cal_dac1.png)
 ![DAC Calibration maximum](images/cal_dac2.png)
@@ -52,23 +53,26 @@ To edit the current page parameter:
 DAC calibration tends to be very linear. You only need to calibrate the minimum and maximum values and the firmware can interpolate in between. For each output:
 * Measure the voltage with a precision multimeter
 * Use the right encoder to make the multimeter agree with the value in the title bar
-* Long-press DOWN on each maximum to interpolate the intermediate values. A checkmark will appear.
+* Long-press DOWN where prompted to interpolate the intermediate values. A checkmark will appear.
 
 ![ADC Offset](images/cal_adc1.png)
-ADC offset for 0v
-    * _All ADC values should be around 0v (-1 < > +1)_
+
+ADC offset for 0v - _All values should be around zero (-1 < > +1)_
 
 ![ADC Scaling 1v](images/cal_adc2.png)
 ![ADC Scaling 3v](images/cal_adc3.png)
-* Scaling for the CV inputs
-    - connect DAC A to CV1
-    - on OCP hardware, make sure the attenuator is fully open (CW)
-    - long-press DOWN button to set each point (1v and 3v)
+
+Scaling for the CV inputs:
+* connect DAC A to CV1
+* on OCP hardware, make sure the attenuator is fully open (CW)
+* long-press DOWN button to set each point (1v and 3v)
 
 ![Screen Blank](images/cal_screenblank.png)
-* Timeout for the screensaver or blank screen
+
+Timeout for the screensaver or blank screen
 
 ![Calibration complete](images/cal_complete.png)
-* Save and adjust encoder direction
-    * Press UP and DOWN buttons to select encoder reversal for L, R, both (LR), or neither (normal)
-    * Select "Yes" to save and "No" to cancel, and press the RIGHT encoder to exit
+
+Final step - save and adjust encoder direction
+* Press UP or DOWN buttons to select encoder reversal for L, R, both (LR), or neither (normal)
+* Select "Yes" to save and "No" to cancel; press the RIGHT encoder to exit
