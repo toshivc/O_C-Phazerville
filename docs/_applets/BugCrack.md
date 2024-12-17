@@ -15,7 +15,7 @@ layout: default
 | ------ | :-------------------------------: | :--------------------------------: |
 | TRIG   |         Kick drum trigger         |         Snare drum trigger         |
 | CV INs | Kick drum modulation (assignable) | Snare drum modulation (assignable) |
-| OUTs   |             Kick drum             |             Snare drum             |
+| OUTs   |             Kick drum             | Snare drum OR Mixed output         |
 
 
 ### UI Parameters
@@ -29,6 +29,7 @@ layout: default
 * Snare snap
 * Snare blend
 * CV2 (Snare) assignment (attenuation, tone, decay, FM, blend)
+* MixOut - kick+snare mix on output 2/4
 
 **Frequency (ton) - Kick and Snare**
 The base frequency of the drum. Kick has a range of 30-60Hz, snare has a range of 100-700Hz.
