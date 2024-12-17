@@ -338,11 +338,10 @@ public:
 
             // regular press cycles thru encoder orientations on first/last screen
             if (calibration_state.step == HELLO || calibration_state.step == CALIBRATION_EXIT)
+            {
               OC::ui.configure_encoders(calibration_data.next_encoder_config());
-            /* shortcut for jumping DAC values quicker...
-            else if (calibration_state.step > CENTER_DISPLAY)
-              calibration_state.encoder_value += (event.control == CONTROL_BUTTON_UP ? 128 : -128);
-            */
+              cal_save_q = true;
+            }
 
             break;
           default:
