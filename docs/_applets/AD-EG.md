@@ -3,7 +3,7 @@ layout: default
 ---
 # AD EG
 
-![Screenshot 2024-06-13 14-17-08](https://github.com/djphazer/O_C-Phazerville/assets/109086194/0adc1a5c-f74c-440e-911a-4efd7e4b7a1d)
+![AD EG screenshot](images/AD-EG.png)
 
 **AD-EG** is an attack/decay envelope generator with forward and reverse trigger inputs, and end-of-cycle trigger output.
 

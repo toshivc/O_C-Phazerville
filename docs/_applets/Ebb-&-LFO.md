@@ -3,17 +3,21 @@ layout: default
 ---
 # Ebb & LFO
 
-![Screenshot 2024-06-13 14-46-32](https://github.com/djphazer/O_C-Phazerville/assets/109086194/608edfcd-3f89-4fc4-82f1-d46b90b65c19)
+![Ebb And LFO screenshot](images/EbbAndLFO.png)
 
 This is a single Tides-like oscillator with two outputs. Both inputs and outputs are configurable. The outputs are visualized on the screen.
 
 It can function like a looping envelope generator or an audio-rate oscillator, with modulatable parameters for morphing the contour. Triggers to input 1/3 may function as tap tempo. "One Shot" mode will output a single waveform cycle and stop, much like the AD envelope mode on Tides (use Reset to retrigger).
 
+### Clocked Mode
+
+When the mode is switched from V/Oct to Clocked, the Frequency control is replaced with a clock divider/multiplier. This mode uses the clever Mutable Instruments pattern predictor algorithm to follow incoming clock trigger patterns and match the groove.
+
 ### I/O
 
 |        |                          1/3                          |    2/4     |
 | ------ | :---------------------------------------------------: | :--------: |
-| TRIG   |                         Clock                         |   Reset    |
+| TRIG   |                         Clock                         |   Reset/Retrigger    |
 | CV INs | Assignable<br>(Freq / Slope / Shape / Fold) | Assignable<br>(Amp / Slope / Shape / Fold) |
 | OUTs   |                      Waveform A                       | Waveform B |
 
