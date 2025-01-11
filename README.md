@@ -32,9 +32,15 @@ This firmware fork is built using Platform IO, a Python-based build toolchain, a
 
 The PlatformIO project for the source code lives within the `software/` directory. From there, you can Build the desired configuration and Upload via USB to your module. In the terminal, I type:
 ```
-pio run -e pewpewpew -t upload
+pio run -e prod -t upload
 ```
-Have a look inside `platformio.ini` for alternative build environment configurations - VOR, Buchla, flipped screen, etc. To build all the defaults consecutively, simply use `pio run`
+Or, for newer Teensy 4.0 modules:
+```
+pio run -e T40 -t upload
+```
+Have a look inside `platformio.ini` for alternative build environment configurations - VOR, Buchla, flipped screen, etc.
+
+To build all supported variants consecutively, simply use `pio run`
 
 _**Pro-tip**_: If you decide to fork the project, and enable GitHub Actions on your own repo, GitHub will build the files for you... ;)
 
