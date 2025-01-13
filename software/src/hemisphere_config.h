@@ -68,6 +68,7 @@ class_name class_name ## _instance[2]
 #include "applets/GameOfLife.h"
 #include "applets/GateDelay.h"
 #include "applets/GatedVCA.h"
+#include "applets/Histo.h"
 #include "applets/DrLoFi.h"
 #include "applets/Logic.h"
 #include "applets/LowerRenz.h"
@@ -118,6 +119,7 @@ class_name class_name ## _instance[2]
 CREATE_APPLET(SegmentedSequencer);      //added
 CREATE_APPLET(Phraser); 
 CREATE_APPLET(Sprouts);    
+CREATE_APPLET(Histo);
 
 
 CREATE_APPLET(Cumulus);
@@ -230,6 +232,7 @@ CREATE_APPLET(VectorMorph);
     DECLARE_APPLET( 22, 0x01, GameOfLife), \
     DECLARE_APPLET( 29, 0x04, GateDelay), \
     DECLARE_APPLET( 17, 0x50, GatedVCA), \
+    DECLARE_APPLET( 103, 0x08, Histo), \
     DECLARE_APPLET( 10, 0x44, Logic), \
     DECLARE_APPLET( 21, 0x01, LowerRenz), \
     DECLARE_APPLET( 50, 0x04, Metronome), \
